@@ -1,0 +1,8 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "Shared constants and types",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {}
+}
