@@ -4,9 +4,10 @@ import { useToast } from '../../hooks/useToast';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
-  AuthInput, AuthButton, AuthLogo, ThemeToggle,
-  OTPBoxInput, StepIndicator, useAuthTheme,
+  AuthInput, AuthButton, AuthLogo,
+  OTPBoxInput, StepIndicator,
 } from '../../components/ui';
+import { useTheme } from '../../context/ThemeContext';
 
 // FORGOT PASSWORD PAGE  (3-step flow)
 // Step 0 — Email
@@ -16,7 +17,8 @@ import {
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const toast    = useToast();
-  const [theme, toggleTheme, isLight] = useAuthTheme();
+  const { theme } = useTheme();
+  const isLight   = theme === 'light';
 
   const [stepIdx,   setStepIdx]   = useState(0);
   const [email,     setEmail]     = useState('');
@@ -84,8 +86,6 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="auth-page-bg" data-auth-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
       <div className="auth-card">
         <AuthLogo isLight={isLight} />
 

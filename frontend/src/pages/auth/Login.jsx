@@ -6,8 +6,9 @@ import { useToast } from '../../hooks/useToast';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
-  AuthInput, AuthButton, AuthLogo, ThemeToggle, useAuthTheme,
+  AuthInput, AuthButton, AuthLogo,
 } from '../../components/ui';
+import { useTheme } from '../../context/ThemeContext';
 
 /* ══════════════════════════════════════════
    LOGIN PAGE
@@ -16,7 +17,8 @@ const LoginPage = () => {
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
   const toast     = useToast();
-  const [theme, toggleTheme, isLight] = useAuthTheme();
+  const { theme } = useTheme();
+  const isLight   = theme === 'light';
 
   const [formData, setData]   = useState({ email: '', password: '' });
   const [errors,   setErrors] = useState({ email: '', password: '' });
@@ -57,7 +59,7 @@ const LoginPage = () => {
       localStorage.setItem('bc-token', accessToken);
       dispatch(setUser(user));
       toast.success('Welcome back!', `Good to see you, ${user?.username || 'Coder'}`);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid credentials.';
       setErrors(p => ({ ...p, email: msg }));
@@ -67,8 +69,6 @@ const LoginPage = () => {
 
   return (
     <div className="auth-page-bg" data-auth-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
       <div className="auth-card">
         <AuthLogo isLight={isLight} />
 

@@ -6,16 +6,18 @@ import { useToast } from '../../hooks/useToast';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
-  AuthButton, AuthLogo, ThemeToggle,
-  OTPBoxInput, ResendTimer, useAuthTheme,
+  AuthButton, AuthLogo,
+  OTPBoxInput, ResendTimer,
 } from '../../components/ui';
+import { useTheme } from '../../context/ThemeContext';
 
 const VerifyOTPPage = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const dispatch  = useDispatch();
   const toast     = useToast();
-  const [theme, toggleTheme, isLight] = useAuthTheme();
+  const { theme } = useTheme();
+  const isLight   = theme === 'light';
 
   const email = location.state?.email || '';
   const mode  = location.state?.mode  || 'register';
@@ -43,7 +45,7 @@ const VerifyOTPPage = () => {
         localStorage.setItem('bc-token', data.accessToken);
         dispatch(setUser(data.user));
         toast.success('Account verified!', 'Welcome to the BattleCode Arena ⚔️');
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Verification failed.';
@@ -69,7 +71,6 @@ const VerifyOTPPage = () => {
 
   return (
     <div className="auth-page-bg" data-auth-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
       <div className="auth-card">
         <AuthLogo isLight={isLight} />
 

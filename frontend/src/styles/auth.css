@@ -55,7 +55,7 @@
    PAGE BACKGROUND
 ══════════════════════════════════════ */
 .auth-page-bg {
-  min-height: 100vh;
+  flex: 1;
   background-color: var(--auth-bg);
   display: flex;
   flex-direction: column;
@@ -67,29 +67,9 @@
   transition: background-color 0.35s ease;
 }
 
-/* Ambient glow — dark only */
-.auth-page-bg::before {
-  content: '';
-  position: absolute;
-  top: -100px; right: -100px;
-  width: 400px; height: 400px;
-  background: radial-gradient(ellipse, rgba(108,99,255,0.12) 0%, transparent 70%);
-  pointer-events: none;
-  animation: ambientFloat 8s ease-in-out infinite;
-}
+/* Ambient glow disabled for uniform background */
+.auth-page-bg::before,
 .auth-page-bg::after {
-  content: '';
-  position: absolute;
-  bottom: -80px; left: -80px;
-  width: 300px; height: 300px;
-  background: radial-gradient(ellipse, rgba(0,245,196,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  animation: ambientFloat 10s ease-in-out infinite reverse;
-}
-
-/* Kill glow blobs in light mode */
-[data-auth-theme="light"] .auth-page-bg::before,
-[data-auth-theme="light"] .auth-page-bg::after {
   display: none;
 }
 

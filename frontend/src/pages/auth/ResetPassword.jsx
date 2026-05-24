@@ -4,15 +4,17 @@ import { useToast } from '../../hooks/useToast';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
-  AuthInput, AuthButton, AuthLogo, ThemeToggle, useAuthTheme,
+  AuthInput, AuthButton, AuthLogo,
 } from '../../components/ui';
+import { useTheme } from '../../context/ThemeContext';
 
 // RESET PASSWORD PAGE  
 const ResetPasswordPage = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const toast     = useToast();
-  const [theme, toggleTheme, isLight] = useAuthTheme();
+  const { theme } = useTheme();
+  const isLight   = theme === 'light';
 
   const email      = location.state?.email      || '';
   const resetToken = location.state?.resetToken || '';
@@ -59,8 +61,6 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="auth-page-bg" data-auth-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
       <div className="auth-card">
         <AuthLogo isLight={isLight} />
 
