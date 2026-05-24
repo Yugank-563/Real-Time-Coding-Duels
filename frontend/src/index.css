@@ -1,31 +1,105 @@
+@import './styles/themes.css';
+@import './styles/auth.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ──── BASE RESET ──── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: 'Outfit', sans-serif;
   margin: 0;
+  padding: 0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
-code, pre {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* Premium Scrollbars */
+/* ──── SCROLLBAR STYLES ──── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #0F0F12;
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-overlay);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #24242E;
+/* ──── SELECTION ──── */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: var(--text-primary);
+}
+
+/* ──── FOCUS RING ──── */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #8B5CF6;
+/* ──── UTILITY LAYERS ──── */
+@layer utilities {
+  .text-gradient-primary {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--bg-overlay) 25%,
+      var(--bg-elevated) 50%,
+      var(--bg-overlay) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .shadow-glow-primary {
+    box-shadow: 0 0 20px var(--shadow-glow-primary);
+  }
+
+  .shadow-glow-blue {
+    box-shadow: 0 0 20px var(--shadow-glow-blue);
+  }
+
+  .animate-marquee {
+    animation: marquee 45s linear infinite;
+  }
+
+  .animate-marquee-reverse {
+    animation: marquee-reverse 45s linear infinite;
+  }
 }

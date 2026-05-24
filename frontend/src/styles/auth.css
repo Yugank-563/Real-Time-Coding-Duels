@@ -1,0 +1,453 @@
+/* ============================================================
+   BATTLECODE — AUTH PAGE STYLES
+   Dark: Cyber Dark | Light: LeetCode-inspired Clean Flat
+   ============================================================ */
+
+/* ── DARK MODE (default, Cyber Dark) ── */
+:root {
+  --auth-bg:          #0D0F14;
+  --auth-card:        #161A24;
+  --auth-input-bg:    #1E2535;
+  --auth-input-border:#2E3548;
+  --auth-card-border: #2a2f3d;
+  --auth-btn:         #00F5C4;
+  --auth-btn-text:    #0D0F14;
+  --auth-accent:      #6C63FF;
+  --auth-heading:     #E8EAF0;
+  --auth-muted:       #A0AABF;
+  --auth-error:       #EF4444;
+  --auth-dot-color:   rgba(108, 99, 255, 0.15);
+
+  /* Social button (dark) */
+  --auth-social-bg:   #1E2535;
+  --auth-social-border:#2E3548;
+  --auth-social-text: #A0AABF;
+  --auth-social-hover:#2a3347;
+  --auth-footer-text: #64748B;
+  --auth-terms-link:  #6C63FF;
+}
+
+/* ── LIGHT MODE — LeetCode inspired ── */
+[data-auth-theme="light"] {
+  --auth-bg:          #E8ECF0;
+  --auth-card:        #FFFFFF;
+  --auth-input-bg:    #FFFFFF;
+  --auth-input-border:#DDDFE1;
+  --auth-card-border: #E5E7EB;
+  --auth-btn:         #4F6EF7;      /* blue */
+  --auth-btn-text:    #FFFFFF;
+  --auth-accent:      #4F6EF7;
+  --auth-heading:     #262626;
+  --auth-muted:       #87888B;
+  --auth-error:       #EF4444;
+  --auth-dot-color:   transparent;
+
+  /* Social button (light) */
+  --auth-social-bg:   #FFFFFF;
+  --auth-social-border:#DDDFE1;
+  --auth-social-text: #3C3C4399;
+  --auth-social-hover:#F9F9F9;
+  --auth-footer-text: #87888B;
+  --auth-terms-link:  #4F6EF7;
+}
+
+/* ══════════════════════════════════════
+   PAGE BACKGROUND
+══════════════════════════════════════ */
+.auth-page-bg {
+  flex: 1;
+  background-color: var(--auth-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.35s ease;
+}
+
+/* Ambient glow disabled for uniform background */
+.auth-page-bg::before,
+.auth-page-bg::after {
+  display: none;
+}
+
+@keyframes ambientFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50%       { transform: translate(20px,-20px) scale(1.05); }
+}
+
+/* ══════════════════════════════════════
+   CARD
+══════════════════════════════════════ */
+.auth-card {
+  background: var(--auth-card);
+  border: 1px solid var(--auth-card-border);
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 24rem;
+  padding: 2.25rem 2rem 1.75rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.08),
+    0 8px 32px rgba(0,0,0,0.08);
+  animation: cardSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Dark mode deeper shadow */
+[data-auth-theme="dark"] .auth-card,
+:root .auth-card {
+  border-radius: 1.25rem;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 20px 60px rgba(0,0,0,0.4),
+    0 4px 16px rgba(0,0,0,0.3);
+}
+
+@keyframes cardSlideUp {
+  from { opacity:0; transform: translateY(20px) scale(0.98); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+
+
+/* ══════════════════════════════════════
+   BADGE / LOGO
+══════════════════════════════════════ */
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  background: var(--auth-btn);
+  color: var(--auth-btn-text);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  box-shadow: 0 0 14px rgba(0,245,196,0.3);
+  transition: background 0.35s, color 0.35s, box-shadow 0.35s;
+}
+
+[data-auth-theme="light"] .auth-badge {
+  box-shadow: 0 2px 8px rgba(255,161,22,0.28);
+}
+
+/* ── LeetCode-style logo block (light only) ── */
+.auth-lc-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0 1.25rem;
+  margin-bottom: 0;
+}
+.auth-lc-logo-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+.auth-lc-logo-text {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--auth-heading);
+  letter-spacing: -0.01em;
+}
+
+/* ══════════════════════════════════════
+   FORM INPUTS
+══════════════════════════════════════ */
+.auth-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.auth-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--auth-muted);
+  letter-spacing: 0.04em;
+  transition: color 0.3s;
+}
+
+[data-auth-theme="light"] .auth-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--auth-heading);
+}
+
+/* Required field asterisk — shown when input[required] follows the label wrapper */
+.auth-input-wrapper:has(input[required]) .auth-label::after {
+  content: ' *';
+  color: var(--auth-error);
+  font-weight: 700;
+  font-size: 0.7rem;
+  margin-left: 1px;
+}
+
+.auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.72rem 1rem;
+  background: var(--auth-input-bg);
+  border: 1px solid var(--auth-input-border);
+  border-radius: 0.4rem;
+  color: var(--auth-heading);
+  font-size: 0.875rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.3s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.auth-input::placeholder {
+  color: var(--auth-muted);
+  opacity: 0.85;
+}
+
+/* Dark hover/focus */
+.auth-input:hover:not(:focus):not(.auth-input--error) {
+  border-color: var(--auth-accent);
+}
+.auth-input:focus:not(.auth-input--error) {
+  border-color: var(--auth-accent);
+  box-shadow: 0 0 0 3px rgba(108,99,255,0.18);
+}
+
+/* Light hover/focus — LeetCode uses blue focus ring */
+[data-auth-theme="light"] .auth-input:hover:not(:focus):not(.auth-input--error) {
+  border-color: #BEBFC2;
+}
+[data-auth-theme="light"] .auth-input:focus:not(.auth-input--error) {
+  border-color: #4F6EF7;
+  box-shadow: 0 0 0 2px rgba(79,110,247,0.18);
+}
+
+.auth-input--error {
+  border-color: var(--auth-error) !important;
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.12) !important;
+}
+
+.auth-error-msg {
+  font-size: 0.72rem;
+  color: var(--auth-error);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+/* ══════════════════════════════════════
+   PRIMARY BUTTON
+══════════════════════════════════════ */
+.auth-btn-primary {
+  width: 100%;
+  padding: 0.72rem 1.25rem;
+  background: var(--auth-btn);
+  color: var(--auth-btn-text);
+  border: none;
+  border-radius: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0,245,196,0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.auth-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: scale(1.02);
+  box-shadow: 0 6px 24px rgba(0,245,196,0.35);
+}
+.auth-btn-primary:active:not(:disabled) { transform: scale(0.99); }
+.auth-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+[data-auth-theme="light"] .auth-btn-primary {
+  box-shadow: 0 2px 8px rgba(255,161,22,0.2);
+}
+[data-auth-theme="light"] .auth-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(255,161,22,0.38);
+}
+
+/* ══════════════════════════════════════
+   SOCIAL SIGN-IN BUTTONS (LeetCode style)
+══════════════════════════════════════ */
+.auth-social-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.auth-social-btn {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--auth-social-bg);
+  border: 1px solid var(--auth-social-border);
+  color: var(--auth-social-text);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  text-decoration: none;
+}
+.auth-social-btn:hover {
+  background: var(--auth-social-hover);
+  border-color: var(--auth-accent);
+  transform: translateY(-1px);
+}
+.auth-social-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* ══════════════════════════════════════
+   DIVIDERS & MISC TEXT
+══════════════════════════════════════ */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.35rem 0;
+}
+.auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--auth-input-border);
+  opacity: 0.6;
+}
+
+.auth-terms-text {
+  font-size: 0.72rem;
+  color: var(--auth-footer-text);
+  text-align: center;
+  line-height: 1.5;
+}
+.auth-terms-text a,
+.auth-terms-link {
+  color: var(--auth-terms-link);
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+.auth-terms-text a:hover,
+.auth-terms-link:hover { text-decoration: underline; }
+
+/* ══════════════════════════════════════
+   LINKS
+══════════════════════════════════════ */
+.auth-link {
+  color: var(--auth-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+.auth-link:hover { opacity: 0.8; text-decoration: underline; }
+
+/* Forgot / Sign Up row (LeetCode style — on same line) */
+.auth-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ══════════════════════════════════════
+   THEME TOGGLE
+══════════════════════════════════════ */
+.auth-theme-toggle {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--auth-card);
+  border: 1px solid var(--auth-card-border);
+  color: var(--auth-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.auth-theme-toggle:hover {
+  color: var(--auth-heading);
+  border-color: var(--auth-accent);
+  transform: scale(1.08);
+}
+
+/* ══════════════════════════════════════
+   PASSWORD STRENGTH
+══════════════════════════════════════ */
+.password-strength-bar {
+  height: 3px;
+  border-radius: 9999px;
+  background: var(--auth-input-border);
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+.password-strength-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* ══════════════════════════════════════
+   SPINNER
+══════════════════════════════════════ */
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-spinner {
+  width: 1rem; height: 1rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  opacity: 0.8;
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 480px) {
+  .auth-card { padding: 1.75rem 1.25rem 1.5rem; }
+  [data-auth-theme="dark"] .auth-card,
+  :root .auth-card { border-radius: 1rem; }
+}
