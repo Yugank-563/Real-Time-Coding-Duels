@@ -7,10 +7,14 @@ import {
   logout,
   forgotPassword,
   verifyResetOTP,
-  resetPassword
+  resetPassword,
+  getMe
 } from '../controllers/auth/index.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+
+router.get('/me', authMiddleware, getMe);
 
 router.post('/register', register);
 router.post('/verify-otp', verifyOTP);
