@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import { limiter } from './src/middleware/rateLimiter.js';
 
 import authRoutes from './src/routes/auth.routes.js';
+import battleRoutes from './src/routes/battles.routes.js';
+import submissionRoutes from './src/routes/submissions.routes.js';
+import userRoutes from './src/routes/users.routes.js';
+
 const app = express();
 
 app.use(
@@ -24,6 +28,9 @@ app.get('/', (req, res) => {
 
 // Authentication routes
 app.use('/auth', authRoutes);
+app.use('/api/battles', battleRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/users', userRoutes);
 
 app.all('/{*any}', (req, res) => {
   res.status(404).send('Page Not Found');
