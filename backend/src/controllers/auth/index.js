@@ -5,3 +5,4 @@ export * from './refreshToken.js';
 export * from './logout.js';
 export * from './forgotPassword.js';
 export * from './resetPassword.js';
+export * from './me.js';
