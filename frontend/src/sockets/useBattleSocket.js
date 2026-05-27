@@ -1,0 +1,262 @@
+import { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
+import { useToast } from '../hooks/useToast';
+import { selectUser } from '../features/auth/authSlice';
+import {
+  initBattle,
+  updateOpponentStatus,
+  addChatMessage,
+  endBattle,
+  setLobbyStatus,
+  setSuggestedTopic,
+  setOutputResults,
+} from '../features/battle/battleSlice';
+
+const SOCKET_URL = 'http://localhost:5001';
+
+export const useBattleSocket = (battleId = null, queueType = null) => {
+  const dispatch = useDispatch();
+  const toast = useToast();
+  const user = useSelector(selectUser);
+  const socketRef = useRef(null);
+ 
+  const teammate = useSelector(state => state.battle.teammate);
+  const teammateRef = useRef(teammate);
+  useEffect(() => {
+    teammateRef.current = teammate;
+  }, [teammate]);
+ 
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('bc-token');
+    if (!token || token === 'undefined' || token === 'null') {
+      console.warn('Socket connection deferred: No valid JWT token found in localStorage.');
+      return;
+    }
+
+    // Establish WebSocket gateway connection
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Successfully connected to WebSocket gateway');
+      
+      // Auto-join active battle room if parameters are present
+      if (battleId) {
+        socket.emit('battle:join', { battleId });
+      }
+
+      // Auto-join matchmaking queue if queueType is present (solves race conditions)
+      if (queueType) {
+        console.log('Auto-joining matchmaking queue for format:', queueType);
+        const searchParams = new URLSearchParams(window.location.search);
+        const topic = searchParams.get('topic') || '';
+        const teamId = searchParams.get('teamId') || '';
+        socket.emit('matchmaking:join', { battleType: queueType, topic, teamId });
+        dispatch(setLobbyStatus('queuing'));
+      }
+    });
+
+    // ── MATCHMAKING EVENTS ──
+    socket.on('matchmaking:found', (data) => {
+      console.log('Match paired successfully!', data);
+      const oppName = data.opponents 
+        ? data.opponents.map(o => `@${o.username}`).join(' & ') 
+        : `@${data.opponent?.username || 'Opponent'}`;
+      toast.success('MATCH FOUND! ⚔️', `You are paired against ${oppName}. Starting duel...`);
+      // Initialize battle in store (Note: BattleRoom component will trigger countdown)
+      dispatch(setLobbyStatus({ status: 'matched', battleId: data.battleId }));
+    });
+
+    socket.on('matchmaking:topic_timeout', (data) => {
+      toast.warning('Queue taking longer', `No opponents found in topic "${data.topic}" yet.`);
+      dispatch(setSuggestedTopic(data.suggestedTopic || 'Dynamic Programming'));
+    });
+
+    socket.on('matchmaking:position', (data) => {
+      dispatch(setLobbyStatus('queuing'));
+    });
+
+    socket.on('matchmaking:left', () => {
+      dispatch(setLobbyStatus('idle'));
+      toast.info('Left matchmaking queue.');
+    });
+
+    // ── BATTLE LIFE-CYCLE EVENTS ──
+    socket.on('battle:start', () => {
+      console.log('Pre-battle countdown completed. Coding starts!');
+    });
+
+    socket.on('battle:opponent_coding', (data) => {
+      // Opponent is typing
+      dispatch(updateOpponentStatus({
+        userId: data.userId,
+        status: 'coding',
+        language: data.language,
+      }));
+    });
+
+    socket.on('battle:update', (data) => {
+      // Progress / test cases passed updates
+      if (data.players && Array.isArray(data.players)) {
+        data.players.forEach(p => {
+          if (p.user !== (user?._id || user?.id)) {
+            dispatch(updateOpponentStatus({
+              userId: p.user._id || p.user,
+              status: p.status,
+              progress: p.progress,
+              language: p.language,
+            }));
+          }
+        });
+      }
+    });
+
+    socket.on('battle:end', (data) => {
+      const activeUser = userRef.current;
+      const activeTeammate = teammateRef.current;
+      
+      const isMeWinner = data.winnerId === activeUser?.id || data.winnerId === activeUser?._id;
+      const isTeammateWinner = activeTeammate && data.winnerId === activeTeammate.id;
+      const isWinner = isMeWinner || isTeammateWinner;
+ 
+      const eloDiff = data.ratingDetails?.eloChange !== undefined ? data.ratingDetails.eloChange : 0;
+      const eloText = eloDiff >= 0 ? `+${eloDiff}` : `${eloDiff}`;
+ 
+      if (isWinner) {
+        if (isTeammateWinner) {
+          toast.success('VICTORY! 🎉', `Teammate solved it! You win! (${eloText} ELO)`);
+        } else {
+          toast.success('VICTORY! 🎉', `Congratulations, you won the battle! (${eloText} ELO)`);
+        }
+      } else {
+        toast.error('DEFEATED 😤', `Duel lost. Better luck next time! (${eloText} ELO)`);
+      }
+      dispatch(endBattle(data));
+    });
+ 
+    socket.on('battle:submission_result', (data) => {
+      const activeTeammate = teammateRef.current;
+      if (activeTeammate && data.userId === activeTeammate.id) {
+        if (data.verdict === 'WA') {
+          toast.warning('Teammate got WA ✗', `Passed: ${data.testCasesPassed}/${data.totalTestCases}`);
+        } else if (data.verdict === 'AC') {
+          toast.success('Teammate got AC! 🎉', `All ${data.testCasesPassed}/${data.totalTestCases} test cases passed.`);
+        } else {
+          toast.info(`Teammate verdict: ${data.verdict}`, `Passed: ${data.testCasesPassed}/${data.totalTestCases}`);
+        }
+      }
+    });
+
+    // ── CHAT CHANNEL EVENTS ──
+    socket.on('chat:message', (data) => {
+      dispatch(addChatMessage(data));
+    });
+
+    // ── SUBMISSION RESULT EVENT ──
+    socket.on('submission:result', (data) => {
+      console.log('Received submission verdict:', data.verdict);
+      
+      // Update output screen console
+      if (data.verdict === 'AC') {
+        toast.success('COMPILATION ACCEPTED! ✓', `All ${data.testCasesPassed}/${data.totalTestCases} test cases passed.`);
+      } else {
+        toast.warning('VERDICT: ' + data.verdict, `Passed: ${data.testCasesPassed}/${data.totalTestCases}`);
+      }
+
+      dispatch(setOutputResults({
+        verdict: data.verdict,
+        results: Array.from({ length: data.testCasesPassed }).map(() => ({ passed: true })),
+        testCasesPassed: data.testCasesPassed,
+        totalTestCases: data.totalTestCases,
+      }));
+    });
+
+    socket.on('error', (err) => {
+      toast.error('Connection Error', err.message || 'WebSocket gateway error occurred.');
+    });
+
+    return () => {
+      if (socket) {
+        if (queueType) {
+          console.log('Auto-leaving queue on unmount for format:', queueType);
+          socket.emit('matchmaking:leave', { battleType: queueType });
+        }
+        socket.disconnect();
+        console.log('Unmounted socket listeners.');
+      }
+    };
+  }, [battleId, queueType, user?.id, dispatch]);
+
+  // ── TRIGGER EMIT FUNCTIONS ──
+  const joinQueue = (battleType, options = {}) => {
+    if (socketRef.current) {
+      socketRef.current.emit('matchmaking:join', { 
+        battleType,
+        topic: options.topic,
+        teamId: options.teamId
+      });
+      dispatch(setLobbyStatus('queuing'));
+    }
+  };
+
+  const leaveQueue = (battleType, options = {}) => {
+    if (socketRef.current) {
+      socketRef.current.emit('matchmaking:leave', { 
+        battleType,
+        topic: options.topic,
+        teamId: options.teamId
+      });
+    }
+  };
+
+  const sendCodeChange = (lang) => {
+    if (socketRef.current && battleId) {
+      socketRef.current.emit('battle:code_change', { battleId, language: lang });
+    }
+  };
+
+  const startCountdown = () => {
+    if (socketRef.current && battleId) {
+      socketRef.current.emit('battle:start_countdown', { battleId });
+    }
+  };
+
+  const surrenderBattle = () => {
+    if (socketRef.current && battleId) {
+      socketRef.current.emit('battle:surrender', { battleId });
+    }
+  };
+
+  const sendChatMessage = (message) => {
+    if (socketRef.current && battleId) {
+      socketRef.current.emit('chat:message', { battleId, message });
+    }
+  };
+ 
+  const sendTimeout = () => {
+    if (socketRef.current && battleId) {
+      socketRef.current.emit('battle:timeout', { battleId });
+    }
+  };
+ 
+  return {
+    socket: socketRef.current,
+    joinQueue,
+    leaveQueue,
+    sendCodeChange,
+    startCountdown,
+    surrenderBattle,
+    sendChatMessage,
+    sendTimeout,
+  };
+};

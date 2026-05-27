@@ -12,11 +12,18 @@ import VerifyOTPPage      from './pages/auth/VerifyOTP';
 import ForgotPasswordPage from './pages/auth/ForgotPassword';
 import ResetPasswordPage  from './pages/auth/ResetPassword';
 
-import { useSelector } from 'react-redux';
-import { selectIsAuthenticated } from './features/auth/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import api from './utils/api';
+import { selectIsAuthenticated, setUser, setLoading, selectAuthLoading } from './features/auth/authSlice';
 
 // ── Protected Dashboard Page ──
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const BattleLobbyPage = lazy(() => import('./pages/BattleLobby'));
+const MatchmakingPage = lazy(() => import('./pages/Matchmaking'));
+const BattleRoomPage = lazy(() => import('./pages/BattleRoom'));
+const BattleSummaryPage = lazy(() => import('./pages/BattleSummary'));
+const PrivateLobbyPage = lazy(() => import('./pages/PrivateLobby'));
 
 // ── Public Pages ──
 const AboutPage = lazy(() => import('./pages/AboutPage'));
@@ -28,6 +35,39 @@ const FallbackRoute = () => {
 };
 
 function App() {
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isLoading = useSelector(selectAuthLoading);
+
+  // Silent session restoration on application startup
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem('bc-token');
+      if (!token) return;
+
+      dispatch(setLoading(true));
+      try {
+        const { data } = await api.get('/auth/me');
+        dispatch(setUser(data));
+      } catch (err) {
+        console.error('Session restoration failed:', err.message);
+        localStorage.removeItem('bc-token');
+      } finally {
+        dispatch(setLoading(false));
+      }
+    };
+
+    restoreSession();
+  }, [dispatch]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] text-[#E0E6F0] flex flex-col items-center justify-center font-sans">
+        <p className="text-sm text-[#7A9AB8] italic animate-pulse">Restoring authenticated session...</p>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Navbar />
@@ -49,6 +89,11 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/battle/lobby" element={<BattleLobbyPage />} />
+              <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
+              <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
+              <Route path="/battle/:battleId" element={<BattleRoomPage />} />
+              <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
             </Route>
           </Route>
 

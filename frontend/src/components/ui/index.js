@@ -6,3 +6,4 @@ export { default as OTPBoxInput } from './OTPBoxInput';
 export { default as ResendTimer } from './ResendTimer';
 export { default as StepIndicator } from './StepIndicator';
 export { default as useAuthTheme } from './useAuthTheme';
+export { default as CustomDropdown } from './CustomDropdown';

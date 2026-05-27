@@ -12,7 +12,7 @@ export const refreshTokenService = async (token) => {
   if (user.refreshToken !== token) throw new Error('Invalid refresh token');
 
   const newAccessToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m',
+    expiresIn: process.env.JWT_ACCESS_EXPIRY || '7d',
   });
 
   return { accessToken: newAccessToken };

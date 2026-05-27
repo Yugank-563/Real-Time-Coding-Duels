@@ -34,3 +34,17 @@ export const updateRefreshToken = async (id, token) => {
 export const deleteUserById = async (id) => {
   return await User.findByIdAndDelete(id);
 };
+
+// Search users by name or email, excluding a specific ID
+export const searchUsersByNameOrEmail = async (q, excludeId) => {
+  return await User.find({
+    $or: [
+      { name: { $regex: q.trim(), $options: 'i' } },
+      { email: { $regex: q.trim(), $options: 'i' } }
+    ],
+    _id: { $ne: excludeId }
+  })
+  .limit(5)
+  .select('name email rank xp level');
+};
+

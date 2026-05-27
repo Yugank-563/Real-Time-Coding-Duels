@@ -1,0 +1,143 @@
+import { Server } from 'socket.io';
+import { createServer } from 'http';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createClient } from 'redis';
+
+// Handlers imports
+import { registerMatchmakingHandlers } from './handlers/matchmaking.js';
+import { registerBattleHandlers } from './handlers/battle.js';
+import { registerChatHandlers } from './handlers/chat.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load central environment variables
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+import { connectDB } from '../../backend/src/config/db.js';
+
+const PORT = process.env.SOCKET_PORT || 5001;
+const mongoUri = process.env.MONGO_URI;
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
+if (!mongoUri) {
+  console.error('MONGO_URI is missing!');
+  process.exit(1);
+}
+
+// 1. Connect to MongoDB using Backend Mongoose instance to avoid buffering timeouts
+await connectDB()
+  .then(() => console.log('Socket Service connected to MongoDB (Backend Instance)'))
+  .catch((err) => {
+    console.error('Socket Service MongoDB failed:', err.message);
+    process.exit(1);
+  });
+
+const httpServer = createServer();
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// 2. Setup Redis Pub/Sub listener for microservice communication
+const redisOptions = {};
+if (redisUrl.startsWith('rediss://')) {
+  redisOptions.socket = {
+    tls: true,
+    rejectUnauthorized: false,
+  };
+}
+
+const subClient = createClient({ url: redisUrl, ...redisOptions });
+subClient.on('error', (err) => console.error('Socket Redis Sub Client Error:', err.message));
+await subClient.connect();
+
+// Listen for compiler updates and emit to socket clients
+await subClient.subscribe('battle:events', (message) => {
+  try {
+    const { battleId, event, data } = JSON.parse(message);
+    console.log(`Redis Pub/Sub received [${event}] for battle ${battleId}`);
+
+    // Broadcast message to Socket room corresponding to battleId
+    io.to(`battle:${battleId}`).emit(event, data);
+  } catch (error) {
+    console.error('Error handling Redis Pub/Sub message:', error.message);
+  }
+});
+
+await subClient.subscribe('submission:events', (message) => {
+  try {
+    const { submissionId, userId, battleId, verdict, testCasesPassed, totalTestCases } = JSON.parse(message);
+    console.log(`Redis Pub/Sub received submission result for ${submissionId}`);
+
+    // Send feedback directly to user socket
+    io.to(`user:${userId}`).emit('submission:result', {
+      submissionId,
+      verdict,
+      testCasesPassed,
+      totalTestCases,
+    });
+
+    if (battleId) {
+      io.to(`battle:${battleId}`).emit('battle:submission_result', {
+        userId,
+        verdict,
+        testCasesPassed,
+        totalTestCases,
+      });
+    }
+  } catch (error) {
+    console.error('Error handling Redis Pub/Sub submission message:', error.message);
+  }
+});
+
+// 3. Authenticate socket connections using JWT
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    if (!token || token === 'undefined' || token === 'null') {
+      return next(new Error('Authentication failed: Missing token.'));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = decoded; // { id, role }
+    socket.userId = decoded.id;
+    next();
+  } catch (err) {
+    // Only log genuinely unexpected errors — not standard token client issues
+    if (err.name !== 'JsonWebTokenError' && err.name !== 'TokenExpiredError') {
+      console.error('Socket Auth Unexpected Error:', err.message);
+    } else {
+      console.warn(`Socket Auth Failed (${err.name}): ${err.message}`);
+    }
+    return next(new Error('Authentication failed: Invalid token.'));
+  }
+});
+
+// 4. Map namespace connection flows
+io.on('connection', (socket) => {
+  console.log(`Socket client connected: socket=${socket.id}, user=${socket.userId}`);
+
+  // Join self-user channel for targeted events
+  socket.join(`user:${socket.userId}`);
+
+  // Register feature handlers
+  registerMatchmakingHandlers(io, socket);
+  registerBattleHandlers(io, socket);
+  registerChatHandlers(io, socket);
+
+  socket.on('disconnect', () => {
+    console.log(`Socket client disconnected: ${socket.id}`);
+  });
+});
+
+httpServer.listen(PORT, () => {
+  console.log(`Socket.IO Gateway is listening on port ${PORT}`);
+});

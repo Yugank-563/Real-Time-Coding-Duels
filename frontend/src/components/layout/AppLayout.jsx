@@ -1,7 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import Sidebar from './Sidebar';
-import StatusBar from './StatusBar';
 
 import Footer from './Footer';
 
@@ -17,11 +15,8 @@ const AppLayout = () => {
   return (
     <div className="min-h-screen bg-base text-text-primary flex flex-col font-sans pt-16">
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — hidden on mobile, visible md+ */}
-        <Sidebar />
-
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto flex flex-col" style={{ marginBottom: '28px' }}>
+        <main className="flex-1 overflow-y-auto flex flex-col">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
             <AnimatePresence mode="wait">
               <motion.div
@@ -38,9 +33,6 @@ const AppLayout = () => {
           <Footer />
         </main>
       </div>
-
-      {/* VS Code style status bar — fixed bottom */}
-      <StatusBar />
     </div>
   );
 };
