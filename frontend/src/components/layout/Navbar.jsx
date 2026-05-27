@@ -13,7 +13,7 @@ import { selectUser, selectIsAuthenticated, logout } from '../../features/auth/a
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
   { label: 'Home', path: '/dashboard', icon: Home },
-  { label: 'Battles', path: '/battles', icon: Swords },
+  { label: 'Battles', path: '/battle/lobby', icon: Swords },
   { label: 'Contests', path: '/contests', icon: Trophy },
   { label: 'Problems', path: '/problems', icon: BookOpen },
   { label: 'Leaderboards', path: '/leaderboard', icon: Trophy },
