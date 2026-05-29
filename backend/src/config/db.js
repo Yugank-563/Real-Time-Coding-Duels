@@ -3,9 +3,18 @@ import Problem from '../models/Problem.js';
 
 const seedProblems = async () => {
   try {
-    // Clear and re-seed pure C++ problems cleanly
-    console.log('Re-seeding pure C++ coding challenges...');
-    await Problem.deleteMany({});
+    const count = await Problem.countDocuments();
+    const forceSeed = process.env.FORCE_SEED === 'true';
+
+    if (count > 0 && !forceSeed) {
+      console.log('Coding challenges already exist in database. Skipping seeding.');
+      return;
+    }
+
+    console.log(forceSeed ? 'Force re-seeding pure C++ coding challenges...' : 'Database is empty. Seeding pure C++ coding challenges...');
+    if (forceSeed) {
+      await Problem.deleteMany({});
+    }
 
     const defaultProblems = [
       {
@@ -214,10 +223,18 @@ const seedProblems = async () => {
       }
     ];
 
-    await Problem.insertMany(defaultProblems);
-    console.log('Successfully seeded default programming problems!');
+    try {
+      await Problem.insertMany(defaultProblems, { ordered: false });
+      console.log('Successfully seeded default programming problems!');
+    } catch (insertErr) {
+      if (insertErr.code === 11000 || (insertErr.writeErrors && insertErr.writeErrors.some(e => e.code === 11000))) {
+        console.log('Default programming problems were seeded concurrently by another service.');
+      } else {
+        throw insertErr;
+      }
+    }
   } catch (err) {
-    console.error('Error seeding problems:', err);
+    console.error('Error seeding database:', err);
   }
 };
 
