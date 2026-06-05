@@ -24,9 +24,15 @@ const MatchmakingPage = lazy(() => import('./pages/Matchmaking'));
 const BattleRoomPage = lazy(() => import('./pages/BattleRoom'));
 const BattleSummaryPage = lazy(() => import('./pages/BattleSummary'));
 const PrivateLobbyPage = lazy(() => import('./pages/PrivateLobby'));
+const ProblemsPage = lazy(() => import('./pages/ProblemsPage'));
+const PracticeRoom = lazy(() => import('./pages/PracticeRoom'));
+
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+
 
 // ── Public Pages ──
-const AboutPage = lazy(() => import('./pages/AboutPage'));
+const AboutPage          = lazy(() => import('./pages/AboutPage'));
+const BattleRoomPreview  = lazy(() => import('./pages/BattleRoomPreview'));
 
 // ── Dynamic Fallback Route ──
 const FallbackRoute = () => {
@@ -76,6 +82,9 @@ function App() {
           {/* Public Landing / About Page */}
           <Route path="/" element={<AboutPage />} />
 
+          {/* Public UI Preview — no auth needed */}
+          <Route path="/battle/preview" element={<BattleRoomPreview />} />
+
           {/* Public Auth Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -92,9 +101,14 @@ function App() {
               <Route path="/battle/lobby" element={<BattleLobbyPage />} />
               <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
               <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
-              <Route path="/battle/:battleId" element={<BattleRoomPage />} />
               <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
+              <Route path="/problems" element={<ProblemsPage />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>
+            {/* Fullscreen workspaces outside AppLayout (no footer/constraints, custom fixed Navbar spacing) */}
+            <Route path="/battle/:battleId" element={<BattleRoomPage />} />
+            <Route path="/problems/:slug" element={<PracticeRoom />} />
+
           </Route>
 
           {/* Global Fallback */}
