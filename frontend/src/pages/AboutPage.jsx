@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { Swords, Trophy,Terminal } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Footer from '../components/layout/Footer';
+import { useSelector } from 'react-redux';
+import { selectIsAuthenticated } from '../features/auth/authSlice';
 
 const AboutPage = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   // Animation variants for smooth premium stagger loads
   const containerVariants = {
@@ -50,43 +53,44 @@ const AboutPage = () => {
           <p className="text-base sm:text-lg text-text-secondary leading-relaxed mb-8">
             Race against the clock, match with global developers, and master Data Structures & Algorithms (DSA) in a gamified real-time coding arena.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/signup">
-              <motion.button
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
-                  isDark 
-                    ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/20 hover:brightness-105' 
-                    : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/20 hover:brightness-105'
-                }`}
-              >
-                Join Now for Free
-              </motion.button>
-            </Link>
-            <Link to="/login">
-              <motion.button
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all duration-300 group ${
-                  isDark 
-                    ? 'border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]' 
-                    : 'border-slate-200 bg-white text-[#4F6EF7] hover:border-[#4F6EF7]/50 hover:bg-[#4F6EF7]/5 hover:shadow-sm'
-                }`}
-              >
-                <span>Enter Battleground</span>
-              </motion.button>
-            </Link>
-          </div>
+          {!isAuthenticated && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/signup">
+                <motion.button
+                  whileHover={{ scale: 1.03, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
+                    isDark 
+                      ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/20 hover:brightness-105' 
+                      : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/20 hover:brightness-105'
+                  }`}
+                >
+                  Join Now for Free
+                </motion.button>
+              </Link>
+              <Link to="/login">
+                <motion.button
+                  whileHover={{ scale: 1.03, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all duration-300 group ${
+                    isDark 
+                      ? 'border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]' 
+                      : 'border-slate-200 bg-white text-[#4F6EF7] hover:border-[#4F6EF7]/50 hover:bg-[#4F6EF7]/5 hover:shadow-sm'
+                  }`}
+                >
+                  <span>Enter Battleground</span>
+                </motion.button>
+              </Link>
+            </div>
+          )}
         </motion.div>
 
         {/* ── CORE VISION & MISSION (User Prompt Content Integrated) ── */}
         <motion.div 
           className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24"
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
         >
           {/* Left Block: Narrative text */}
           <div className="lg:col-span-7 space-y-6">
@@ -155,8 +159,7 @@ const AboutPage = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10"
           variants={containerVariants}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          animate="visible"
         >
           {/* Card 1: 1v1 Arena */}
           <motion.div 
@@ -190,7 +193,7 @@ const AboutPage = () => {
             </p>
           </motion.div>
 
-          {/* Card 3: Rated Contests */}
+          {/* Card 3: Rated Arenas */}
           <motion.div 
             variants={itemVariants}
             className="p-8 rounded-2xl bg-surface border border-border/80 relative group hover:border-border transition-all duration-300"
@@ -200,7 +203,7 @@ const AboutPage = () => {
             }`}>
               <Trophy className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Rated Arenas & Contests</h3>
+            <h3 className="text-xl font-bold mb-3">Global Leaderboards</h3>
             <p className="text-text-secondary text-sm leading-relaxed">
               Climb ratings, top the global leaderboards, and win exclusive badges by competing in live multi-player DSA arenas.
             </p>
