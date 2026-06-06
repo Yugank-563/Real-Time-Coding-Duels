@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Globe, Calendar, User as UserIcon } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../hooks/ui/useTheme';
 import { useProfile } from '../hooks/useProfile';
 import RatingChart from '../components/profile/RatingChart';
 import DifficultyRing from '../components/profile/DifficultyRing';

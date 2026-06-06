@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Stat = ({ label, value, large }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
     <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--auth-muted)',

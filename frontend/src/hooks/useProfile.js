@@ -1,9 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectUser, setUser } from '../features/auth/authSlice';
-import { useToast } from './useToast';
-import { fetchProfile, updateProfile } from '../services/profileService';
+import { selectUser, setUser } from '../features/authSlice';
+import { useToast } from './ui/useToast';
+import api from '../utils/api';
+
+const fetchProfile = async (username) => {
+  const res = await api.get(`/api/users/profile/${username}`);
+  return res.data;
+};
+
+const updateProfile = async (data) => {
+  const res = await api.put('/api/users/profile', data);
+  return res.data;
+};
 
 export const useProfile = (username) => {
   const navigate = useNavigate();
