@@ -1,8 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/authSlice';
-import themeReducer from '../features/theme/themeSlice';
-import notificationReducer from '../features/notification/notificationSlice';
-import battleReducer from '../features/battle/battleSlice';
+import authReducer from '../features/authSlice';
+import themeReducer from '../features/themeSlice';
+import notificationReducer from '../features/notificationSlice';
+import battleReducer from '../features/battleSlice';
+import problemsReducer from '../features/problemsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     theme:         themeReducer,
     notifications: notificationReducer,
     battle:        battleReducer,
+    problems:      problemsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../features/auth/authSlice';
-import { useToast } from '../../hooks/useToast';
+import { setUser } from '../../features/authSlice';
+import { useToast, useTheme } from '../../hooks';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
   AuthButton, AuthLogo,
   OTPBoxInput, ResendTimer,
 } from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
 
 const VerifyOTPPage = () => {
   const navigate  = useNavigate();

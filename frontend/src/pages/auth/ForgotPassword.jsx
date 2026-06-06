@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../../hooks/useToast';
+import { useToast, useTheme } from '../../hooks/index';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
   OTPBoxInput, StepIndicator,
 } from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
 
 // FORGOT PASSWORD PAGE  (3-step flow)
 // Step 0 — Email

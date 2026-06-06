@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../features/auth/authSlice';
-import { useToast } from '../../hooks/useToast';
+import { setUser } from '../../features/authSlice';
+import { useToast, useTheme } from '../../hooks/index';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
 } from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
 
 /* ══════════════════════════════════════════
    LOGIN PAGE

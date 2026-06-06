@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../../hooks/useToast';
+import { useToast, useTheme } from '../../hooks';
 import api from '../../utils/api';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
 } from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
 
 // SIGNUP PAGE
 const SignupPage = () => {

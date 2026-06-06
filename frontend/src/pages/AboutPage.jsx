@@ -4,7 +4,7 @@ import { Swords, Trophy,Terminal } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Footer from '../components/layout/Footer';
 import { useSelector } from 'react-redux';
-import { selectIsAuthenticated } from '../features/auth/authSlice';
+import { selectIsAuthenticated } from '../features/authSlice';
 
 const AboutPage = () => {
   const { theme } = useTheme();
