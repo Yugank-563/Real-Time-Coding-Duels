@@ -27,6 +27,7 @@ export const verifyOTPService = async (email, otp) => {
 
   const user = await createUser({
     email: emailLower,
+    username: name.toLowerCase() + Math.floor(Math.random() * 1000), // generate a unique username
     name: name,
     passwordHash: payload.passwordHash,
     role: payload.role,

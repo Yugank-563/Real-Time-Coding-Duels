@@ -13,7 +13,21 @@ export const login = async (req, res) => {
     });
 
     res.json({
-      user,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username || user.email.split('@')[0],
+        name: user.name || '',
+        role: user.role,
+        rating: user.rank || 1200,
+        xp: user.xp || 0,
+        level: user.level || 1,
+        streaks: user.streaks || 0,
+        badges: user.badges || [],
+        bio: user.bio || '',
+        country: user.country || '',
+        joinDate: user.createdAt,
+      },
       token: accessToken,
     });
   } catch (error) {
