@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Swords, Trophy,Terminal } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../hooks/ui/useTheme';
 import Footer from '../components/layout/Footer';
 import { useSelector } from 'react-redux';
 import { selectIsAuthenticated } from '../features/authSlice';
