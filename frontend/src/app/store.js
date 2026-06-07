@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../features/authSlice';
-import themeReducer from '../features/themeSlice';
-import notificationReducer from '../features/notificationSlice';
-import battleReducer from '../features/battleSlice';
-import problemsReducer from '../features/problemsSlice';
+import { 
+  authReducer, 
+  themeReducer, 
+  notificationReducer, 
+  battleReducer, 
+  problemsReducer 
+} from '../features/index';
 
 export const store = configureStore({
   reducer: {

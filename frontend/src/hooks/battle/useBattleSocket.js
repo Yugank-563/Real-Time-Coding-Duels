@@ -1,19 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
-import { useToast } from '../hooks/useToast';
-import { selectUser } from '../features/auth/authSlice';
+import { useToast } from '../ui/useToast';
+import { selectUser } from '../../features/index';
 import {
-  initBattle,
   updateOpponentStatus,
-  addChatMessage,
   endBattle,
   setLobbyStatus,
   setSuggestedTopic,
   setOutputResults,
-} from '../features/battle/battleSlice';
+  setOutputProgress,
+} from '../../features/index';
 
-const SOCKET_URL = 'http://localhost:5001';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
+  (window.location.hostname === 'localhost' 
+    ? 'http://localhost:5001' 
+    : `http://${window.location.hostname}:5001`);
 
 export const useBattleSocket = (battleId = null, queueType = null) => {
   const dispatch = useDispatch();
@@ -157,9 +159,10 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       }
     });
 
-    // ── CHAT CHANNEL EVENTS ──
-    socket.on('chat:message', (data) => {
-      dispatch(addChatMessage(data));
+    // ── SUBMISSION PROGRESS EVENT ──
+    socket.on('submission:progress', (data) => {
+      console.log('Received submission progress:', data.done, '/', data.total);
+      dispatch(setOutputProgress({ done: data.done, total: data.total }));
     });
 
     // ── SUBMISSION RESULT EVENT ──
@@ -174,15 +177,28 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       }
 
       dispatch(setOutputResults({
-        verdict: data.verdict,
-        results: Array.from({ length: data.testCasesPassed }).map(() => ({ passed: true })),
-        testCasesPassed: data.testCasesPassed,
-        totalTestCases: data.totalTestCases,
+        verdict:          data.verdict,
+        results:          data.results || [],
+        testCasesPassed:  data.testCasesPassed,
+        totalTestCases:   data.totalTestCases,
       }));
+    });
+
+    socket.on('battle:problem_error', (data) => {
+      toast.error('API Offline ⚠️', data.message || 'LeetCode problem service is currently down. Requeuing...');
+      dispatch(setLobbyStatus('queuing'));
+      window.location.href = '/battle/lobby';
     });
 
     socket.on('error', (err) => {
       toast.error('Connection Error', err.message || 'WebSocket gateway error occurred.');
+    });
+
+    socket.on('battle:error', (data) => {
+      toast.error('Battle Error', data.message || 'Unable to join battle room.');
+      if (data.redirect) {
+        window.location.replace(data.redirect);
+      }
     });
 
     return () => {
@@ -236,12 +252,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       socketRef.current.emit('battle:surrender', { battleId });
     }
   };
-
-  const sendChatMessage = (message) => {
-    if (socketRef.current && battleId) {
-      socketRef.current.emit('chat:message', { battleId, message });
-    }
-  };
  
   const sendTimeout = () => {
     if (socketRef.current && battleId) {
@@ -256,7 +266,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     sendCodeChange,
     startCountdown,
     surrenderBattle,
-    sendChatMessage,
     sendTimeout,
   };
 };

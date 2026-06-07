@@ -11,8 +11,6 @@ const initialState = {
   opponents: [],
   teamId: null,
   topic: '',
-  myCode: '',
-  selectedLanguage: 'cpp',
   timer: {
     total: 1200, // 20 minutes (1200 seconds)
     remaining: 1200,
@@ -26,10 +24,9 @@ const initialState = {
     verdict: null,
     executionTime: 0,
     memory: 0,
-  },
-  chat: {
-    messages: [],
-    isOpen: false,
+    testCasesPassed: 0,
+    totalTestCases: 0,
+    runProgress: { done: 0, total: 0 }, // live batch progress
   },
   spectators: {
     count: 0,
@@ -61,25 +58,7 @@ const battleSlice = createSlice({
     setInvitedUser: (state, action) => {
       state.invitedUser = action.payload;
     },
-    cycleBattleLanguage: (state, action) => {
-      state.selectedLanguage = action.payload;
-      if (state.problem && state.problem.boilerplates) {
-        state.myCode = state.problem.boilerplates[action.payload] || '';
-      }
-    },
-    updateMyCode: (state, action) => {
-      state.myCode = action.payload;
-    },
-    toggleChat: (state) => {
-      state.chat.isOpen = !state.chat.isOpen;
-    },
-    addChatMessage: (state, action) => {
-      state.chat.messages.push(action.payload);
-      // Keep only last 100 messages
-      if (state.chat.messages.length > 100) {
-        state.chat.messages.shift();
-      }
-    },
+
     initBattle: (state, action) => {
       const { battleId, battleType, problem, players, myUserId } = action.payload;
       state.battleId = battleId;
@@ -93,12 +72,7 @@ const battleSlice = createSlice({
       state.timer.isDanger = false;
       state.lobbyStatus = 'matched';
       state.output = initialState.output;
-      state.chat.messages = [];
       state.eloDetails = null;
-
-      // Extract my starting code
-      state.selectedLanguage = 'cpp';
-      state.myCode = problem?.boilerplates?.cpp || '';
 
       // Extract opponent, teammate and opponents
       const opponentPlayer = players.find(p => p.user._id !== myUserId);
@@ -164,15 +138,24 @@ const battleSlice = createSlice({
     },
     setOutputState: (state, action) => {
       state.output.state = action.payload;
+      if (action.payload === 'running') {
+        state.output.runProgress = { done: 0, total: 0 };
+      }
+    },
+    setOutputProgress: (state, action) => {
+      const { done, total } = action.payload;
+      state.output.runProgress = { done, total };
     },
     setOutputResults: (state, action) => {
-      const { results, errorMessage, verdict, executionTime, memory } = action.payload;
+      const { results, errorMessage, verdict, executionTime, memory, testCasesPassed, totalTestCases } = action.payload;
       state.output.results = results || [];
       state.output.errorMessage = errorMessage || '';
       state.output.verdict = verdict || null;
       state.output.executionTime = executionTime || 0;
       state.output.memory = memory || 0;
-      state.output.state = verdict === 'AC' ? 'success' : 'error';
+      state.output.testCasesPassed = testCasesPassed || 0;
+      state.output.totalTestCases = totalTestCases || 0;
+      state.output.state = verdict ? (verdict === 'AC' ? 'success' : 'error') : state.output.state;
     },
     endBattle: (state, action) => {
       const { winnerId, ratingDetails } = action.payload;
@@ -187,14 +170,11 @@ export const {
   setLobbyStatus,
   setSuggestedTopic,
   setInvitedUser,
-  cycleBattleLanguage,
-  updateMyCode,
-  toggleChat,
-  addChatMessage,
   initBattle,
   updateOpponentStatus,
   tickTimer,
   setOutputState,
+  setOutputProgress,
   setOutputResults,
   endBattle,
   resetBattleState,

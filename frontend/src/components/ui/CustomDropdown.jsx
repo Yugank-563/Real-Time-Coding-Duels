@@ -66,11 +66,15 @@ const CustomDropdown = ({
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors duration-150 block truncate ${
-                      isSelected
-                        ? 'bg-accent-primary/10 text-accent-primary font-extrabold border-l-2 border-accent-primary'
-                        : 'hover:bg-overlay text-text-primary hover:text-accent-primary'
-                    } ${optionClassName}`}
+                    className={
+                      optionClassName 
+                        ? `${optionClassName} ${isSelected ? 'auth-dropdown-option--selected' : ''}`
+                        : `w-full text-left px-4 py-2.5 text-xs transition-colors duration-150 block truncate ${
+                            isSelected
+                              ? 'bg-accent-primary/10 text-accent-primary font-extrabold border-l-2 border-accent-primary'
+                              : 'hover:bg-overlay text-text-primary hover:text-accent-primary'
+                          }`
+                    }
                   >
                     {option.label}
                   </button>

@@ -10,6 +10,11 @@ const THEME_LABELS = {
 const applyTheme = (theme) => {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('bc-theme', theme);
+  
+  const favicon = document.getElementById('app-favicon');
+  if (favicon) {
+    favicon.href = theme === 'light' ? '/favicon-light.svg?v=5' : '/favicon-dark.svg?v=5';
+  }
 };
 
 const raw    = localStorage.getItem('bc-theme') || 'dark';
@@ -17,6 +22,10 @@ const stored = THEMES.includes(raw) ? raw : 'dark';
 // Apply immediately on load (before React renders)
 if (typeof document !== 'undefined') {
   document.documentElement.setAttribute('data-theme', stored);
+  const favicon = document.getElementById('app-favicon');
+  if (favicon) {
+    favicon.href = stored === 'light' ? '/favicon-light.svg?v=5' : '/favicon-dark.svg?v=5';
+  }
 }
 
 const themeSlice = createSlice({
