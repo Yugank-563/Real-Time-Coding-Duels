@@ -28,6 +28,7 @@ const ProblemsPage = lazy(() => import('./pages/problems/ProblemsPage'));
 const PracticeRoom = lazy(() => import('./pages/problems/PracticeRoom'));
 
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const NotFound = lazy(() => import('./components/layout/NotFound'));
 
 // ── Public Pages ──
@@ -98,6 +99,7 @@ function App() {
               <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
               <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
               <Route path="/problems" element={<ProblemsPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>
             {/* Fullscreen workspaces outside AppLayout (no footer/constraints, custom fixed Navbar spacing) */}

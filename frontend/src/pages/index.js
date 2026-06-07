@@ -10,6 +10,9 @@ export { default as Profile } from './auth/Profile';
 export { default as PracticeRoom } from './problems/PracticeRoom';
 export { default as ProblemsPage } from './problems/ProblemsPage';
 
+// leaderboard
+export { default as LeaderboardPage } from './LeaderboardPage';
+
 // battle folder
 export { default as Matchmaking } from './battle/Matchmaking';
 export { default as BattleRoom } from './battle/BattleRoom';
