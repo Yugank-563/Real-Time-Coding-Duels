@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProblems } from '../../features/index';
+import { useTheme, useDocumentTitle } from '../../hooks/index';
+import '../../styles/auth.css';
+import { BookOpen } from 'lucide-react';
+import { ProblemsFilter, ProblemsTable, ProblemsPagination } from '../../components/index';
+
+import { PROBLEM_TOPICS } from '../../utils/index';
+
+const ProblemsPage = () => {
+  const { theme } = useTheme();
+  useDocumentTitle('Problems');
+  
+  const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const { items: problems, pagination, loading, error } = useSelector((state) => state.problems);
+  
+  // Read from URL, provide defaults
+  const page = parseInt(searchParams.get('page')) || 1;
+  const search = searchParams.get('search') || '';
+  const difficulty = searchParams.get('difficulty') || 'ALL';
+  const tag = searchParams.get('tag') || 'ALL';
+
+  // Local state for debounced search input
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Update URL helper
+  const updateParams = (newParams) => {
+    const params = new URLSearchParams(searchParams);
+    Object.keys(newParams).forEach(key => {
+      if (newParams[key] === '' || newParams[key] === 'ALL' || (key === 'page' && newParams[key] === 1)) {
+        params.delete(key);
+      } else {
+        params.set(key, newParams[key]);
+      }
+    });
+    setSearchParams(params);
+  };
+
+  const setPage = (newPage) => updateParams({ page: newPage });
+  const setDifficulty = (newDiff) => updateParams({ difficulty: newDiff, page: 1 });
+  const setTag = (newTag) => updateParams({ tag: newTag, page: 1 });
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      if (localSearch !== search) {
+        updateParams({ search: localSearch, page: 1 });
+      }
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [localSearch]);
+
+  // Fetch problems when URL parameters change
+  useEffect(() => {
+    dispatch(fetchProblems({ page, search, difficulty, tag, limit: 20 }));
+  }, [dispatch, page, search, difficulty, tag]);
+
+  return (
+    <div className="auth-page-bg" data-auth-theme={theme} style={{ minHeight: 'calc(100vh - 64px)', padding: '0.75rem 1rem', display: 'block', overflowY: 'auto' }}>
+      
+      <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+        
+        {/* Header */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '0.5rem', background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <BookOpen size={20} color="var(--auth-accent)" />
+            </div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--auth-heading)', letterSpacing: '-0.02em' }}>
+              Problem Set
+            </h1>
+          </div>
+          <p style={{ fontSize: '0.9rem', color: 'var(--auth-muted)', margin: 0 }}>
+            Practice coding challenges and prepare for your next battle.
+          </p>
+        </div>
+
+        <ProblemsFilter 
+          search={localSearch} setSearch={setLocalSearch}
+          difficulty={difficulty} setDifficulty={setDifficulty}
+          tag={tag} setTag={setTag}
+          allTags={PROBLEM_TOPICS}
+        />
+
+        <ProblemsTable problems={problems} loading={loading} error={error} page={page} />
+
+        {!loading && !error && (
+          <ProblemsPagination pagination={pagination} setPage={setPage} />
+        )}
+        
+      </div>
+    </div>
+  );
+};
+
+export default ProblemsPage;
