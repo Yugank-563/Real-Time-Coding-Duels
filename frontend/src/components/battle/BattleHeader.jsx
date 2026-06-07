@@ -1,12 +1,16 @@
-import React from 'react';
-import { Award, ShieldAlert, Swords, Timer } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { Timer, Award } from 'lucide-react';
 import { formatTimer } from '../../utils/index';
 
-const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic }) => {
+export const BattleHeader = ({
+  battleType,
+  problemDifficulty,
+  timer,
+  opponent,
+  topic,
+  onExitBattle,
+}) => {
   const { remaining, isWarning, isDanger } = timer;
-
-  // Must be called at top level (Rules of Hooks) — only used in team mode
   const teammate = useSelector(state => state.battle.teammate);
   const opponents = useSelector(state => state.battle.opponents);
 
@@ -49,19 +53,17 @@ const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic })
       : 'bg-white/4 border-white/10';
 
   return (
-    <div className="bg-surface border border-border rounded-2xl px-5 py-3 mb-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-card shrink-0 relative overflow-hidden">
+    <div className="bg-surface border border-border rounded-2xl px-5 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-card shrink-0 relative overflow-hidden">
       {/* Subtle top accent line */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent-primary/30 to-transparent" />
 
       {/* ── LEFT: Battle Info ── */}
       <div className="flex items-center gap-3 min-w-0">
-        {/* Battle type icon */}
         <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 text-accent-primary shrink-0">
           <span className="text-base leading-none">⚔️</span>
         </div>
 
         <div className="min-w-0">
-          {/* Battle type badge */}
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 uppercase tracking-widest font-mono">
               {getBattleLabel(battleType)}
@@ -83,7 +85,6 @@ const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic })
             )}
           </div>
 
-          {/* Difficulty + constraints row */}
           <div className="flex items-center gap-2">
             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${diffConfig.color} ${diffConfig.bg} ${diffConfig.border}`}>
               {problemDifficulty || 'Medium'}
@@ -98,28 +99,15 @@ const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic })
         <Timer className={`w-5 h-5 transition-all duration-300 ${timerColorClass} ${isDanger ? 'animate-pulse' : ''}`} />
         <span
           className={`text-3xl font-black tracking-tight font-mono transition-all duration-300 ${timerColorClass} ${isDanger ? 'animate-pulse' : ''}`}
-          style={isDanger ? {
-            animation: 'pulseRed 1s ease-in-out infinite'
-          } : undefined}
         >
           {formatTimer(remaining)}
         </span>
-
-        {/* Inline CSS keyframe for danger state */}
-        {isDanger && (
-          <style>{`
-            @keyframes pulseRed {
-              0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.6)); }
-              50% { opacity: 0.6; filter: drop-shadow(0 0 14px rgba(248, 113, 113, 0.9)); }
-            }
-          `}</style>
-        )}
       </div>
 
-      {/* ── RIGHT: Opponent Status ── */}
+      {/* ── RIGHT: Opponent & Exit ── */}
       <div className="flex items-center justify-end gap-3 font-mono">
-        {battleType === 'team' ? (
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          {battleType === 'team' ? (
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
                 {(opponents || []).map((opp, idx) => (
@@ -142,48 +130,54 @@ const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic })
                 )}
               </div>
             </div>
-          </div>
-        ) : opponent ? (
-          <>
-            {/* Opponent info */}
-            <div className="text-right hidden sm:block">
-              <span className="text-sm font-semibold text-text-primary block">@{opponent.username}</span>
-              <span className="text-[10px] text-text-muted flex items-center justify-end gap-1">
-                <Award className="w-3 h-3 text-amber-400" /> {opponent.elo} Elo
-              </span>
-            </div>
-
-            {/* Glowing avatar */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md ring-2 ring-pink-500/40 relative shrink-0">
-              {opponent.username?.slice(0, 2).toUpperCase()}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface bg-emerald-500" />
-            </div>
-
-            {/* Status + progress */}
-            {!isBlindMode ? (
-              <div className="flex flex-col gap-1 items-end min-w-[100px]">
-                <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${oppCfg.badge}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${oppCfg.dot}`} />
-                  {oppCfg.label}
-                </span>
-                <span className="text-[9px] text-text-muted">
-                  Passed: <strong className="text-text-primary">{opponent.progress || 0}</strong> testcases
+          ) : opponent ? (
+            <>
+              <div className="text-right hidden sm:block">
+                <span className="text-sm font-semibold text-text-primary block">@{opponent.username}</span>
+                <span className="text-[10px] text-text-muted flex items-center justify-end gap-1">
+                  <Award className="w-3 h-3 text-amber-400" /> {opponent.elo} Elo
                 </span>
               </div>
-            ) : (
-              <div className="min-w-[100px] text-right">
-                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-border bg-elevated text-text-muted/50 uppercase tracking-widest">
-                  BLIND MODE
-                </span>
+
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md ring-2 ring-pink-500/40 relative shrink-0">
+                {opponent.username?.slice(0, 2).toUpperCase()}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface bg-emerald-500" />
               </div>
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-text-muted italic">Loading opponent…</span>
+
+              {!isBlindMode ? (
+                <div className="flex flex-col gap-0.5 items-end min-w-[90px]">
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${oppCfg?.badge}`}>
+                    <span className={`w-1 h-1 rounded-full shrink-0 ${oppCfg?.dot}`} />
+                    {oppCfg?.label}
+                  </span>
+                  <span className="text-[9px] text-text-muted">
+                    Passed: <strong className="text-text-primary">{opponent.progress || 0}</strong> TCs
+                  </span>
+                </div>
+              ) : (
+                <div className="min-w-[90px] text-right">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border border-border bg-elevated text-text-muted/50 uppercase tracking-widest">
+                    BLIND
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <span className="text-xs text-text-muted italic">Duel Match...</span>
+          )}
+        </div>
+
+        {onExitBattle && (
+          <button
+            onClick={onExitBattle}
+            className="ml-2 px-3 py-1.5 rounded-xl border border-red-500/25 bg-red-500/6 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-200 text-xs font-semibold"
+          >
+            🚪 Exit
+          </button>
         )}
       </div>
     </div>
   );
 };
 
-export default BattleTopBar;
+export default BattleHeader;

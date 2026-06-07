@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
-import { useBattleSocket } from '../sockets/useBattleSocket';
-import { selectBattle, setSuggestedTopic } from '../features/battle/battleSlice';
-import { selectUser } from '../features/auth/authSlice';
-import { useToast } from '../hooks/useToast';
-import { useTheme } from '../context/ThemeContext';
-import { ShieldAlert, Users, Award, ShieldClose, Sparkles } from 'lucide-react';
+import { Users, Award, Sparkles } from 'lucide-react';
+import { useBattleSocket, useDocumentTitle } from '../../hooks/index';
+import { selectBattle, setSuggestedTopic } from '../../features/index';
+import { selectUser } from '../../features/index';
+import { useToast } from '../../hooks/ui/useToast';
+import { useTheme } from '../../hooks/ui/useTheme';
 
 const Matchmaking = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const battleType = searchParams.get('type') || '1v1';
+  useDocumentTitle(`Matchmaking (${battleType.toUpperCase()})`);
   const toast = useToast();
   const { theme } = useTheme();
   const isDark = theme === 'dark';

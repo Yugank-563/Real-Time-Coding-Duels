@@ -1,22 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Shield, Users, Award, Copy, Link2, Play, Sparkles } from 'lucide-react';
-import { selectUser } from '../features/auth/authSlice';
-import { useToast } from '../hooks/useToast';
-import { useTheme } from '../context/ThemeContext';
-import { useBattleSocket } from '../sockets/useBattleSocket';
-import api from '../utils/api';
+import { Shield, Link2, Copy, Play } from 'lucide-react';
+import { selectUser } from '../../features/index';
+import { useToast, useDocumentTitle } from '../../hooks/index';
+import { useTheme } from '../../hooks/ui/useTheme';
+import { useBattleSocket } from '../../hooks/index';
+import { api } from '../../utils/index';
 
 const PrivateLobby = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const myUser = useSelector(selectUser);
+  
+  useDocumentTitle('Private Lobby');
 
-  const [battle, setBattle] = useState(null);
+  const [battle, setBattle] = useState(location.state?.roomData || null);
   const [isCopied, setIsCopied] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
