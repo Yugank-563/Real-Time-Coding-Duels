@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../../styles/auth.css';
-import CustomDropdown from '../ui/CustomDropdown';
-import { Filter, Search, X } from 'lucide-react';
+import { CustomDropdown, SearchInput } from '../index';
+import { Filter, X } from 'lucide-react';
 
 const ProblemsFilter = ({ search, setSearch, difficulty, setDifficulty, tag, setTag, allTags }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -11,19 +11,11 @@ const ProblemsFilter = ({ search, setSearch, difficulty, setDifficulty, tag, set
       
       {/* Search Input */}
       <div style={{ flex: '1 1 200px', position: 'relative', display: 'flex', gap: '0.5rem' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--auth-muted)', pointerEvents: 'none' }}>
-            <Search size={16} />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Search problems..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="auth-input w-full"
-            style={{ paddingLeft: '2.5rem' }}
-          />
-        </div>
+        <SearchInput 
+          value={search} 
+          onChange={setSearch} 
+          placeholder="Search problems..." 
+        />
         <button 
           onClick={() => setIsDrawerOpen(true)}
           className="md:hidden flex items-center justify-center bg-[var(--auth-card-border)] hover:bg-[var(--auth-hover)] rounded-md px-3 transition-colors"

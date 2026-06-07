@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { StateCard } from '../index';
 import '../../styles/auth.css'; // Ensure theme styles are applied
 
 const DIFF_META = {
@@ -43,19 +44,11 @@ const ProblemsTable = ({ problems, loading, error, page = 1 }) => {
   }
 
   if (error) {
-    return (
-      <div className="auth-card" style={{ maxWidth: '100%', padding: '2rem', textAlign: 'center', color: 'var(--auth-error)' }}>
-        <p>{error}</p>
-      </div>
-    );
+    return <StateCard isError message={error} />;
   }
 
   if (!problems || problems.length === 0) {
-    return (
-      <div className="auth-card" style={{ maxWidth: '100%', padding: '4rem 2rem', textAlign: 'center', color: 'var(--auth-muted)' }}>
-        <p>No coding problems found matching your criteria.</p>
-      </div>
-    );
+    return <StateCard message="No coding problems found matching your criteria." />;
   }
 
   return (
