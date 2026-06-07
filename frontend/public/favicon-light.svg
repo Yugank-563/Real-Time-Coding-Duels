@@ -1,0 +1,24 @@
+<svg viewBox="-2 -2 104 104" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(79, 110, 247, 0.08)"></stop>
+      <stop offset="100%" stop-color="rgba(79, 110, 247, 0.08)"></stop>
+    </linearGradient>
+  </defs>
+
+  <g style="filter: drop-shadow(rgba(79, 110, 247, 0.15) 0px 2px 5px);">
+    <polygon points="50,5 93,30 93,80 50,95 7,80 7,30" fill="url(#logo-grad)" stroke="#4F6EF7" stroke-width="5"></polygon>
+  </g>
+
+  <!-- Swords -->
+  <svg x="25" y="25" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#4F6EF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+    <line x1="13" x2="19" y1="19" y2="13" />
+    <line x1="16" x2="20" y1="16" y2="20" />
+    <line x1="19" x2="21" y1="21" y2="19" />
+    <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
+    <line x1="5" x2="9" y1="14" y2="18" />
+    <line x1="7" x2="4" y1="17" y2="20" />
+    <line x1="3" x2="5" y1="19" y2="21" />
+  </svg>
+</svg>
