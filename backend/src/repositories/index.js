@@ -1,5 +1,11 @@
+// user repository
 export * from './user.repository.js';
-export * from './battle.repository.js';
-export * from './submission.repository.js';
-export * from './problem.repository.js';
 
+// battle repository
+export * from './battle.repository.js';
+
+// submission repository
+export * from './submission.repository.js';
+
+// problem repository
+export * from './problem.repository.js';
