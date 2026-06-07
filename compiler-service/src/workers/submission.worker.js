@@ -11,7 +11,11 @@ export const submissionWorker = new Worker(
   },
   {
     connection: redisConnection,
-    concurrency: 2,
+    concurrency: 1,
+    limiter: {
+      max: 1,
+      duration: 1500, // Process max 1 job every 1.5 seconds globally
+    }
   }
 );
 

@@ -1,5 +1,217 @@
 import BaseDriver from './base.driver.js';
 
+/**
+ * Generates a dynamic C++ main() driver for any LeetCode-style solution class.
+ * Parses the function signature from the user's boilerplate to determine param types
+ * and return type, then generates stdin readers and stdout formatters automatically.
+ */
+function generateDynamicCppDriver(code) {
+  // ── Step 1: Isolate the public section of class Solution ────────────────────
+  // (helper methods inside private/protected won't fool us)
+  let searchArea = code;
+  const pubIdx = code.indexOf('public:');
+  if (pubIdx !== -1) {
+    // Extract from "public:" to the closing }; of the class
+    searchArea = code.substring(pubIdx + 'public:'.length);
+  }
+
+  // ── Step 2: Collect ALL method signatures in the public section ─────────────
+  // returnType must appear at start-of-line (after indentation) and methodName
+  // must start with a lowercase letter (LeetCode convention; constructors/
+  // destructor start with uppercase or ~).
+  const allMethods = [];
+  const sigRegex = /([\w:<>*&\s,]+?)\s+([a-z]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?\{/g;
+  let m;
+  while ((m = sigRegex.exec(searchArea)) !== null) {
+    const returnType = m[1].trim();
+    const name       = m[2].trim();
+    const paramsStr  = m[3].trim();
+    // Skip obvious helper-call false-matches (e.g. if / for / while)
+    if (['if', 'for', 'while', 'switch', 'catch', 'do'].includes(name)) continue;
+    allMethods.push({ returnType, name, paramsStr });
+  }
+
+  if (!allMethods.length) {
+    return `\nint main() {\n    return 0;\n}\n`;
+  }
+
+  // ── Step 3: Pick the PRIMARY solution method ─────────────────────────────────
+  // Priority: prefer non-void return types, and prefer richer return types
+  // (vector<vector<int>> > vector<int> > int/bool/string > void)
+  function returnTypePriority(rt) {
+    if (/vector\s*<\s*vector\s*<\s*vector/i.test(rt)) return 5;
+    if (/vector\s*<\s*vector/i.test(rt))              return 4;
+    if (/vector/i.test(rt))                           return 3;
+    if (/string/i.test(rt))                           return 2;
+    if (/int|long|double|bool|char/i.test(rt))        return 1;
+    if (/void/i.test(rt))                             return 0;
+    return 1;
+  }
+
+  // Sort by priority descending, but keep FIRST method's index as tiebreaker
+  // (first method wins when priority is equal — LeetCode puts the solution first)
+  const sorted = allMethods
+    .map((meth, idx) => ({ ...meth, idx, priority: returnTypePriority(meth.returnType) }))
+    .sort((a, b) => b.priority !== a.priority ? b.priority - a.priority : a.idx - b.idx);
+
+  const { returnType: rawReturnType, name: methodName, paramsStr: rawParams } = sorted[0];
+
+  // ── Step 4: Parse individual parameters (template-bracket-aware) ─────────────
+  const params = [];
+  if (rawParams) {
+    let cur = '', depth = 0;
+    for (const ch of rawParams) {
+      if (ch === '<') depth++;
+      else if (ch === '>') depth--;
+      if (ch === ',' && depth === 0) { params.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    if (cur.trim()) params.push(cur.trim());
+  }
+
+  // ── Step 5: Generate stdin readers for each parameter ───────────────────────
+  const readers = [];
+  const callArgs = [];
+  for (let i = 0; i < params.length; i++) {
+    const p = params[i];
+    const v = `_p${i}`;
+    callArgs.push(v);
+    if (/vector\s*<\s*vector\s*<\s*int/i.test(p)) {
+      readers.push(`    auto ${v} = _parseVVI(_readLine());`);
+    } else if (/vector\s*<\s*int/i.test(p)) {
+      readers.push(`    auto ${v} = _parseVI(_readLine());`);
+    } else if (/vector\s*<\s*string/i.test(p)) {
+      readers.push(`    auto ${v} = _parseVS(_readLine());`);
+    } else if (/vector\s*<\s*char/i.test(p)) {
+      readers.push(`    auto ${v} = _parseVC(_readLine());`);
+    } else if (/string/i.test(p)) {
+      readers.push(`    string ${v} = _readLine();`);
+    } else if (/bool/i.test(p)) {
+      readers.push(`    string _bs${i} = _readLine(); bool ${v} = (_bs${i} == "true");`);
+    } else if (/long\s*long/i.test(p)) {
+      readers.push(`    long long ${v}; cin >> ${v}; cin.ignore();`);
+    } else if (/double|float/i.test(p)) {
+      readers.push(`    double ${v}; cin >> ${v}; cin.ignore();`);
+    } else if (/char/i.test(p) && !/vector/i.test(p)) {
+      readers.push(`    char ${v}; cin >> ${v}; cin.ignore();`);
+    } else {
+      readers.push(`    int ${v}; cin >> ${v}; cin.ignore();`);
+    }
+  }
+
+  // ── Step 6: Generate return value printer ────────────────────────────────────
+  const call = `sol.${methodName}(${callArgs.join(', ')})`;
+  let printer = '';
+  if (/\bvoid\b/i.test(rawReturnType)) {
+    // For void methods (e.g. sortColors, rotate), print first vector/matrix arg
+    const matIdx = params.findIndex(p => /vector\s*<\s*vector/i.test(p));
+    const vecIdx = params.findIndex(p => /vector\s*<\s*int/i.test(p));
+    if (matIdx !== -1) {
+      printer = `    ${call};\n    cout << _printVVI(${callArgs[matIdx]});`;
+    } else if (vecIdx !== -1) {
+      printer = `    ${call};\n    cout << _printVI(${callArgs[vecIdx]});`;
+    } else {
+      printer = `    ${call};`;
+    }
+  } else if (/vector\s*<\s*vector\s*<\s*int/i.test(rawReturnType)) {
+    printer = `    auto _r = ${call};\n    cout << _printVVI(_r);`;
+  } else if (/vector\s*<\s*int/i.test(rawReturnType)) {
+    printer = `    auto _r = ${call};\n    cout << _printVI(_r);`;
+  } else if (/vector\s*<\s*string/i.test(rawReturnType)) {
+    printer = `    auto _r = ${call};\n    cout << _printVS(_r);`;
+  } else if (/\bbool\b/i.test(rawReturnType)) {
+    printer = `    cout << (${call} ? "true" : "false");`;
+  } else {
+    printer = `    cout << ${call};`;
+  }
+
+  return `
+// ── Dynamic I/O Helpers ──────────────────────────────────────────────────────
+string _readLine() {
+    string s;
+    if (!getline(cin, s)) return "";
+    while (!s.empty() && (s.back() == '\\r' || s.back() == ' ')) s.pop_back();
+    return s;
+}
+vector<int> _parseVI(string s) {
+    vector<int> v;
+    for (char& c : s) if (c == '[' || c == ']') c = ' ';
+    stringstream ss(s);
+    string t;
+    while (getline(ss, t, ',')) {
+        while (!t.empty() && isspace((unsigned char)t.front())) t.erase(t.begin());
+        while (!t.empty() && isspace((unsigned char)t.back()))  t.pop_back();
+        if (!t.empty()) try { v.push_back(stoi(t)); } catch(...) {}
+    }
+    return v;
+}
+vector<vector<int>> _parseVVI(string s) {
+    vector<vector<int>> res;
+    int i = 0, n = (int)s.size();
+    while (i < n) {
+        if (s[i] == '[') {
+            int j = i + 1, d = 1;
+            while (j < n && d > 0) { if (s[j]=='[') d++; else if (s[j]==']') d--; j++; }
+            string sub = s.substr(i + 1, j - i - 2);
+            if (!sub.empty()) res.push_back(_parseVI(sub));
+            i = j;
+        } else i++;
+    }
+    return res;
+}
+vector<string> _parseVS(string s) {
+    vector<string> v;
+    for (char& c : s) if (c == '[' || c == ']' || c == '"') c = ' ';
+    stringstream ss(s);
+    string t;
+    while (getline(ss, t, ',')) {
+        while (!t.empty() && isspace((unsigned char)t.front())) t.erase(t.begin());
+        while (!t.empty() && isspace((unsigned char)t.back()))  t.pop_back();
+        if (!t.empty()) v.push_back(t);
+    }
+    return v;
+}
+vector<char> _parseVC(string s) {
+    vector<char> v;
+    for (char& c : s) if (c == '[' || c == ']' || c == '"') c = ' ';
+    stringstream ss(s);
+    string t;
+    while (getline(ss, t, ',')) {
+        while (!t.empty() && isspace((unsigned char)t.front())) t.erase(t.begin());
+        while (!t.empty() && isspace((unsigned char)t.back()))  t.pop_back();
+        if (!t.empty()) v.push_back(t[0]);
+    }
+    return v;
+}
+string _printVI(const vector<int>& v) {
+    string o = "[";
+    for (int i = 0; i < (int)v.size(); i++) { o += to_string(v[i]); if (i+1<(int)v.size()) o += ","; }
+    return o + "]";
+}
+string _printVVI(const vector<vector<int>>& vv) {
+    string o = "[";
+    for (int i = 0; i < (int)vv.size(); i++) { o += _printVI(vv[i]); if (i+1<(int)vv.size()) o += ","; }
+    return o + "]";
+}
+string _printVS(const vector<string>& vs) {
+    string o = "[";
+    for (int i = 0; i < (int)vs.size(); i++) { o += "\\"" + vs[i] + "\\""; if (i+1<(int)vs.size()) o += ","; }
+    return o + "]";
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+${readers.join('\n')}
+    Solution sol;
+${printer}
+    return 0;
+}
+`;
+}
+
+
 export class CppDriver extends BaseDriver {
   wrap(code, problemTitle) {
     const listNodeDef = `
@@ -75,6 +287,9 @@ int main() {
     string s;
     if (getline(cin, s)) {
         if (s.empty()) return 0;
+        bool hasBrackets = (s.find('[') != string::npos);
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         stringstream ss(s);
         string token;
         ListNode* dummy = new ListNode(0);
@@ -93,7 +308,8 @@ int main() {
             res = res->next;
         }
         if (!out.empty()) out.pop_back();
-        cout << out;
+        if (hasBrackets) cout << "[" << out << "]";
+        else cout << out;
     }
     return 0;
 }
@@ -168,10 +384,15 @@ string serialize(TreeNode* root) {
 int main() {
     string s;
     if (getline(cin, s)) {
+        bool hasBrackets = (s.find('[') != string::npos);
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         TreeNode* root = buildTree(s);
         Solution sol;
         TreeNode* inverted = sol.invertTree(root);
-        cout << serialize(inverted);
+        string out = serialize(inverted);
+        if (hasBrackets) cout << "[" << out << "]";
+        else cout << out;
     }
     return 0;
 }
@@ -192,6 +413,8 @@ int main() {
 int main() {
     string s;
     if (getline(cin, s)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -228,6 +451,9 @@ int main() {
     string s1, s2, temp;
     int m = 0, n = 0;
     if (getline(cin, s1) && getline(cin, temp)) {
+        bool hasBrackets = (s1.find('[') != string::npos);
+        s1.erase(remove(s1.begin(), s1.end(), '['), s1.end());
+        s1.erase(remove(s1.begin(), s1.end(), ']'), s1.end());
         m = stoi(temp);
         vector<int> nums1;
         stringstream ss1(s1);
@@ -236,6 +462,8 @@ int main() {
             if (!token.empty()) nums1.push_back(stoi(token));
         }
         if (getline(cin, s2) && getline(cin, temp)) {
+            s2.erase(remove(s2.begin(), s2.end(), '['), s2.end());
+            s2.erase(remove(s2.begin(), s2.end(), ']'), s2.end());
             n = stoi(temp);
             vector<int> nums2;
             stringstream ss2(s2);
@@ -249,7 +477,8 @@ int main() {
                 out += to_string(nums1[i]);
                 if (i + 1 < nums1.size()) out += ",";
             }
-            cout << out;
+            if (hasBrackets) cout << "[" << out << "]";
+            else cout << out;
         }
     }
     return 0;
@@ -260,6 +489,8 @@ int main() {
 int main() {
     string s;
     if (getline(cin, s)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -277,6 +508,8 @@ int main() {
 int main() {
     string s;
     if (getline(cin, s)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -311,6 +544,8 @@ int main() {
 int main() {
     string s, temp;
     if (getline(cin, s) && getline(cin, temp)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -340,6 +575,8 @@ int main() {
 int main() {
     string s, temp;
     if (getline(cin, s) && getline(cin, temp)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -358,6 +595,8 @@ int main() {
 int main() {
     string s, temp;
     if (getline(cin, s) && getline(cin, temp)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -377,6 +616,8 @@ int main() {
 int main() {
     string s;
     if (getline(cin, s)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -394,6 +635,8 @@ int main() {
 int main() {
     string s;
     if (getline(cin, s)) {
+        s.erase(remove(s.begin(), s.end(), '['), s.end());
+        s.erase(remove(s.begin(), s.end(), ']'), s.end());
         vector<int> nums;
         stringstream ss(s);
         string token;
@@ -405,7 +648,7 @@ int main() {
             Solution sol;
             vector<int> res = sol.twoSum(nums, target);
             if (res.size() >= 2) {
-                cout << res[0] << "," << res[1];
+                cout << "[" << res[0] << "," << res[1] << "]";
             }
         }
     }
@@ -425,11 +668,7 @@ int main() {
 }
 `;
     } else {
-      driver = `
-int main() {
-    return 0;
-}
-`;
+      driver = generateDynamicCppDriver(code);
     }
 
     return `${header}\n${code}\n${driver}`;
