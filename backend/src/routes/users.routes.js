@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/index.js';
-import { searchUsers, getProfile, updateProfile } from '../controllers/index.js';
+import { searchUsers, getProfile, updateProfile, getLeaderboard } from '../controllers/index.js';
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // User routes
+router.get('/leaderboard', getLeaderboard);
 router.get('/search', searchUsers);
 router.get('/profile/:username', getProfile);
 router.put('/profile', updateProfile);

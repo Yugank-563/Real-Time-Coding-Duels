@@ -9,3 +9,6 @@ export * from './submission.repository.js';
 
 // problem repository
 export * from './problem.repository.js';
+
+// leaderboard repository
+export * from './leaderboard.repository.js';

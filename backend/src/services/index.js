@@ -31,6 +31,7 @@ export * from './submissions/submitCode.service.js';
 export * from './users/getProfile.service.js';
 export * from './users/searchUsers.service.js';
 export * from './users/updateProfile.service.js';
+export * from './users/getLeaderboard.service.js';
 
 // general folder
 export * from './constraintParser.js';
