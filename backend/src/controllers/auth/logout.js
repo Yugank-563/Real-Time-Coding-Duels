@@ -1,4 +1,4 @@
-import { logoutService } from '../../services/auth/index.js';
+import { logoutService } from '../../services/index.js';
 
 const getCookie = (req, name) => {
   const list = {};

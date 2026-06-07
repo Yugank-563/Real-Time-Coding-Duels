@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import { User } from '../models/index.js';
 
 // Create a new user
 export const createUser = async (data) => {
@@ -35,16 +35,17 @@ export const deleteUserById = async (id) => {
   return await User.findByIdAndDelete(id);
 };
 
-// Search users by name or email, excluding a specific ID
+// Search users by name, username or email, excluding a specific ID
 export const searchUsersByNameOrEmail = async (q, excludeId) => {
   return await User.find({
     $or: [
+      { username: { $regex: q.trim(), $options: 'i' } },
       { name: { $regex: q.trim(), $options: 'i' } },
       { email: { $regex: q.trim(), $options: 'i' } }
     ],
     _id: { $ne: excludeId }
   })
   .limit(5)
-  .select('name email rank xp level');
+  .select('username name email rank xp level');
 };
 

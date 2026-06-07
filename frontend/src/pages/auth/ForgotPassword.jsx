@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../../hooks/useToast';
-import api from '../../utils/api';
+import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { api } from '../../utils/index';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
   OTPBoxInput, StepIndicator,
-} from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../components/index';
 
 // FORGOT PASSWORD PAGE  (3-step flow)
 // Step 0 — Email
@@ -18,6 +17,7 @@ const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const toast    = useToast();
   const { theme } = useTheme();
+  useDocumentTitle('Forgot Password');
   const isLight   = theme === 'light';
 
   const [stepIdx,   setStepIdx]   = useState(0);

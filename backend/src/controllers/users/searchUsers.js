@@ -1,4 +1,4 @@
-import { searchUsersService } from '../../services/users/index.js';
+import { searchUsersService } from '../../services/index.js';
 
 export const searchUsers = async (req, res) => {
   try {

@@ -7,14 +7,14 @@ import {
   Swords, Trophy, BookOpen, LayoutGrid, Home,
   User, Award
 } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
-import { selectUser, selectIsAuthenticated, logout } from '../../features/auth/authSlice';
+import { useTheme } from '../../hooks/ui/useTheme';
+import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
 
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
   { label: 'Home', path: '/dashboard', icon: Home },
   { label: 'Battles', path: '/battle/lobby', icon: Swords },
-  { label: 'Contests', path: '/contests', icon: Trophy },
+
   { label: 'Problems', path: '/problems', icon: BookOpen },
   { label: 'Leaderboards', path: '/leaderboard', icon: Trophy },
 ];
@@ -82,7 +82,7 @@ const Navbar = () => {
   // Notifications Mock
   const [notifications, setNotifications] = useState([
     { id: 1, text: '⚔️ Challenge request from yugank-563!', time: '2m ago', unread: true },
-    { id: 2, text: '🏆 "Code Rush #12" contest starts in 1 hour!', time: '1h ago', unread: true },
+
     { id: 3, text: '📈 Your leaderboard rating rose by +25 points!', time: '1d ago', unread: false }
   ]);
 
@@ -181,16 +181,14 @@ const Navbar = () => {
                   <link.icon className="w-3.5 h-3.5" />
                   <span>{link.label}</span>
 
-                  {/* Animated Underline for Active state (Linear-style) */}
+                  {/* Underline for Active state (Linear-style) */}
                   {isActive && (
-                    <motion.div
-                      layoutId="active-underline"
+                    <div
                       className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
                       style={{
                         backgroundColor: isDark ? '#00F5C4' : '#4F6EF7',
                         boxShadow: isDark ? '0 0 8px #00F5C4' : 'none'
                       }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                     />
                   )}
                 </NavLink>
@@ -282,22 +280,19 @@ const Navbar = () => {
                 {/* Profile Dropdown */}
                 <div className="hidden lg:block relative" ref={profileRef}>
                   <motion.button
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl border transition-all ${isDark
+                    className={`flex items-center justify-center p-1 rounded-full border transition-all ${isDark
                         ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/40 hover:bg-slate-900/80'
                         : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100'
                       }`}
                   >
                     {/* Glowing Avatar */}
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg ${isDark
-                        ? 'bg-gradient-to-tr from-[#6C63FF] to-[#00F5C4]'
-                        : 'bg-gradient-to-tr from-[#4F6EF7] to-[#2563EB]'
-                      }`}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
+                         style={{ backgroundColor: isDark ? '#00F5C4' : '#4F6EF7', color: isDark ? '#0D0F14' : '#FFFFFF' }}>
                       {user?.username?.slice(0, 2).toUpperCase() || 'YK'}
                     </div>
-                    <span className="hidden sm:inline text-xs font-bold">{user?.username || 'Gamer'}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                   </motion.button>
 
                   <AnimatePresence>
@@ -324,20 +319,12 @@ const Navbar = () => {
 
                         {/* Options */}
                         <button
-                          onClick={() => { setProfileDropdownOpen(false); navigate('/'); }}
+                          onClick={() => { setProfileDropdownOpen(false); navigate(`/profile/${user?.username || 'me'}`); }}
                           className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${isDark ? 'hover:bg-slate-900 text-slate-300' : 'hover:bg-slate-50 text-slate-700'
                             }`}
                         >
                           <User className="w-3.5 h-3.5" />
                           <span>My Profile</span>
-                        </button>
-                        <button
-                          onClick={() => { setProfileDropdownOpen(false); navigate('/'); }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${isDark ? 'hover:bg-slate-900 text-slate-300' : 'hover:bg-slate-50 text-slate-700'
-                            }`}
-                        >
-                          <LayoutGrid className="w-3.5 h-3.5" />
-                          <span>Lobby Dashboard</span>
                         </button>
 
                         <div className="h-px my-1.5" style={{ backgroundColor: 'var(--border-subtle)' }} />
@@ -465,6 +452,25 @@ const Navbar = () => {
                     </NavLink>
                   );
                 })}
+                
+                {/* Mobile-only Profile Link */}
+                {isAuthenticated && (
+                  <NavLink
+                    to={`/profile/${user?.username}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${location.pathname === `/profile/${user?.username}`
+                        ? isDark
+                          ? 'bg-[#00F5C4]/10 border border-[#00F5C4]/30 text-[#00F5C4]'
+                          : 'bg-[#4F6EF7]/10 border border-[#4F6EF7]/30 text-[#4F6EF7]'
+                        : isDark
+                          ? 'hover:bg-slate-900/60 border border-transparent text-slate-300'
+                          : 'hover:bg-slate-50 border border-transparent text-slate-700'
+                      }`}
+                  >
+                    <User className="w-5 h-5" />
+                    <span>My Profile</span>
+                  </NavLink>
+                )}
               </nav>
 
               {/* Unauthenticated Bottom Actions inside Drawer */}
@@ -492,7 +498,11 @@ const Navbar = () => {
               {/* Authenticated user footer inside Drawer */}
               {isAuthenticated && (
                 <div className="border-t pt-6 flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <div className="flex items-center gap-3">
+                  <Link 
+                    to={`/profile/${user?.username}`} 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${isDark ? 'bg-gradient-to-tr from-[#6C63FF] to-[#00F5C4]' : 'bg-gradient-to-tr from-[#4F6EF7] to-[#2563EB]'
                       }`}>
                       {user?.username?.slice(0, 2).toUpperCase() || 'YK'}
@@ -501,7 +511,7 @@ const Navbar = () => {
                       <span className="block text-xs font-bold text-text-primary">{user?.username || 'Gamer'}</span>
                       <span className="block text-[10px] text-slate-400 mt-0.5">{user?.rating || 1247} Elo</span>
                     </div>
-                  </div>
+                  </Link>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={handleLogout}

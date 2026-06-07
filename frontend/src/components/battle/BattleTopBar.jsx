@@ -1,196 +1,187 @@
 import React from 'react';
 import { Award, ShieldAlert, Swords, Timer } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { formatTimer } from '../../utils/index';
 
 const BattleTopBar = ({ battleType, problemDifficulty, timer, opponent, topic }) => {
   const { remaining, isWarning, isDanger } = timer;
 
-  const formatTime = (secs) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  // Must be called at top level (Rules of Hooks) — only used in team mode
+  const teammate = useSelector(state => state.battle.teammate);
+  const opponents = useSelector(state => state.battle.opponents);
+
+  const getDifficultyConfig = (diff) => {
+    if (diff === 'Easy') return { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' };
+    if (diff === 'Medium') return { color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' };
+    if (diff === 'Hard') return { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' };
+    return { color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' };
   };
 
-  const getDifficultyColor = (diff) => {
-    if (diff === 'Easy') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-    if (diff === 'Medium') return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-    if (diff === 'Hard') return 'text-red-400 bg-red-500/10 border-red-500/20';
-    return 'text-purple-400 bg-purple-500/10 border-purple-500/20'; // Expert
+  const getBattleLabel = (type) => {
+    if (type === 'sprint') return 'Timed Sprint';
+    if (type === 'topic') return 'Topic Battle';
+    if (type === 'team') return '2v2 Team';
+    if (type?.toLowerCase() === 'blind') return 'Blind Duel';
+    return `${type || '1v1'} Match`.toUpperCase();
   };
 
   const getOpponentStatusConfig = (status) => {
-    if (status === 'surrendered') return { label: 'Surrendered ✗', classes: 'text-red-400 border-red-500/20 bg-red-500/10' };
-    if (status === 'submitted') return { label: 'Submitted ✓', classes: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10' };
-    if (status === 'testing') return { label: 'Testing...', classes: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/10 animate-pulse' };
-    return { label: 'Coding...', classes: 'text-slate-400 border-slate-500/20 bg-slate-500/10' }; // coding / ready
+    if (status === 'surrendered') return { label: 'Surrendered ✗', dot: 'bg-red-500', badge: 'text-red-400 border-red-500/25 bg-red-500/10' };
+    if (status === 'submitted') return { label: 'Submitted ✓', dot: 'bg-emerald-500', badge: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10' };
+    if (status === 'testing') return { label: 'Testing…', dot: 'bg-blue-400 animate-pulse', badge: 'text-blue-400 border-blue-500/25 bg-blue-500/10 animate-pulse' };
+    return { label: 'Coding…', dot: 'bg-amber-400 animate-pulse', badge: 'text-amber-400 border-amber-500/25 bg-amber-500/10' };
   };
 
   const isBlindMode = battleType?.toLowerCase() === 'blind';
   const oppCfg = opponent ? getOpponentStatusConfig(opponent.status) : null;
+  const diffConfig = getDifficultyConfig(problemDifficulty);
+
+  const timerColorClass = isDanger
+    ? 'text-red-400'
+    : isWarning
+      ? 'text-amber-400'
+      : 'text-text-primary';
+
+  const timerBgClass = isDanger
+    ? 'bg-red-500/8 border-red-500/25'
+    : isWarning
+      ? 'bg-amber-500/8 border-amber-500/25'
+      : 'bg-white/4 border-white/10';
 
   return (
-    <div className="bg-[#141B2D] border border-[#1E2D40] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg shrink-0">
-      
-      {/* ── LEFT SECTION: BATTLE INFO ── */}
-      <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-[#00E5FF] text-xs font-bold shadow-[0_0_12px_rgba(0,229,255,0.06)]">
-          ⚔️
-        </span>
-        <div>
-          <h2 className="text-[10px] font-black text-[#7A9AB8] uppercase tracking-widest leading-none font-mono">
-            {battleType === 'sprint' 
-              ? 'Timed Sprint' 
-              : (battleType === 'topic' 
-                ? 'Topic Battle' 
-                : (battleType?.toLowerCase() === 'blind' 
-                  ? 'Blind Duel' 
-                  : `${battleType} Match`))}
-          </h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border uppercase tracking-wider ${getDifficultyColor(problemDifficulty)}`}>
-              {problemDifficulty || 'Medium'}
+    <div className="bg-surface border border-border rounded-2xl px-5 py-3 mb-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-card shrink-0 relative overflow-hidden">
+      {/* Subtle top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent-primary/30 to-transparent" />
+
+      {/* ── LEFT: Battle Info ── */}
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Battle type icon */}
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent-primary/10 border border-accent-primary/20 text-accent-primary shrink-0">
+          <span className="text-base leading-none">⚔️</span>
+        </div>
+
+        <div className="min-w-0">
+          {/* Battle type badge */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 uppercase tracking-widest font-mono">
+              {getBattleLabel(battleType)}
             </span>
             {battleType === 'topic' && topic && (
-              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] uppercase tracking-wider flex items-center gap-1 font-mono">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/25 font-mono">
                 🎯 {topic}
               </span>
             )}
             {battleType === 'team' && (
-              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] uppercase tracking-wider flex items-center gap-1 font-mono">
-                👥 2v2 Team
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/25 font-mono">
+                👥 2v2
               </span>
             )}
-            {battleType?.toLowerCase() === 'blind' && (
-              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded border border-orange-500/30 bg-orange-500/10 text-orange-400 uppercase tracking-wider flex items-center gap-1 font-mono">
-                👁 Blind Mode
+            {isBlindMode && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/25 font-mono">
+                👁 Blind
               </span>
             )}
-            <span className="text-[10px] text-[#7A9AB8]/60 font-mono">Constraints: 2s · 256MB</span>
+          </div>
+
+          {/* Difficulty + constraints row */}
+          <div className="flex items-center gap-2">
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${diffConfig.color} ${diffConfig.bg} ${diffConfig.border}`}>
+              {problemDifficulty || 'Medium'}
+            </span>
+            <span className="text-[10px] text-text-muted font-mono">⏱ 2s · 💾 256MB</span>
           </div>
         </div>
       </div>
 
-      {/* ── CENTER SECTION: COUNTDOWN TIMER ── */}
-      <div className="flex items-center justify-center gap-2 bg-[#0D1520] border border-[#1E2D40] px-4 py-2.5 rounded-2xl shrink-0 self-center">
-        <Timer className={`w-4 h-4 ${isDanger ? 'text-red-500 animate-pulse' : 'text-[#7A9AB8]'}`} />
-        <span 
-          className={`text-lg font-black tracking-tight font-mono transition-all duration-300 ${
-            isDanger 
-              ? 'text-red-500 animate-pulse-red' 
-              : isWarning 
-                ? 'text-orange-500' 
-                : 'text-white'
-          }`}
+      {/* ── CENTER: Timer ── */}
+      <div className={`flex items-center gap-2 justify-center px-6 py-2 rounded-xl border transition-all duration-500 ${timerBgClass} shrink-0 self-center`}>
+        <Timer className={`w-5 h-5 transition-all duration-300 ${timerColorClass} ${isDanger ? 'animate-pulse' : ''}`} />
+        <span
+          className={`text-3xl font-black tracking-tight font-mono transition-all duration-300 ${timerColorClass} ${isDanger ? 'animate-pulse' : ''}`}
+          style={isDanger ? {
+            animation: 'pulseRed 1s ease-in-out infinite'
+          } : undefined}
         >
-          {formatTime(remaining)}
+          {formatTimer(remaining)}
         </span>
-        
-        {/* CSS pulsers injected directly */}
+
+        {/* Inline CSS keyframe for danger state */}
         {isDanger && (
           <style>{`
             @keyframes pulseRed {
-              0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4)); }
-              50% { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.7)); }
-            }
-            .animate-pulse-red {
-              animation: pulseRed 1s ease-in-out infinite;
+              0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.6)); }
+              50% { opacity: 0.6; filter: drop-shadow(0 0 14px rgba(248, 113, 113, 0.9)); }
             }
           `}</style>
         )}
       </div>
 
-      {/* ── RIGHT SECTION: OPPONENT LIVE STATUS ── */}
+      {/* ── RIGHT: Opponent Status ── */}
       <div className="flex items-center justify-end gap-3 font-mono">
         {battleType === 'team' ? (
-          (() => {
-            const teammate = useSelector(state => state.battle.teammate);
-            const opponents = useSelector(state => state.battle.opponents);
-            return (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    {opponents.map((opp, idx) => (
-                      <div 
-                        key={idx}
-                        title={`@${opp.username} (${opp.elo} Elo) - ${opp.status}`}
-                        className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 border-2 border-[#141B2D] flex items-center justify-center text-[10px] font-bold text-white shadow-md relative"
-                      >
-                        {opp.username?.slice(0, 2).toUpperCase()}
-                        {opp.status === 'submitted' && (
-                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-[#141B2D] flex items-center justify-center text-[8px] text-white">✓</span>
-                        )}
-                        {opp.status === 'testing' && (
-                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-cyan-500 border border-[#141B2D] flex items-center justify-center text-[8px] animate-pulse">…</span>
-                        )}
-                      </div>
-                    ))}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {(opponents || []).map((opp, idx) => (
+                  <div
+                    key={idx}
+                    title={`@${opp.username} (${opp.elo} Elo) — ${opp.status}`}
+                    className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 border-2 border-surface flex items-center justify-center text-[10px] font-bold text-white shadow-md ring-2 ring-pink-500/30"
+                  >
+                    {opp.username?.slice(0, 2).toUpperCase()}
                   </div>
-                  <span className="text-[10px] text-[#7A9AB8] font-bold">VS</span>
-                  <div className="flex -space-x-2">
-                    <div 
-                      title="You"
-                      className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 border-2 border-[#141B2D] flex items-center justify-center text-[10px] font-bold text-white shadow-md"
-                    >
-                      ME
-                    </div>
-                    {teammate && (
-                      <div 
-                        title={`Teammate @${teammate.username} (${teammate.elo} Elo) - ${teammate.status}`}
-                        className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 border-2 border-[#141B2D] flex items-center justify-center text-[10px] font-bold text-white shadow-md relative"
-                      >
-                        {teammate.username?.slice(0, 2).toUpperCase()}
-                        {teammate.status === 'submitted' && (
-                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-[#141B2D] flex items-center justify-center text-[8px] text-white">✓</span>
-                        )}
-                        {teammate.status === 'testing' && (
-                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-cyan-500 border border-[#141B2D] flex items-center justify-center text-[8px] animate-pulse">…</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                ))}
               </div>
-            );
-          })()
+              <span className="text-[10px] text-text-muted font-bold">VS</span>
+              <div className="flex -space-x-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 border-2 border-surface flex items-center justify-center text-[10px] font-bold text-white shadow-md ring-2 ring-emerald-500/30">ME</div>
+                {teammate && (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 border-2 border-surface flex items-center justify-center text-[10px] font-bold text-white shadow-md ring-2 ring-cyan-500/30">
+                    {teammate.username?.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         ) : opponent ? (
           <>
+            {/* Opponent info */}
             <div className="text-right hidden sm:block">
-              <span className="text-xs font-bold text-white block">@{opponent.username}</span>
-              <span className="text-[10px] text-[#7A9AB8] flex items-center justify-end gap-1">
+              <span className="text-sm font-semibold text-text-primary block">@{opponent.username}</span>
+              <span className="text-[10px] text-text-muted flex items-center justify-end gap-1">
                 <Award className="w-3 h-3 text-amber-400" /> {opponent.elo} Elo
               </span>
             </div>
 
             {/* Glowing avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md relative">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md ring-2 ring-pink-500/40 relative shrink-0">
               {opponent.username?.slice(0, 2).toUpperCase()}
-              {/* Ping active bubble */}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#141B2D] bg-emerald-500" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface bg-emerald-500" />
             </div>
 
-            {/* Live Progress updates / hide in blind mode */}
+            {/* Status + progress */}
             {!isBlindMode ? (
-              <div className="flex flex-col gap-1 items-end min-w-[90px]">
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${oppCfg.classes}`}>
+              <div className="flex flex-col gap-1 items-end min-w-[100px]">
+                <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${oppCfg.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${oppCfg.dot}`} />
                   {oppCfg.label}
                 </span>
-                <span className="text-[9px] text-[#7A9AB8]">
-                  Passed: <strong className="text-white">{opponent.progress || 0}</strong> testcases
+                <span className="text-[9px] text-text-muted">
+                  Passed: <strong className="text-text-primary">{opponent.progress || 0}</strong> testcases
                 </span>
               </div>
             ) : (
-              <div className="text-right min-w-[90px]">
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded border border-[#1E2D40] bg-[#0D1520] text-[#7A9AB8]/40 uppercase tracking-widest">
+              <div className="min-w-[100px] text-right">
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-border bg-elevated text-text-muted/50 uppercase tracking-widest">
                   BLIND MODE
                 </span>
               </div>
             )}
           </>
         ) : (
-          <span className="text-xs text-[#7A9AB8] italic">Loading opponent...</span>
+          <span className="text-xs text-text-muted italic">Loading opponent…</span>
         )}
       </div>
-
     </div>
   );
 };

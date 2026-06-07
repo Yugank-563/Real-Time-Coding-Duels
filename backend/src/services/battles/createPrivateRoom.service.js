@@ -1,20 +1,38 @@
 import crypto from 'crypto';
 import { findProblemsByDifficulty, findAllProblems, createBattle, findBattleByRoomCode } from '../../repositories/index.js';
+import { Problem } from '../../models/index.js';
+import { getRandomProblem } from '../problemService.js';
 
 export const createPrivateRoomService = async (name, password, difficulty, timeLimit, userId, originHeader) => {
   if (!name) {
     throw new Error('Room Name is required.');
   }
 
-  // Find random problem with the selected difficulty
-  let problems = await findProblemsByDifficulty(difficulty || 'Medium');
-  if (!problems || problems.length === 0) {
-    problems = await findAllProblems();
+  let randomProblem;
+  try {
+    const problemData = await getRandomProblem('Array', difficulty || 'Medium');
+    const dbDiff = (difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase();
+    randomProblem = await Problem.findOneAndUpdate(
+      { titleSlug: problemData.titleSlug },
+      { 
+        ...problemData,
+        description: problemData.content,
+        difficulty: dbDiff,
+        boilerplates: { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+      },
+      { upsert: true, new: true }
+    );
+  } catch (err) {
+    console.error('[PrivateLobby] Fallback to database repository query:', err.message);
+    let problems = await findProblemsByDifficulty(difficulty || 'Medium');
+    if (!problems || problems.length === 0) {
+      problems = await findAllProblems();
+    }
+    if (!problems || problems.length === 0) {
+      throw new Error('Problem service unavailable and no offline fallbacks exist.');
+    }
+    randomProblem = problems[Math.floor(Math.random() * problems.length)];
   }
-  if (!problems || problems.length === 0) {
-    throw new Error('No coding challenges exist in system.');
-  }
-  const randomProblem = problems[Math.floor(Math.random() * problems.length)];
 
   // Generate unique 8-character uppercase roomCode
   let roomCode;

@@ -9,8 +9,8 @@ import {
   verifyResetOTP,
   resetPassword,
   getMe
-} from '../controllers/auth/index.js';
-import { authMiddleware } from '../middleware/auth.middleware.js';
+} from '../controllers/index.js';
+import { authMiddleware } from '../middleware/index.js';
 
 const router = express.Router();
 

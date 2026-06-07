@@ -17,6 +17,8 @@
   --text-muted:     #64748B;
   --accent-primary: #6C63FF; /* Same as --auth-accent (Purple) */
   --accent-blue:    #00F5C4; /* Same as --auth-btn (Electric Cyan/Mint) */
+  --btn-primary-bg: #00F5C4;
+  --btn-primary-text: #0D0F14;
   --accent-emerald: #00F59B;
   --accent-red:     #FF00E5;
   --accent-amber:   #FFB800;
@@ -37,6 +39,8 @@
   --text-muted:     #87888B; /* Same as --auth-muted */
   --accent-primary: #4F6EF7; /* Same as --auth-accent (LeetCode Blue) */
   --accent-blue:    #2563EB;
+  --btn-primary-bg: #4F6EF7;
+  --btn-primary-text: #FFFFFF;
   --accent-emerald: #10B981;
   --accent-red:     #EF4444;
   --accent-amber:   #F59E0B;

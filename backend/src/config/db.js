@@ -1,223 +1,134 @@
 import mongoose from 'mongoose';
-import Problem from '../models/Problem.js';
+import axios from 'axios';
+import { Problem } from '../models/index.js';
+import redis from './redis.js';
+
+const clearProblemsCache = async () => {
+  try {
+    const keys = await redis.keys('problems:*');
+    if (keys && keys.length > 0) {
+      await redis.del(keys);
+      console.log(`[db] Cleared ${keys.length} cached problems page keys from Redis.`);
+    }
+  } catch (err) {
+    console.warn('[db] Failed to clear problems cache in Redis:', err.message);
+  }
+};
 
 const seedProblems = async () => {
   try {
-    // Clear and re-seed pure C++ problems cleanly
-    console.log('Re-seeding pure C++ coding challenges...');
-    await Problem.deleteMany({});
+    // Heal existing database problems in the background (non-blocking, using fast bulk update)
+    const healDBProblems = async () => {
+      try {
+        // Step 1: Fix missing titleSlug using the title
+        const noSlug = await Problem.find({ titleSlug: { $exists: false } }, { title: 1 });
+        for (const p of noSlug) {
+          const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          await Problem.updateOne({ _id: p._id }, { $set: { titleSlug: slug } });
+        }
 
-    const defaultProblems = [
-      {
-        title: 'Reverse Words in a String',
-        description: 'Given an input string `s`, reverse the order of the words. A word is defined as a sequence of non-space characters. The words in `s` will be separated by at least one space.',
-        difficulty: 'Medium',
-        tags: ['Arrays & Strings'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: 'the sky is blue', output: 'blue is sky the', isSample: true },
-          { input: '  hello world  ', output: 'world hello', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseWords(string s) {\n        // Write your code here\n        return "";\n    }\n};`
-        }
-      },
-      {
-        title: 'Reverse Linked List',
-        description: 'Given the `head` of a singly linked list, reverse the list, and return the reversed list.',
-        difficulty: 'Easy',
-        tags: ['Linked Lists'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '1,2,3,4,5', output: '5,4,3,2,1', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `class Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        // Write your code here\n        return nullptr;\n    }\n};`
-        }
-      },
-      {
-        title: 'Valid Parentheses',
-        description: 'Given a string `s` containing just the characters `\'(\'`, `\')\'`, `\'{\'`, `\'}\'`, `\'[\'` and `\']\'`, determine if the input string is valid.',
-        difficulty: 'Easy',
-        tags: ['Stacks & Queues'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '()[]{}', output: 'true', isSample: true },
-          { input: '(]', output: 'false', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isValid(string s) {\n        // Write your code here\n        return false;\n    }\n};`
-        }
-      },
-      {
-        title: 'Invert Binary Tree',
-        description: 'Given the `root` of a binary tree, invert the tree, and return its root.',
-        difficulty: 'Easy',
-        tags: ['Trees & Graphs'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: '4,2,7,1,3,6,9', output: '4,7,2,9,6,3,1', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `class Solution {\npublic:\n    TreeNode* invertTree(TreeNode* root) {\n        // Write your code here\n        return nullptr;\n    }\n};`
-        }
-      },
-      {
-        title: 'Climbing Stairs',
-        description: 'You are climbing a staircase. It takes `n` steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?',
-        difficulty: 'Easy',
-        tags: ['Dynamic Programming'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '2', output: '2', isSample: true },
-          { input: '3', output: '3', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `class Solution {\npublic:\n    int climbStairs(int n) {\n        // Write your code here\n        return 0;\n    }\n};`
-        }
-      },
-      {
-        title: 'Subsets',
-        description: 'Given an integer array `nums` of unique elements, return all possible subsets (the power set). The solution set must not contain duplicate subsets.',
-        difficulty: 'Medium',
-        tags: ['Recursion & Backtracking'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: '1,2', output: '[],[1],[2],[1,2]', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> subsets(vector<int>& nums) {\n        // Write your code here\n        return {};\n    }\n};`
-        }
-      },
-      {
-        title: 'Merge Sorted Array',
-        description: 'You are given two integer arrays `nums1` and `nums2`, sorted in non-decreasing order, and two integers `m` and `n`, representing the number of elements in `nums1` and `nums2` respectively. Merge `nums2` into `nums1` as one sorted array.',
-        difficulty: 'Easy',
-        tags: ['Sorting & Searching'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '1,2,3,0,0,0\n3\n2,5,6\n3', output: '1,2,2,3,5,6', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {\n        // Write your code here\n    }\n};`
-        }
-      },
-      {
-        title: 'Jump Game',
-        description: 'You are given an integer array `nums`. You are initially positioned at the array\'s first index, and each element in the array represents your maximum jump length at that position. Return `true` if you can reach the last index, or `false` otherwise.',
-        difficulty: 'Medium',
-        tags: ['Greedy Algorithms'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: '2,3,1,1,4', output: 'true', isSample: true },
-          { input: '3,2,1,0,4', output: 'false', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n        // Write your code here\n        return false;\n    }\n};`
-        }
-      },
-      {
-        title: 'Single Number',
-        description: 'Given a non-empty array of integers `nums`, every element appears twice except for one. Find that single one.',
-        difficulty: 'Easy',
-        tags: ['Bit Manipulation'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '2,2,1', output: '1', isSample: true },
-          { input: '4,1,2,1,2', output: '4', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int singleNumber(vector<int>& nums) {\n        // Write your code here\n        return 0;\n    }\n};`
-        }
-      },
-      {
-        title: 'Fizz Buzz',
-        description: 'Given an integer `n`, return a string array `answer` (1-indexed) where answer[i] is "FizzBuzz" if divisible by 3 and 5, "Fizz" if divisible by 3, "Buzz" if divisible by 5, or the number as a string otherwise.',
-        difficulty: 'Easy',
-        tags: ['Math & Number Theory'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '3', output: '"1","2","Fizz"', isSample: true },
-          { input: '5', output: '"1","2","Fizz","4","Buzz"', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<string> fizzBuzz(int n) {\n        // Write your code here\n        return {};\n    }\n};`
-        }
-      },
-      {
-        title: 'Max Consecutive Ones III',
-        description: 'Given a binary array `nums` and an integer `k`, return the maximum number of consecutive `1`s in the array if you can flip at most `k` `0`s.',
-        difficulty: 'Medium',
-        tags: ['Sliding Window'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: '1,1,1,0,0,0,1,1,1,1,0\n2', output: '6', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int longestOnes(vector<int>& nums, int k) {\n        // Write your code here\n        return 0;\n    }\n};`
-        }
-      },
-      {
-        title: 'Valid Palindrome',
-        description: 'A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Given a string `s`, return `true` if it is a palindrome, or `false` otherwise.',
-        difficulty: 'Easy',
-        tags: ['Two Pointers'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: 'A man, a plan, a canal: Panama', output: 'true', isSample: true },
-          { input: 'race a car', output: 'false', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(string s) {\n        // Write your code here\n        return false;\n    }\n};`
-        }
-      },
-      {
-        title: 'Binary Search',
-        description: 'Given an array of integers `nums` which is sorted in ascending order, and an integer `target`, write a function to search `target` in `nums`. If `target` exists, then return its index. Otherwise, return `-1`.',
-        difficulty: 'Easy',
-        tags: ['Binary Search'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '-1,0,3,5,9,12\n9', output: '4', isSample: true },
-          { input: '-1,0,3,5,9,12\n2', output: '-1', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        // Write your code here\n        return -1;\n    }\n};`
-        }
-      },
-      {
-        title: 'Kth Largest Element in an Array',
-        description: 'Given an integer array `nums` and an integer `k`, return the `k`th largest element in the array.',
-        difficulty: 'Medium',
-        tags: ['Heaps & Priority Queues'],
-        constraints: { timeLimit: 2, memoryLimit: 256 },
-        testCases: [
-          { input: '3,2,1,5,6,4\n2', output: '5', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n        // Write your code here\n        return 0;\n    }\n};`
-        }
-      },
-      {
-        title: 'Contains Duplicate',
-        description: 'Given an integer array `nums`, return `true` if any value appears at least twice in the array, and return `false` if every element is distinct.',
-        difficulty: 'Easy',
-        tags: ['Hashing'],
-        constraints: { timeLimit: 1, memoryLimit: 128 },
-        testCases: [
-          { input: '1,2,3,1', output: 'true', isSample: true },
-          { input: '1,2,3,4', output: 'false', isSample: true }
-        ],
-        boilerplates: {
-          cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool containsDuplicate(vector<int>& nums) {\n        // Write your code here\n        return false;\n    }\n};`
-        }
+        // Step 2: Single-pass bulk update — set source and sourceUrl on every problem that's missing them
+        const db = Problem.db.db;
+        const col = db.collection('problems');
+
+        // Set source = 'leetcode' where source is not yet set and titleSlug does NOT start with 'cf-'
+        await col.updateMany(
+          { source: { $exists: false }, titleSlug: { $not: /^cf-/ } },
+          [{
+            $set: {
+              source: 'leetcode',
+              sourceUrl: { $concat: ['https://leetcode.com/problems/', '$titleSlug', '/'] }
+            }
+          }]
+        );
+
+        // Set source = 'codeforces' where source is not yet set and titleSlug starts with 'cf-'
+        await col.updateMany(
+          { source: { $exists: false }, titleSlug: /^cf-/ },
+          { $set: { source: 'codeforces', sourceUrl: 'https://codeforces.com/' } }
+        );
+
+        // Set sourceUrl on leetcode problems that already have source but still missing sourceUrl
+        await col.updateMany(
+          { source: 'leetcode', sourceUrl: { $exists: false } },
+          [{
+            $set: {
+              sourceUrl: { $concat: ['https://leetcode.com/problems/', '$titleSlug', '/'] }
+            }
+          }]
+        );
+
+        console.log('[db] Healed database problems (source/sourceUrl) successfully.');
+      } catch (err) {
+        console.error('[db] Error healing database problems:', err.message);
       }
-    ];
+    };
 
-    await Problem.insertMany(defaultProblems);
-    console.log('Successfully seeded default programming problems!');
+    // Trigger healing in the background
+    healDBProblems();
+
+    // Sync LeetCode problems in the background (non-blocking)
+    const syncLeetCode = async () => {
+      try {
+        const leetcodeCount = await Problem.countDocuments({ source: 'leetcode' });
+        if (leetcodeCount < 500) {
+          console.log('[db] Under 500 LeetCode problems in DB. Background syncing 1000 problems from LeetCode API...');
+          const LEETCODE_BASE = process.env.LEETCODE_API_URL || 'https://alfa-leetcode-api.onrender.com';
+          
+          let allFreeProblems = [];
+          for (let skip = 0; skip < 1000; skip += 100) {
+            try {
+              const resLc = await axios.get(`${LEETCODE_BASE}/problems?limit=100&skip=${skip}`, { timeout: 8000 });
+              const pageProblems = resLc.data?.problemsetQuestionList || [];
+              const freePageProblems = pageProblems.filter(p => !p.isPaidOnly);
+              allFreeProblems.push(...freePageProblems);
+              if (pageProblems.length < 100) break;
+            } catch (pageErr) {
+              console.error(`[db] Failed to fetch LeetCode page skip=${skip}:`, pageErr.message);
+            }
+          }
+
+          console.log(`[db] Found ${allFreeProblems.length} free problems to seed.`);
+
+          const bulkOps = allFreeProblems.map(p => {
+            const dbDiff = p.difficulty.charAt(0).toUpperCase() + p.difficulty.slice(1).toLowerCase();
+            const tags = p.topicTags?.map(t => t.name) || [];
+            return {
+              updateOne: {
+                filter: { titleSlug: p.titleSlug },
+                update: {
+                  $setOnInsert: {
+                    title: p.title,
+                    titleSlug: p.titleSlug,
+                    difficulty: dbDiff,
+                    tags,
+                    source: 'leetcode',
+                  }
+                },
+                upsert: true
+              }
+            };
+          });
+
+          if (bulkOps.length > 0) {
+            await Problem.bulkWrite(bulkOps, { ordered: false });
+          }
+
+          console.log('[db] Background LeetCode sync completed successfully.');
+          await clearProblemsCache();
+        }
+      } catch (syncErr) {
+        console.error('[db] Background LeetCode sync failed:', syncErr.message);
+      }
+    };
+
+    // Trigger background sync
+    syncLeetCode();
+
+    // Clear problems cache on server startup/restart
+    clearProblemsCache();
   } catch (err) {
-    console.error('Error seeding problems:', err);
+    console.error('Error seeding database:', err);
   }
 };
 

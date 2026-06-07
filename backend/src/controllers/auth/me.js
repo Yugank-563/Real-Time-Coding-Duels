@@ -1,4 +1,4 @@
-import User from '../../models/User.js';
+import { User } from '../../models/index.js';
 
 export const getMe = async (req, res) => {
   try {
@@ -10,13 +10,17 @@ export const getMe = async (req, res) => {
     res.status(200).json({
       id: user._id,
       email: user.email,
-      username: user.name || user.email.split('@')[0],
+      username: user.username || user.email.split('@')[0],
+      name: user.name || '',
       role: user.role,
       rating: user.rank || 1200,
       xp: user.xp || 0,
       level: user.level || 1,
       streaks: user.streaks || 0,
       badges: user.badges || [],
+      bio: user.bio || '',
+      country: user.country || '',
+      joinDate: user.createdAt,
     });
   } catch (error) {
     console.error('Error fetching user profile:', error.message);

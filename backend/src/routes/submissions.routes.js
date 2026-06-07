@@ -1,9 +1,9 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware.js';
+import { authMiddleware } from '../middleware/index.js';
 import {
-  submitCode,
+  submitBattleCode,
   getSubmissionStatus
-} from '../controllers/submissions/index.js';
+} from '../controllers/index.js';
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Submission routes
-router.post('/battle', submitCode);
+router.post('/battle', submitBattleCode);
 router.get('/:id/status', getSubmissionStatus);
 
 export default router;

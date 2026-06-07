@@ -1,4 +1,4 @@
-import { createPrivateRoomService } from '../../services/battles/index.js';
+import { createPrivateRoomService } from '../../services/index.js';
 
 export const createPrivateRoom = async (req, res) => {
   try {

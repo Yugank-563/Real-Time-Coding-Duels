@@ -14,25 +14,24 @@ import ResetPasswordPage  from './pages/auth/ResetPassword';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { useEffect } from 'react';
-import api from './utils/api';
-import { selectIsAuthenticated, setUser, setLoading, selectAuthLoading } from './features/auth/authSlice';
+import { api } from './utils/index';
+import { selectIsAuthenticated, setUser, setLoading, selectAuthLoading } from './features/index';
 
 // ── Protected Dashboard Page ──
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const BattleLobbyPage = lazy(() => import('./pages/BattleLobby'));
-const MatchmakingPage = lazy(() => import('./pages/Matchmaking'));
-const BattleRoomPage = lazy(() => import('./pages/BattleRoom'));
-const BattleSummaryPage = lazy(() => import('./pages/BattleSummary'));
-const PrivateLobbyPage = lazy(() => import('./pages/PrivateLobby'));
+const BattleLobbyPage = lazy(() => import('./pages/battle/BattleLobby'));
+const MatchmakingPage = lazy(() => import('./pages/battle/Matchmaking'));
+const BattleRoomPage = lazy(() => import('./pages/battle/BattleRoom'));
+const BattleSummaryPage = lazy(() => import('./pages/battle/BattleSummary'));
+const PrivateLobbyPage = lazy(() => import('./pages/battle/PrivateLobby'));
+const ProblemsPage = lazy(() => import('./pages/problems/ProblemsPage'));
+const PracticeRoom = lazy(() => import('./pages/problems/PracticeRoom'));
+
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NotFound = lazy(() => import('./components/layout/NotFound'));
 
 // ── Public Pages ──
 const AboutPage = lazy(() => import('./pages/AboutPage'));
-
-// ── Dynamic Fallback Route ──
-const FallbackRoute = () => {
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  return <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />;
-};
 
 function App() {
   const dispatch = useDispatch();
@@ -71,7 +70,12 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <Suspense fallback={null}>
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#0B0F1A] text-[#E0E6F0] flex flex-col items-center justify-center font-sans gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#00F5C4] border-t-transparent animate-spin" />
+          <span className="text-xs text-[#7A9AB8] font-medium tracking-wide">Loading module...</span>
+        </div>
+      }>
         <Routes>
           {/* Public Landing / About Page */}
           <Route path="/" element={<AboutPage />} />
@@ -92,13 +96,18 @@ function App() {
               <Route path="/battle/lobby" element={<BattleLobbyPage />} />
               <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
               <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
-              <Route path="/battle/:battleId" element={<BattleRoomPage />} />
               <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
+              <Route path="/problems" element={<ProblemsPage />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>
+            {/* Fullscreen workspaces outside AppLayout (no footer/constraints, custom fixed Navbar spacing) */}
+            <Route path="/battle/:battleId" element={<BattleRoomPage />} />
+            <Route path="/problems/:slug" element={<PracticeRoom />} />
+
           </Route>
 
           {/* Global Fallback */}
-          <Route path="*" element={<FallbackRoute />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

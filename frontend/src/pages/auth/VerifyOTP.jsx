@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../features/auth/authSlice';
-import { useToast } from '../../hooks/useToast';
-import api from '../../utils/api';
+import { setUser } from '../../features/index';
+import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { api } from '../../utils/index';
 import '../../styles/auth.css';
 import {
   AuthButton, AuthLogo,
   OTPBoxInput, ResendTimer,
-} from '../../components/ui';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../components/index';
 
 const VerifyOTPPage = () => {
   const navigate  = useNavigate();
@@ -17,6 +16,7 @@ const VerifyOTPPage = () => {
   const dispatch  = useDispatch();
   const toast     = useToast();
   const { theme } = useTheme();
+  useDocumentTitle('Verify Email');
   const isLight   = theme === 'light';
 
   const email = location.state?.email || '';

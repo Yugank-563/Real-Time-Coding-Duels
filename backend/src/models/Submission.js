@@ -46,7 +46,20 @@ const submissionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Per-case results from batch execution (populated by compiler-service)
+    results: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
+    totalTestCases: {
+      type: Number,
+      default: 0,
+    },
     errorMessage: {
+      type: String,
+      default: '',
+    },
+    output: {
       type: String,
       default: '',
     },

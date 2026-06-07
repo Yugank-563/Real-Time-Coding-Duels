@@ -1,4 +1,4 @@
-import Submission from '../models/Submission.js';
+import { Submission } from '../models/index.js';
 
 export const createSubmission = async (data) => {
   return await Submission.create(data);

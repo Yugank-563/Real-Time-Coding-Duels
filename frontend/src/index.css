@@ -40,6 +40,44 @@ body {
   background: var(--text-muted);
 }
 
+/* ──── PROBLEM PANEL SCROLLBAR ──── */
+.problem-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.problem-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.problem-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.problem-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+.problem-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 245, 196, 0.45);
+}
+
+/* ──── CODE BLOCK HORIZONTAL SCROLLBAR ──── */
+.code-scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.code-scroll-x::-webkit-scrollbar {
+  height: 4px;
+}
+.code-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+.code-scroll-x::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+.code-scroll-x::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 245, 196, 0.45);
+}
+
 /* ──── SELECTION ──── */
 ::selection {
   background: rgba(139, 92, 246, 0.3);
@@ -102,4 +140,107 @@ body {
   .animate-marquee-reverse {
     animation: marquee-reverse 45s linear infinite;
   }
+}
+
+/* ──── PROSE-BATTLECODE: Rich problem description renderer ──── */
+.prose-battlecode {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.prose-battlecode p {
+  margin-bottom: 12px;
+}
+.prose-battlecode strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.prose-battlecode strong.example {
+  display: block;
+  margin-top: 28px;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+.prose-battlecode em {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.prose-battlecode code {
+  background: var(--bg-overlay);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--accent-blue);
+}
+.prose-battlecode pre {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.8;
+  margin-top: 8px;
+  margin-bottom: 28px;
+}
+.prose-battlecode pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: inherit;
+}
+.prose-battlecode ul,
+.prose-battlecode ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+.prose-battlecode li {
+  margin-bottom: 4px;
+}
+.prose-battlecode img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+.prose-battlecode a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+.prose-battlecode h1,
+.prose-battlecode h2,
+.prose-battlecode h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+/* Light mode overrides */
+[data-theme="light"] .prose-battlecode code {
+  background: var(--bg-overlay);
+  color: var(--accent-blue);
+  border-color: var(--border);
+}
+[data-theme="light"] .prose-battlecode pre {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .prose-battlecode pre code {
+  color: var(--text-primary);
+}
+
+@media (max-width: 1024px) {
+  .mobile-editor-height {
+    min-height: var(--mobile-editor-height, 350px);
+  }
+}
+
+.prose-battlecode pre strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  display: inline;
+  margin-right: 4px;
 }

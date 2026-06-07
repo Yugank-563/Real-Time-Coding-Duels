@@ -1,4 +1,4 @@
-import { forgotPasswordService } from '../../services/auth/index.js';
+import { forgotPasswordService } from '../../services/index.js';
 
 export const forgotPassword = async (req, res) => {
   try {

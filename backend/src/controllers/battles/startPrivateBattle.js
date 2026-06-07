@@ -1,4 +1,4 @@
-import { startPrivateBattleService } from '../../services/battles/index.js';
+import { startPrivateBattleService } from '../../services/index.js';
 
 export const startPrivateBattle = async (req, res) => {
   try {

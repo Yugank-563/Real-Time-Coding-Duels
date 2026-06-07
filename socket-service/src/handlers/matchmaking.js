@@ -10,6 +10,13 @@ import {
 import User from '../../../backend/src/models/User.js';
 import Problem from '../../../backend/src/models/Problem.js';
 import Battle from '../../../backend/src/models/Battle.js';
+import { getRandomProblem } from '../../../backend/src/services/problemService.js';
+
+const eloToDifficulty = (elo) => {
+  if (elo < 1200) return 'EASY';
+  if (elo < 1600) return 'MEDIUM';
+  return 'HARD';
+};
 
 // Cache active intervals keyed by socket.id to prevent leaks
 const activeQueueIntervals = new Map();
@@ -99,27 +106,45 @@ export const registerMatchmakingHandlers = (io, socket) => {
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
               const opponent = await User.findById(matchedUserId);
-
-              // Find topic-filtered problem
-              let problems = await Problem.find({ tags: { $regex: topic, $options: 'i' } });
-              if (problems.length === 0) problems = await Problem.find({});
-              if (problems.length === 0) {
-                socket.emit('error', { message: 'No coding challenges exist in system.' });
-                return;
-              }
-              const randomProblem = problems[Math.floor(Math.random() * problems.length)];
-
-              const battle = await Battle.create({
-                players: [
-                  { user: userId, status: 'ready' },
-                  { user: matchedUserId, status: 'ready' },
-                ],
-                problem: randomProblem._id,
-                battleType: 'topic',
-                topic,
-                status: 'active',
-                startTime: new Date(),
-              });
+ 
+               let dbProblem;
+               try {
+                 const difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
+                 const problemData = await getRandomProblem(topic, difficulty);
+                 const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
+                 const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
+                 dbProblem = await Problem.findOneAndUpdate(
+                   query,
+                   { 
+                     ...problemData,
+                     description: problemData.content || problemData.description || '',
+                     difficulty: dbDiff,
+                     boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
+                       ? problemData.boilerplates
+                       : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+                   },
+                   { upsert: true, new: true }
+                 );
+               } catch (fetchErr) {
+                 console.error('[Matchmaking] Topic problem fetch error:', fetchErr.message);
+                 io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+                 io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+                 await handleTopicQueue(userId, myElo, topic);
+                 if (opponent) await handleTopicQueue(matchedUserId, opponent.rank || 1200, topic);
+                 return;
+               }
+ 
+               const battle = await Battle.create({
+                 players: [
+                   { user: userId, status: 'ready' },
+                   { user: matchedUserId, status: 'ready' },
+                 ],
+                 problem: dbProblem._id,
+                 battleType: 'topic',
+                 topic,
+                 status: 'active',
+                 startTime: new Date(),
+               });
 
               const battleIdStr = battle._id.toString();
               console.log(`[Matchmaking] ✅ Topic Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | topic: ${topic}`);
@@ -171,33 +196,51 @@ export const registerMatchmakingHandlers = (io, socket) => {
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
               const opponent = await User.findById(matchedUserId);
-
-              let problems;
-              if (battleType === 'sprint') {
-                problems = await Problem.find({ difficulty: 'Easy' });
-              } else {
-                problems = await Problem.find({});
-              }
-              if (!problems || problems.length === 0) {
-                problems = await Problem.find({});
-              }
-              if (problems.length === 0) {
-                socket.emit('error', { message: 'No coding challenges exist in system.' });
-                return;
-              }
-              const randomProblem = problems[Math.floor(Math.random() * problems.length)];
-
-              const battle = await Battle.create({
-                players: [
-                  { user: userId, status: 'ready' },
-                  { user: matchedUserId, status: 'ready' },
-                ],
-                problem: randomProblem._id,
-                battleType,
-                status: 'active',
-                startTime: new Date(),
-                timeLimit: battleType === 'sprint' ? 300 : 1200,
-              });
+                let dbProblem;
+                try {
+                  let problemData;
+                  let difficulty = 'MEDIUM';
+                  if (battleType === 'sprint') {
+                    difficulty = 'EASY';
+                    problemData = await getRandomProblem('Array', 'EASY');
+                  } else {
+                    difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
+                    problemData = await getRandomProblem('Array', difficulty);
+                  }
+                  const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
+                  const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
+                  dbProblem = await Problem.findOneAndUpdate(
+                    query,
+                    { 
+                      ...problemData,
+                      description: problemData.content || problemData.description || '',
+                      difficulty: dbDiff,
+                      boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
+                        ? problemData.boilerplates
+                        : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+                    },
+                    { upsert: true, new: true }
+                  );
+                } catch (fetchErr) {
+                 console.error('[Matchmaking] Standard problem fetch error:', fetchErr.message);
+                 io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+                 io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+                 await addToQueue(userId, myElo, battleType);
+                 if (opponent) await addToQueue(matchedUserId, opponent.rank || 1200, battleType);
+                 return;
+               }
+ 
+               const battle = await Battle.create({
+                 players: [
+                   { user: userId, status: 'ready' },
+                   { user: matchedUserId, status: 'ready' },
+                 ],
+                 problem: dbProblem._id,
+                 battleType,
+                 status: 'active',
+                 startTime: new Date(),
+                 timeLimit: battleType === 'sprint' ? 300 : 1200,
+               });
 
               const battleIdStr = battle._id.toString();
               console.log(`[Matchmaking] ✅ Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | type: ${battleType}`);

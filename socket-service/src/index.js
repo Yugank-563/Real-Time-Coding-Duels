@@ -10,7 +10,6 @@ import { createClient } from 'redis';
 // Handlers imports
 import { registerMatchmakingHandlers } from './handlers/matchmaking.js';
 import { registerBattleHandlers } from './handlers/battle.js';
-import { registerChatHandlers } from './handlers/chat.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,7 +73,20 @@ await subClient.subscribe('battle:events', (message) => {
 
 await subClient.subscribe('submission:events', (message) => {
   try {
-    const { submissionId, userId, battleId, verdict, testCasesPassed, totalTestCases } = JSON.parse(message);
+    const data = JSON.parse(message);
+    const { submissionId, userId, battleId, type } = data;
+
+    if (type === 'progress') {
+      console.log(`Redis Pub/Sub received submission progress for ${submissionId}: ${data.done}/${data.total}`);
+      io.to(`user:${userId}`).emit('submission:progress', {
+        submissionId,
+        done: data.done,
+        total: data.total,
+      });
+      return;
+    }
+
+    const { verdict, testCasesPassed, totalTestCases, results } = data;
     console.log(`Redis Pub/Sub received submission result for ${submissionId}`);
 
     // Send feedback directly to user socket
@@ -83,6 +95,7 @@ await subClient.subscribe('submission:events', (message) => {
       verdict,
       testCasesPassed,
       totalTestCases,
+      results,
     });
 
     if (battleId) {
@@ -131,7 +144,6 @@ io.on('connection', (socket) => {
   // Register feature handlers
   registerMatchmakingHandlers(io, socket);
   registerBattleHandlers(io, socket);
-  registerChatHandlers(io, socket);
 
   socket.on('disconnect', () => {
     console.log(`Socket client disconnected: ${socket.id}`);

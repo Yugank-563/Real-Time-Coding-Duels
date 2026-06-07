@@ -25,6 +25,8 @@ export default {
         emerald:  'var(--accent-emerald)',
         danger:   'var(--accent-red)',
         warning:  'var(--accent-amber)',
+        'btn-primary': 'var(--btn-primary-bg)',
+        'btn-primary-text': 'var(--btn-primary-text)',
       },
       fontFamily: {
         sans:    ['Inter', 'system-ui', 'sans-serif'],

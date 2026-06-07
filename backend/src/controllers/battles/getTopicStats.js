@@ -1,4 +1,4 @@
-import { getTopicStatsService } from '../../services/battles/index.js';
+import { getTopicStatsService } from '../../services/index.js';
 
 export const getTopicStats = async (req, res) => {
   try {

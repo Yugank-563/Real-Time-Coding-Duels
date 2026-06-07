@@ -1,4 +1,4 @@
-import { removeFromTopicQueue, removeFromQueue } from '../../services/matchmakingService.js';
+import { removeFromTopicQueue, removeFromQueue } from '../../services/index.js';
 
 export const leaveQueue = async (req, res) => {
   try {
