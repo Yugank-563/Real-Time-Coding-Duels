@@ -7,10 +7,30 @@ const problemSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    description: {
+    titleSlug: {
       type: String,
-      required: true,
+      unique: true,
+      sparse: true,
+      index: true,
     },
+    source: {
+      type: String,
+      default: 'leetcode',
+    },
+    sourceUrl: {
+      type: String,
+    },
+    content: {
+      type: String,
+    },
+    examples: {
+      type: String,
+    },
+    hints: [
+      {
+        type: String,
+      },
+    ],
     difficulty: {
       type: String,
       enum: ['Easy', 'Medium', 'Hard', 'Expert'],
@@ -39,7 +59,7 @@ const problemSchema = new mongoose.Schema(
         },
         output: {
           type: String,
-          required: true,
+          default: '',
         },
         isSample: {
           type: Boolean,
@@ -52,6 +72,13 @@ const problemSchema = new mongoose.Schema(
         type: String,
         default: '',
       },
+    },
+    lastFetchAttempt: {
+      type: Date,
+    },
+    isFallback: {
+      type: Boolean,
+      default: false,
     },
   },
   {
