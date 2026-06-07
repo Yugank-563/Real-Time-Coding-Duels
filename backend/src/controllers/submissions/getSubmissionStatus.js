@@ -1,4 +1,4 @@
-import { getSubmissionStatusService } from '../../services/submissions/index.js';
+import { getSubmissionStatusService } from '../../services/index.js';
 
 export const getSubmissionStatus = async (req, res) => {
   try {

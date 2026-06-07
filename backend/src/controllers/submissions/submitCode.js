@@ -1,6 +1,6 @@
-import { submitCodeService } from '../../services/submissions/index.js';
+import { submitCodeService } from '../../services/index.js';
 
-export const submitCode = async (req, res) => {
+export const submitBattleCode = async (req, res) => {
   try {
     const { battleId, code, language, problemId } = req.body;
     const result = await submitCodeService(battleId, code, language, problemId, req.userId);

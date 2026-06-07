@@ -1,4 +1,4 @@
-import { surrenderBattleService } from '../../services/battles/index.js';
+import { surrenderBattleService } from '../../services/index.js';
 
 export const surrenderBattle = async (req, res) => {
   try {

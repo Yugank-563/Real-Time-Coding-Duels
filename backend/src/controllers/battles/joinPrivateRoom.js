@@ -1,4 +1,4 @@
-import { joinPrivateRoomService } from '../../services/battles/index.js';
+import { joinPrivateRoomService } from '../../services/index.js';
 
 export const joinPrivateRoom = async (req, res) => {
   try {

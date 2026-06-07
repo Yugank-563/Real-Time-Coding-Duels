@@ -1,5 +1,5 @@
 import { findUserById } from '../../repositories/index.js';
-import { handleTopicQueue, addToQueue } from '../../services/matchmakingService.js';
+import { handleTopicQueue, addToQueue } from '../../services/index.js';
 
 export const joinQueue = async (req, res) => {
   try {

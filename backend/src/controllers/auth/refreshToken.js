@@ -1,4 +1,4 @@
-import { refreshTokenService } from '../../services/auth/index.js';
+import { refreshTokenService } from '../../services/index.js';
 
 const getCookie = (req, name) => {
   const list = {};

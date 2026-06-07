@@ -1,4 +1,4 @@
-import { updateProfileService } from '../../services/users/updateProfile.service.js';
+import { updateProfileService } from '../../services/index.js';
 
 export const updateProfile = async (req, res) => {
   try {

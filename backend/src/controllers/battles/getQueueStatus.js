@@ -1,4 +1,4 @@
-import { getQueuePosition } from '../../services/matchmakingService.js';
+import { getQueuePosition } from '../../services/index.js';
 
 export const getQueueStatus = async (req, res) => {
   try {

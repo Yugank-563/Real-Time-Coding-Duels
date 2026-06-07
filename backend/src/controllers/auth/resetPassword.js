@@ -1,4 +1,4 @@
-import { verifyResetOTPService, resetPasswordService } from '../../services/auth/index.js';
+import { verifyResetOTPService, resetPasswordService } from '../../services/index.js';
 
 export const verifyResetOTP = async (req, res) => {
   try {
