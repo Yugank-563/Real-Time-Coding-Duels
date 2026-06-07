@@ -39,26 +39,7 @@ const userSchema = new mongoose.Schema(
       default: 1200,
     },
 
-    xp: {
-      type: Number,
-      default: 0,
-    },
 
-    level: {
-      type: Number,
-      default: 1,
-    },
-
-    streaks: {
-      type: Number,
-      default: 0,
-    },
-
-    badges: [
-      {
-        type: String,
-      },
-    ],
 
     // ── Profile Fields ──
     bio: {
