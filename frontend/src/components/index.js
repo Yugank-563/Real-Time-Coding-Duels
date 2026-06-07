@@ -1,6 +1,9 @@
+// leaderboard folder
+export { default as LeaderboardTable } from './leaderboard/LeaderboardTable';
+export { default as LeaderboardFilter } from './leaderboard/LeaderboardFilter';
+
 // problems folder
 export { default as ProblemsFilter } from './problems/ProblemsFilter';
-export { default as ProblemsPagination } from './problems/ProblemsPagination';
 export { default as ProblemsTable } from './problems/ProblemsTable';
 
 // battle folder
@@ -27,3 +30,6 @@ export { default as StepIndicator } from './ui/StepIndicator';
 export { default as CustomDropdown } from './ui/CustomDropdown';
 export { default as VerdictBadge } from './ui/VerdictBadge';
 export { default as CodeViewer } from './ui/CodeViewer';
+export { default as Pagination } from './ui/Pagination';
+export { default as SearchInput } from './ui/SearchInput';
+export { default as StateCard } from './ui/StateCard';
