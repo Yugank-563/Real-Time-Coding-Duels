@@ -34,9 +34,9 @@ const FEATURED_ARENAS = [
 
 // ── Lobby Feed ──
 const LOBBIES = [
-  { id: '1', title: '1v1 Ranked Duel', difficulty: 'Medium', lang: 'C++', elo: '1200–1400', players: 1, status: 'live' },
-  { id: '2', title: 'Blind Coding Battle', difficulty: 'Hard', lang: 'Python', elo: 'Any', players: 0, status: 'open' },
-  { id: '3', title: 'DP Sprint Challenge', difficulty: 'Medium', lang: 'JavaScript', elo: '1000–1300', players: 2, status: 'full' },
+  { id: '1', title: '1v1 Ranked Duel', difficulty: 'Medium', lang: 'C++', elo: '1200–1400', users: 1, status: 'live' },
+  { id: '2', title: 'Blind Coding Battle', difficulty: 'Hard', lang: 'Python', elo: 'Any', users: 0, status: 'open' },
+  { id: '3', title: 'DP Sprint Challenge', difficulty: 'Medium', lang: 'JavaScript', elo: '1000–1300', users: 2, status: 'full' },
 ];
 
 const STATUS_CONFIG = {
@@ -52,7 +52,7 @@ const HISTORY = [
   { result: 'W', opponent: '@ankit', elo: '+15 ELO', time: '2d ago', problem: 'House Robber' },
 ];
 
-const TOP_PLAYERS = [
+const TOP_USERS = [
   { rank: '🥇', name: '@vivek', elo: 2341, delta: '+47', isMe: false, solved: 842 },
   { rank: '🥈', name: '@yugank', elo: 1247, delta: '+23', isMe: true, solved: 142 },
   { rank: '🥉', name: '@rahul', elo: 1198, delta: '+11', isMe: false, solved: 310 },
@@ -109,7 +109,7 @@ const LobbyCard = ({ lobby }) => {
             {' · '}
             ELO Range: <span className="text-text-secondary">{lobby.elo}</span>
             {' · '}
-            {lobby.status === 'full' ? 'Lobby occupied' : `${lobby.players} waiting`}
+            {lobby.status === 'full' ? 'Lobby occupied' : `${lobby.users} waiting`}
           </p>
         </div>
       </div>
@@ -134,7 +134,7 @@ const DashboardPage = () => {
       variants={container}
       initial="hidden"
       animate="show"
-      className="space-y-6 max-w-7xl mx-auto pb-10"
+      className="space-y-6 pb-10 w-full"
     >
       {/* ── Top Bar with Command Input ── */}
       <motion.div variants={item} className="flex items-center justify-between gap-4 flex-wrap">
@@ -229,7 +229,7 @@ const DashboardPage = () => {
                     <p className="text-[11px] text-text-muted font-mono">{arena.status}</p>
                   </div>
 
-                  {/* Player ELO duel bar */}
+                  {/* User ELO duel bar */}
                   <div className="bg-overlay/40 rounded-xl p-2 border border-border/50 flex flex-col gap-1 font-mono text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary font-semibold truncate">{arena.p1}</span>
@@ -397,7 +397,7 @@ const DashboardPage = () => {
             </button>
           </motion.div>
 
-          {/* TOP PLAYERS LEADERBOARD */}
+          {/* TOP USERS LEADERBOARD */}
           <motion.div variants={item} className="bg-surface border border-border rounded-3xl p-6 shadow-xl relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -408,7 +408,7 @@ const DashboardPage = () => {
             </div>
             
             <div className="space-y-2">
-              {TOP_PLAYERS.map((p, i) => (
+              {TOP_USERS.map((p, i) => (
                 <div
                   key={i}
                   className={`flex items-center justify-between py-2 px-3 rounded-2xl border transition-all duration-300 ${
