@@ -24,7 +24,6 @@ export { default as ThemeToggle } from './ui/ThemeToggle';
 export { default as OTPBoxInput } from './ui/OTPBoxInput';
 export { default as ResendTimer } from './ui/ResendTimer';
 export { default as StepIndicator } from './ui/StepIndicator';
-export { default as useAuthTheme } from './ui/useAuthTheme';
 export { default as CustomDropdown } from './ui/CustomDropdown';
 export { default as VerdictBadge } from './ui/VerdictBadge';
 export { default as CodeViewer } from './ui/CodeViewer';

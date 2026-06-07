@@ -1,3 +1,4 @@
+import Editor from '@monaco-editor/react';
 
 const CodeViewer = ({ code, language }) => {
   return (

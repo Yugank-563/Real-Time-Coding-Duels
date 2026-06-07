@@ -92,14 +92,14 @@ const BattleSummary = () => {
 
   if (!battle) return null;
 
-  const me = battle.players.find(p => p.user._id === myUserId) || battle.players[0];
-  const opponent = battle.players.find(p => p.user._id !== myUserId) || battle.players[1];
+  const me = battle.players.find(p => p.user?._id === myUserId) || battle.players[0];
+  const opponent = battle.players.find(p => p.user?._id !== myUserId) || battle.players[1];
   const winnerId = battle.winner;
-  const isWinnerMe = winnerId === me.user._id;
-  const isWinnerOpp = winnerId === opponent.user._id;
+  const isWinnerMe = winnerId === me?.user?._id;
+  const isWinnerOpp = opponent && winnerId === opponent?.user?._id;
 
-  const mySubmissions = submissions.filter(s => s.userId === me.user._id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const oppSubmissions = submissions.filter(s => s.userId === opponent.user._id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const mySubmissions = submissions.filter(s => s.userId === me?.user?._id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const oppSubmissions = opponent ? submissions.filter(s => s.userId === opponent?.user?._id).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
 
   const myFinalSub = mySubmissions[0];
   const oppFinalSub = oppSubmissions[0];

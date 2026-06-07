@@ -1,3 +1,4 @@
+import { CheckCircle2, XCircle, Clock, Database, AlertCircle } from 'lucide-react';
 
 export const VerdictBadge = ({ verdict }) => {
   const getBadgeData = (verd) => {
