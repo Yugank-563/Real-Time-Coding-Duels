@@ -4,7 +4,8 @@ import {
   themeReducer, 
   notificationReducer, 
   battleReducer, 
-  problemsReducer 
+  problemsReducer,
+  leaderboardReducer
 } from '../features/index';
 
 export const store = configureStore({
@@ -14,6 +15,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     battle:        battleReducer,
     problems:      problemsReducer,
+    leaderboard:   leaderboardReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

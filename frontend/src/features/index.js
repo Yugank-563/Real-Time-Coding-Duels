@@ -21,3 +21,7 @@ export { default as problemsReducer } from './problemsSlice';
 // theme slice
 export { setTheme, cycleTheme, selectTheme, selectThemeLabel } from './themeSlice';
 export { default as themeReducer } from './themeSlice';
+
+// leaderboard slice
+export { fetchLeaderboard, resetLeaderboard, selectLeaderboard } from './leaderboardSlice';
+export { default as leaderboardReducer } from './leaderboardSlice';
