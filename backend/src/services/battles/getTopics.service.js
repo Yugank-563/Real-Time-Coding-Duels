@@ -1,8 +1,8 @@
 import redis from '../../config/redis.js';
-import { getDistinctTags } from '../../repositories/index.js';
+import topicMap from '../../config/topicMap.js';
 
 export const getTopicsService = async () => {
-  const topics = await getDistinctTags() || [];
+  const topics = Object.keys(topicMap);
   const stats = {};
   for (const topic of topics) {
     const normalizedTopic = topic.toLowerCase().replace(/\s+/g, '_');

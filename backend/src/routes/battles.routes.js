@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware.js';
+import { authMiddleware } from '../middleware/index.js';
 import {
   joinQueue,
   leaveQueue,
@@ -12,23 +12,25 @@ import {
   getTopics,
   createPrivateRoom,
   joinPrivateRoom,
-  startPrivateBattle
-} from '../controllers/battles/index.js';
+  startPrivateBattle,
+  getHealth
+} from '../controllers/index.js';
 
 const router = express.Router();
 
-// Apply auth middleware to all routes
+// Public Endpoints
+router.get('/health', getHealth);
+router.get('/topic-stats', getTopicStats);
+router.get('/lobby-stats', getLobbyStats);
+router.get('/topics', getTopics);
+
+// Apply auth middleware to all remaining routes
 router.use(authMiddleware);
 
 // Queue routes
 router.post('/queue/join', joinQueue);
 router.post('/queue/leave', leaveQueue);
 router.get('/queue/status', getQueueStatus);
-
-// Stats & Metadata routes (precedence above dynamic ID)
-router.get('/topic-stats', getTopicStats);
-router.get('/lobby-stats', getLobbyStats);
-router.get('/topics', getTopics);
 
 // Private Custom Room routes
 router.post('/private/create', createPrivateRoom);

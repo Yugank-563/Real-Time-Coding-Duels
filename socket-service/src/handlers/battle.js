@@ -19,6 +19,15 @@ export const registerBattleHandlers = (io, socket) => {
         return;
       }
  
+      // Critical validation: reject joining ended battles
+      if (battle.status === 'ended') {
+        socket.emit('battle:error', { 
+          message: 'Battle has already concluded.',
+          redirect: `/battle/${battleId}/summary` 
+        });
+        return;
+      }
+
       // Check if user is player vs spectator
       const isPlayer = battle.players.some(p => p.user.toString() === socket.userId);
       if (isPlayer) {

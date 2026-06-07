@@ -1,4 +1,4 @@
-import Battle from '../models/Battle.js';
+import { Battle } from '../models/index.js';
 
 export const createBattle = async (data) => {
   return await Battle.create(data);
