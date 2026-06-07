@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { selectUser } from '../features/auth/authSlice';
-import { useToast } from '../hooks/useToast';
+import { selectUser } from '../features/index';
+import { useToast, useDocumentTitle } from '../hooks/index';
 
 // ── Animation variants ──
 const container = {
@@ -125,6 +125,7 @@ const DashboardPage = () => {
   const user = useSelector(selectUser);
   const toast = useToast();
   const [searchFocused, setSearchFocused] = useState(false);
+  useDocumentTitle('Dashboard');
 
   const handleFindBattle = () => toast.battle('Matchmaking active!', 'Searching for suitable opponent...');
 
@@ -184,9 +185,7 @@ const DashboardPage = () => {
               >
                 ⚔️ Find 1v1 Battle
               </button>
-              <button className="px-6 py-3 rounded-2xl bg-overlay border border-border text-text-primary text-sm font-bold hover:bg-elevated hover:-translate-y-0.5 transition-all duration-300 font-mono">
-                🏆 Enter Arena Contests
-              </button>
+
             </div>
           </div>
         </div>

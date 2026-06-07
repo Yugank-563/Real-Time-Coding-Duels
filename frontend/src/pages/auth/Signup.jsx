@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast, useTheme } from '../../hooks';
-import api from '../../utils/api';
+import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { api } from '../../utils/index';
 import '../../styles/auth.css';
-import {
-  AuthInput, AuthButton, AuthLogo,
-} from '../../components/ui';
+import { AuthInput, AuthButton, AuthLogo } from '../../components/index';
 
 // SIGNUP PAGE
 const SignupPage = () => {
   const navigate  = useNavigate();
   const toast     = useToast();
   const { theme } = useTheme();
+  useDocumentTitle('Signup');
   const isLight   = theme === 'light';
 
   const [formData, setData]   = useState({ email: '', password: '', confirmPassword: '' });

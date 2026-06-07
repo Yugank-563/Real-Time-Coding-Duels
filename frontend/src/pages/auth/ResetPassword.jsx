@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useToast, useTheme } from '../../hooks';
-import api from '../../utils/api';
+import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { api } from '../../utils/index';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
-} from '../../components/ui';
+} from '../../components/index';
 
 
 // RESET PASSWORD PAGE  
@@ -14,6 +14,7 @@ const ResetPasswordPage = () => {
   const location = useLocation();
   const toast = useToast();
   const { theme } = useTheme();
+  useDocumentTitle('Reset Password');
   const isLight = theme === 'light';
 
   const email = location.state?.email || '';

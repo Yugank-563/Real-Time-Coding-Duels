@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 import { Globe, Calendar, User as UserIcon } from 'lucide-react';
 import { useTheme } from '../hooks/ui/useTheme';
 import { useProfile } from '../hooks/useProfile';
+import { useDocumentTitle } from '../hooks/index';
 import RatingChart from '../components/profile/RatingChart';
 import DifficultyRing from '../components/profile/DifficultyRing';
 import EditProfileModal from '../components/profile/EditProfileModal';
 
 const ProfilePage = () => {
   const { username } = useParams();
+  useDocumentTitle(`${username}'s Profile`);
   const { theme } = useTheme();
   const { profile, loading, isOwn, handleSave } = useProfile(username);
   const [editOpen, setEditOpen] = useState(false);
@@ -17,7 +19,7 @@ const ProfilePage = () => {
     if (!text) return null;
     const re = /(https?:\/\/[^\s]+)/g;
     return text.split(re).map((part, i) =>
-      re.test(part)
+      /^https?:\/\//.test(part)
         ? <a key={i} href={part} target="_blank" rel="noopener noreferrer"
              style={{ color: 'var(--auth-btn)', textDecoration: 'underline' }}
              onClick={e => e.stopPropagation()}>{part}</a>

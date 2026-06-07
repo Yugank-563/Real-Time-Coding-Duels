@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Swords, Trophy,Terminal } from 'lucide-react';
+import { Swords, Trophy, Terminal } from 'lucide-react';
+import { useDocumentTitle } from '../hooks/index';
 import { useTheme } from '../hooks/ui/useTheme';
 import Footer from '../components/layout/Footer';
 import { useSelector } from 'react-redux';
-import { selectIsAuthenticated } from '../features/authSlice';
+import { selectIsAuthenticated } from '../features/index';
 
 const AboutPage = () => {
+  useDocumentTitle('About');
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const isAuthenticated = useSelector(selectIsAuthenticated);

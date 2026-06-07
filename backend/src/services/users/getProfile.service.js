@@ -1,6 +1,6 @@
-import User from '../../models/User.js';
-import Battle from '../../models/Battle.js';
-import Submission from '../../models/Submission.js';
+import { User } from '../../models/index.js';
+import { Battle } from '../../models/index.js';
+import { Submission } from '../../models/index.js';
 
 export const getProfileService = async (username) => {
   // 1. Fetch main user details

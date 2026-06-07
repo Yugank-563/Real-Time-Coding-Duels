@@ -9,9 +9,18 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+      default: null,
+    },
+
     name: {
       type: String,
-      default: null,
+      default: '',
+      maxlength: 50,
     },
 
     passwordHash: {
@@ -50,6 +59,18 @@ const userSchema = new mongoose.Schema(
         type: String,
       },
     ],
+
+    // ── Profile Fields ──
+    bio: {
+      type: String,
+      default: '',
+      maxlength: 250,
+    },
+
+    country: {
+      type: String,
+      default: '',
+    },
 
     refreshToken: {
       type: String,

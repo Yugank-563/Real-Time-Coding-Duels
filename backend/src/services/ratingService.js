@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import { User } from '../models/index.js';
 
 /**
  * Calculates new Elo ratings for two players after a battle.
@@ -87,7 +87,7 @@ export const processBattleResult = async (userId, opponentId, actualScore, bonus
 
   return {
     userId,
-    username: user.name || user.email.split('@')[0],
+    username: user.username || user.email.split('@')[0],
     oldElo: myElo,
     newElo: myNewElo,
     eloChange: myEloChange,
@@ -97,7 +97,7 @@ export const processBattleResult = async (userId, opponentId, actualScore, bonus
     isLevelUp,
     opponent: {
       userId: opponentId,
-      username: opponent.name || opponent.email.split('@')[0],
+      username: opponent.username || opponent.email.split('@')[0],
       oldElo: oppElo,
       newElo: oppNewElo,
       eloChange: oppEloChange,

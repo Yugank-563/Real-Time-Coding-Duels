@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectIsAuthenticated } from '../../features/authSlice';
+import { selectIsAuthenticated } from '../../features/index';
 
 // ProtectedRoute - Route guard to protect pages from unauthenticated access.
 // Returns <Outlet /> (children routes) if authorized, or redirects to /login.

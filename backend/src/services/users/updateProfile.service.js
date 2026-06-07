@@ -1,4 +1,4 @@
-import User from '../../models/User.js';
+import { User } from '../../models/index.js';
 
 const sanitizeText = (str) => {
   if (typeof str !== 'string') return '';

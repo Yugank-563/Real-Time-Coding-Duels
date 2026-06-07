@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../features/authSlice';
-import { useToast, useTheme } from '../../hooks/index';
-import api from '../../utils/api';
+import { setUser } from '../../features/index';
+import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { api } from '../../utils/index';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
-} from '../../components/ui';
+} from '../../components/index';
 
 /* ══════════════════════════════════════════
    LOGIN PAGE
@@ -17,6 +17,7 @@ const LoginPage = () => {
   const dispatch  = useDispatch();
   const toast     = useToast();
   const { theme } = useTheme();
+  useDocumentTitle('Login');
   const isLight   = theme === 'light';
 
   const [formData, setData]   = useState({ email: '', password: '' });

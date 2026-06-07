@@ -1,5 +1,4 @@
-import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../hooks/index';
 
 const Footer = () => {
   const { isDark } = useTheme();

@@ -7,8 +7,8 @@ import {
   Swords, Trophy, BookOpen, LayoutGrid, Home,
   User, Award
 } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
-import { selectUser, selectIsAuthenticated, logout } from '../../features/auth/authSlice';
+import { useTheme } from '../../hooks/ui/useTheme';
+import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
 
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
@@ -181,16 +181,14 @@ const Navbar = () => {
                   <link.icon className="w-3.5 h-3.5" />
                   <span>{link.label}</span>
 
-                  {/* Animated Underline for Active state (Linear-style) */}
+                  {/* Underline for Active state (Linear-style) */}
                   {isActive && (
-                    <motion.div
-                      layoutId="active-underline"
+                    <div
                       className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
                       style={{
                         backgroundColor: isDark ? '#00F5C4' : '#4F6EF7',
                         boxShadow: isDark ? '0 0 8px #00F5C4' : 'none'
                       }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                     />
                   )}
                 </NavLink>
