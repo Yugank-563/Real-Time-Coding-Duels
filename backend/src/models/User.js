@@ -34,9 +34,15 @@ const userSchema = new mongoose.Schema(
       default: 'user',
     },
 
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
     rank: {
       type: Number,
       default: 1200,
+      index: true,
     },
 
 
@@ -62,6 +68,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Index for finding user by refresh token (sparse index)
+userSchema.index({ refreshToken: 1 }, { sparse: true });
 
 const User = mongoose.model('User', userSchema);
 

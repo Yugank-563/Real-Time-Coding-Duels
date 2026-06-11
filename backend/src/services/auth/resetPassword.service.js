@@ -7,41 +7,26 @@ export const verifyResetOTPService = async (email, otp) => {
   const emailLower = email.toLowerCase();
   const user = await findUserByEmail(emailLower);
 
-  if (!user) throw new Error('User not found');
+  if (!user) { const err = new Error('User not found'); err.status = 404; throw err; }
 
   const otpHash = await redis.get(`forgot-password:${emailLower}`);
 
   if (!otpHash) {
-    throw new Error('Reset code has expired or was not requested. Please request a new one.');
+    { const err = new Error('Reset code has expired or was not requested. Please request a new one.'); err.status = 401; throw err; }
   }
 
   const valid = await bcryptjs.compare(otp, otpHash);
 
-  if (!valid) throw new Error('Invalid reset code');
+  if (!valid) { const err = new Error('Invalid reset code'); err.status = 401; throw err; }
 
-  return true;
+  return user;
 };
 
 // POST /auth/reset-password
 export const resetPasswordService = async (email, otp, newPassword) => {
-  if (!newPassword || newPassword.length < 6) {
-    throw new Error('Password must be at least 6 characters');
-  }
-
   const emailLower = email.toLowerCase();
-  const user = await findUserByEmail(emailLower);
-
-  if (!user) throw new Error('User not found');
-
-  const otpHash = await redis.get(`forgot-password:${emailLower}`);
-
-  if (!otpHash) {
-    throw new Error('Reset code has expired or was not requested. Please request a new one.');
-  }
-
-  const valid = await bcryptjs.compare(otp, otpHash);
-
-  if (!valid) throw new Error('Invalid reset code');
+  
+  const user = await verifyResetOTPService(emailLower, otp);
 
   const passwordHash = await bcryptjs.hash(newPassword, 10);
 

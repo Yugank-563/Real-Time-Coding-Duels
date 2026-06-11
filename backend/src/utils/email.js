@@ -13,11 +13,6 @@ apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_AP
 const accountInstance = new AccountApi();
 accountInstance.setApiKey(AccountApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
-// Check connections and print clean startup log
-accountInstance.getAccount().then(
-  () => console.log('email server is ready'),
-  (err) => console.error('Brevo Connection Error:', err.message)
-);
 
 const sender = {
   name: 'BattleCode Arena',
@@ -46,7 +41,7 @@ export const sendOTPEmail = async (email, otp, name = 'User') => {
     await apiInstance.sendTransacEmail(emailData);
     return { success: true };
   } catch (error) {
-    return { success: false, error: error.message };
+    throw new Error(`Failed to send OTP email: ${error.message}`);
   }
 };
 
@@ -72,6 +67,6 @@ export const sendPasswordResetEmail = async (email, otp, name = 'User') => {
     await apiInstance.sendTransacEmail(emailData);
     return { success: true };
   } catch (error) {
-    return { success: false, error: error.message };
+    throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 };
