@@ -1,16 +1,19 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/index.js';
+import { authMiddleware, optionalAuthMiddleware, validateRequest } from '../middleware/index.js';
 import { searchUsers, getProfile, updateProfile, getLeaderboard } from '../controllers/index.js';
+import { searchUsersSchema, updateProfileSchema, getLeaderboardSchema } from '../schemas/index.js';
 
 const router = express.Router();
 
-// Apply auth middleware to all routes
+// Public/Optional auth routes
+router.get('/leaderboard', optionalAuthMiddleware, validateRequest(getLeaderboardSchema), getLeaderboard);
+
+// Apply auth middleware to all remaining routes
 router.use(authMiddleware);
 
-// User routes
-router.get('/leaderboard', getLeaderboard);
-router.get('/search', searchUsers);
+// Protected User routes
+router.get('/search', validateRequest(searchUsersSchema), searchUsers);
 router.get('/profile/:username', getProfile);
-router.put('/profile', updateProfile);
+router.put('/profile', validateRequest(updateProfileSchema), updateProfile);
 
 export default router;
