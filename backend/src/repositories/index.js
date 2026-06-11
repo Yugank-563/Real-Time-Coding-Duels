@@ -1,5 +1,6 @@
 // user repository
 export * from './user.repository.js';
+export * from './testcase.repository.js';
 
 // battle repository
 export * from './battle.repository.js';

@@ -15,6 +15,7 @@ export * from './battles/getBattleSummary.service.js';
 export * from './battles/getLobbyStats.service.js';
 export * from './battles/getTopicStats.service.js';
 export * from './battles/getTopics.service.js';
+export * from './battles/joinQueue.service.js';
 export * from './battles/joinPrivateRoom.service.js';
 export * from './battles/startPrivateBattle.service.js';
 export * from './battles/surrenderBattle.service.js';

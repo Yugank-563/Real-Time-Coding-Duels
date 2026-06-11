@@ -11,6 +11,16 @@ export const findUserByEmail = async (email) => {
   return await User.findOne({ email });
 };
 
+// Find user by username
+export const findUserByUsername = async (username) => {
+  return await User.findOne({ username });
+};
+
+// Find user by username excluding sensitive data
+export const findUserByUsernameExcludingPassword = async (username) => {
+  return await User.findOne({ username }).select('-passwordHash -refreshToken');
+};
+
 // Find user by MongoDB ObjectId
 export const findUserById = async (id) => {
   return await User.findById(id);
