@@ -6,6 +6,7 @@ export * from './auth/refreshToken.service.js';
 export * from './auth/register.service.js';
 export * from './auth/resetPassword.service.js';
 export * from './auth/verifyOtp.service.js';
+export * from './auth/me.service.js';
 
 // battles folder
 export * from './battles/createPrivateRoom.service.js';

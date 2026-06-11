@@ -1,4 +1,5 @@
 import { User } from '../models/index.js';
+import { escapeRegex } from '../utils/regexUtils.js';
 
 // Create a new user
 export const createUser = async (data) => {
@@ -30,22 +31,19 @@ export const updateRefreshToken = async (id, token) => {
   return await User.findByIdAndUpdate(id, { refreshToken: token }, { returnDocument: 'after' });
 };
 
-// Hard delete user
-export const deleteUserById = async (id) => {
-  return await User.findByIdAndDelete(id);
-};
 
 // Search users by name, username or email, excluding a specific ID
 export const searchUsersByNameOrEmail = async (q, excludeId) => {
+  const safeQ = escapeRegex(q.trim());
   return await User.find({
     $or: [
-      { username: { $regex: q.trim(), $options: 'i' } },
-      { name: { $regex: q.trim(), $options: 'i' } },
-      { email: { $regex: q.trim(), $options: 'i' } }
+      { username: { $regex: safeQ, $options: 'i' } },
+      { name: { $regex: safeQ, $options: 'i' } },
+      { email: { $regex: safeQ, $options: 'i' } }
     ],
     _id: { $ne: excludeId }
   })
   .limit(5)
-  .select('username name email rank xp level');
+  .select('username name email rank');
 };
 

@@ -1,11 +1,11 @@
 import { registerService } from '../../services/index.js';
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await registerService(email, password);
     res.status(201).json(result);
   } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+    next(error);
+}
 };
