@@ -11,6 +11,7 @@ import User from '../../../backend/src/models/User.js';
 import Problem from '../../../backend/src/models/Problem.js';
 import Battle from '../../../backend/src/models/Battle.js';
 import { getRandomProblem } from '../../../backend/src/services/problemService.js';
+import { matchmakingSchema } from '../schemas/socket.schema.js';
 
 const eloToDifficulty = (elo) => {
   if (elo < 1200) return 'EASY';
@@ -23,6 +24,109 @@ const activeQueueIntervals = new Map();
 
 // Map userId → socketId so we can stop the matched user's interval
 const userSocketMap = new Map();
+
+const validateSocketPayload = (schema, data, socket, eventName) => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    socket.emit('error', { message: `Validation failed for ${eventName}`, details: result.error.issues });
+    console.warn(`[Security] Socket payload validation failed for ${eventName}:`, result.error.issues);
+    return null;
+  }
+  return result.data;
+};
+
+const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleType, user, opponent, io) => {
+  let dbProblem;
+  try {
+    let problemData;
+    let difficulty = 'MEDIUM';
+
+    if (battleType === 'topic') {
+      difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
+      problemData = await getRandomProblem(topic, difficulty);
+    } else if (battleType === 'sprint') {
+      difficulty = 'EASY';
+      problemData = await getRandomProblem('Array', 'EASY');
+    } else {
+      difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
+      problemData = await getRandomProblem('Array', difficulty);
+    }
+
+    const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
+    const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
+    dbProblem = await Problem.findOneAndUpdate(
+      query,
+      { 
+        ...problemData,
+        description: problemData.content || problemData.description || '',
+        difficulty: dbDiff,
+        boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
+          ? problemData.boilerplates
+          : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+      },
+      { upsert: true, new: true }
+    );
+  } catch (fetchErr) {
+    console.error(`[Matchmaking] Problem fetch error for ${battleType}:`, fetchErr.message);
+    io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+    io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
+    
+    if (battleType === 'topic') {
+      await handleTopicQueue(userId, myElo, topic);
+      if (opponent) await handleTopicQueue(matchedUserId, opponent.rank || 1200, topic);
+    } else {
+      await addToQueue(userId, myElo, battleType);
+      if (opponent) await addToQueue(matchedUserId, opponent.rank || 1200, battleType);
+    }
+    return;
+  }
+
+  const battleData = {
+    players: [
+      { user: userId, status: 'ready' },
+      { user: matchedUserId, status: 'ready' },
+    ],
+    problem: dbProblem._id,
+    battleType,
+    status: 'active',
+    startTime: new Date(),
+    timeLimit: battleType === 'sprint' ? 300 : 1200,
+  };
+  
+  if (battleType === 'topic' && topic) {
+    battleData.topic = topic;
+  }
+
+  const battle = await Battle.create(battleData);
+  const battleIdStr = battle._id.toString();
+  console.log(`[Matchmaking] ✅ Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | type: ${battleType}`);
+
+  const myData = {
+    battleId: battleIdStr,
+    battleType,
+    opponent: {
+      username: opponent?.name || opponent?.email?.split('@')[0] || 'Opponent',
+      elo: opponent?.rank || 1200,
+    },
+  };
+  
+  const opponentData = {
+    battleId: battleIdStr,
+    battleType,
+    opponent: {
+      username: user.name || user.email.split('@')[0],
+      elo: myElo,
+    },
+  };
+
+  if (battleType === 'topic' && topic) {
+    myData.topic = topic;
+    opponentData.topic = topic;
+  }
+
+  io.to(`user:${userId}`).emit('matchmaking:found', myData);
+  io.to(`user:${matchedUserId}`).emit('matchmaking:found', opponentData);
+};
 
 export const registerMatchmakingHandlers = (io, socket) => {
 
@@ -44,15 +148,13 @@ export const registerMatchmakingHandlers = (io, socket) => {
   };
 
   // 1. Join matchmaking queue
-  socket.on('matchmaking:join', async (data) => {
+  socket.on('matchmaking:join', async (raw_data) => {
     try {
+      const data = validateSocketPayload(matchmakingSchema, raw_data, socket, 'matchmaking:join');
+      if (!data) return;
+
       const { battleType, topic } = data;
       const userId = socket.userId;
-
-      if (!battleType) {
-        socket.emit('error', { message: 'battleType is required.' });
-        return;
-      }
 
       const user = await User.findById(userId);
       if (!user) {
@@ -106,73 +208,7 @@ export const registerMatchmakingHandlers = (io, socket) => {
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
               const opponent = await User.findById(matchedUserId);
- 
-               let dbProblem;
-               try {
-                 const difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
-                 const problemData = await getRandomProblem(topic, difficulty);
-                 const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
-                 const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
-                 dbProblem = await Problem.findOneAndUpdate(
-                   query,
-                   { 
-                     ...problemData,
-                     description: problemData.content || problemData.description || '',
-                     difficulty: dbDiff,
-                     boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
-                       ? problemData.boilerplates
-                       : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
-                   },
-                   { upsert: true, new: true }
-                 );
-               } catch (fetchErr) {
-                 console.error('[Matchmaking] Topic problem fetch error:', fetchErr.message);
-                 io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
-                 io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
-                 await handleTopicQueue(userId, myElo, topic);
-                 if (opponent) await handleTopicQueue(matchedUserId, opponent.rank || 1200, topic);
-                 return;
-               }
- 
-               const battle = await Battle.create({
-                 players: [
-                   { user: userId, status: 'ready' },
-                   { user: matchedUserId, status: 'ready' },
-                 ],
-                 problem: dbProblem._id,
-                 battleType: 'topic',
-                 topic,
-                 status: 'active',
-                 startTime: new Date(),
-               });
-
-              const battleIdStr = battle._id.toString();
-              console.log(`[Matchmaking] ✅ Topic Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | topic: ${topic}`);
-
-              const myData = {
-                battleId: battleIdStr,
-                battleType: 'topic',
-                topic,
-                opponent: {
-                  username: opponent?.name || opponent?.email?.split('@')[0] || 'Opponent',
-                  elo: opponent?.rank || 1200,
-                  level: opponent?.level || 1,
-                },
-              };
-
-              const opponentData = {
-                battleId: battleIdStr,
-                battleType: 'topic',
-                topic,
-                opponent: {
-                  username: user.name || user.email.split('@')[0],
-                  elo: myElo,
-                  level: user.level || 1,
-                },
-              };
-
-              io.to(`user:${userId}`).emit('matchmaking:found', myData);
-              io.to(`user:${matchedUserId}`).emit('matchmaking:found', opponentData);
+              await executeMatchCreation(userId, matchedUserId, myElo, topic, 'topic', user, opponent, io);
 
             } else {
               // No match yet — send wait update
@@ -196,74 +232,7 @@ export const registerMatchmakingHandlers = (io, socket) => {
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
               const opponent = await User.findById(matchedUserId);
-                let dbProblem;
-                try {
-                  let problemData;
-                  let difficulty = 'MEDIUM';
-                  if (battleType === 'sprint') {
-                    difficulty = 'EASY';
-                    problemData = await getRandomProblem('Array', 'EASY');
-                  } else {
-                    difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rank || 1200)) / 2));
-                    problemData = await getRandomProblem('Array', difficulty);
-                  }
-                  const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
-                  const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
-                  dbProblem = await Problem.findOneAndUpdate(
-                    query,
-                    { 
-                      ...problemData,
-                      description: problemData.content || problemData.description || '',
-                      difficulty: dbDiff,
-                      boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
-                        ? problemData.boilerplates
-                        : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
-                    },
-                    { upsert: true, new: true }
-                  );
-                } catch (fetchErr) {
-                 console.error('[Matchmaking] Standard problem fetch error:', fetchErr.message);
-                 io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
-                 io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
-                 await addToQueue(userId, myElo, battleType);
-                 if (opponent) await addToQueue(matchedUserId, opponent.rank || 1200, battleType);
-                 return;
-               }
- 
-               const battle = await Battle.create({
-                 players: [
-                   { user: userId, status: 'ready' },
-                   { user: matchedUserId, status: 'ready' },
-                 ],
-                 problem: dbProblem._id,
-                 battleType,
-                 status: 'active',
-                 startTime: new Date(),
-                 timeLimit: battleType === 'sprint' ? 300 : 1200,
-               });
-
-              const battleIdStr = battle._id.toString();
-              console.log(`[Matchmaking] ✅ Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | type: ${battleType}`);
-
-              io.to(`user:${userId}`).emit('matchmaking:found', {
-                battleId: battleIdStr,
-                battleType,
-                opponent: {
-                  username: opponent?.name || opponent?.email?.split('@')[0] || 'Opponent',
-                  elo: opponent?.rank || 1200,
-                  level: opponent?.level || 1,
-                },
-              });
-
-              io.to(`user:${matchedUserId}`).emit('matchmaking:found', {
-                battleId: battleIdStr,
-                battleType,
-                opponent: {
-                  username: user.name || user.email.split('@')[0],
-                  elo: myElo,
-                  level: user.level || 1,
-                },
-              });
+              await executeMatchCreation(userId, matchedUserId, myElo, null, battleType, user, opponent, io);
 
             } else {
               const queueInfo = await getQueuePosition(userId, battleType);
@@ -288,8 +257,11 @@ export const registerMatchmakingHandlers = (io, socket) => {
   });
 
   // 2. Leave matchmaking queue
-  socket.on('matchmaking:leave', async (data) => {
+  socket.on('matchmaking:leave', async (raw_data) => {
     try {
+      const data = validateSocketPayload(matchmakingSchema, raw_data, socket, 'matchmaking:leave');
+      if (!data) return;
+
       const { battleType, topic } = data;
 
       if (battleType === 'topic') {
