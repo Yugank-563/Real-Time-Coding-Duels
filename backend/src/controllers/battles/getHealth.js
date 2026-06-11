@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 const LEETCODE_BASE = process.env.LEETCODE_API_URL || 'https://alfa-leetcode-api.onrender.com';
 
-export const getHealth = async (req, res) => {
+export const getHealth = async (req, res, next) => {
   const results = {};
 
   // 1. Ping LeetCode API
@@ -11,8 +11,8 @@ export const getHealth = async (req, res) => {
     await axios.get(`${LEETCODE_BASE}/daily`, { timeout: 6000 });
     results.leetcode = 'up';
   } catch (err) {
-    results.leetcode = 'down';
-  }
+    next(err);
+}
 
   // 2. Ping local MongoDB cache
   results.mongodb = mongoose.connection.readyState === 1 ? 'up' : 'down';

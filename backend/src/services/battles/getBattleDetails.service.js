@@ -7,13 +7,13 @@ export const getBattleDetailsService = async (battleId, userId) => {
   ]);
 
   if (!battle) {
-    throw new Error('Battle room not found.');
+    { const err = new Error('Battle room not found.'); err.status = 404; throw err; }
   }
 
   // Check if player is part of this battle
   const isPlayer = battle.players.some(p => p.user._id.toString() === userId);
   if (!isPlayer) {
-    throw new Error('You are not a participant in this battle.');
+    { const err = new Error('You are not a participant in this battle.'); err.status = 403; throw err; }
   }
 
   return {

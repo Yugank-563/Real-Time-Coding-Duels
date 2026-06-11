@@ -1,6 +1,6 @@
 import { removeFromTopicQueue, removeFromQueue } from '../../services/index.js';
 
-export const leaveQueue = async (req, res) => {
+export const leaveQueue = async (req, res, next) => {
   try {
     const { battleType, topic, teamId } = req.body;
     if (!battleType) {
@@ -17,6 +17,6 @@ export const leaveQueue = async (req, res) => {
     }
     res.status(200).json({ message: 'Successfully left matchmaking queue' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    next(error);
+}
 };

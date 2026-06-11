@@ -7,7 +7,7 @@ export const getBattleSummaryService = async (battleId) => {
   ]);
 
   if (!battle) {
-    throw new Error('Battle room not found.');
+    { const err = new Error('Battle room not found.'); err.status = 404; throw err; }
   }
 
   // Fetch all submissions registered for this battle room
