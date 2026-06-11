@@ -1,19 +1,22 @@
 import jwt from 'jsonwebtoken';
 import { findUserById } from '../../repositories/index.js';
+import { generateAccessToken, generateRefreshToken } from '../../utils/tokenUtils.js';
 
 // POST /auth/refresh
 export const refreshTokenService = async (token) => {
-  if (!token) throw new Error('No token provided');
+  if (!token) { const err = new Error('No token provided'); err.status = 401; throw err; }
 
   const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
   const user = await findUserById(decoded.id);
 
-  if (!user) throw new Error('User not found');
-  if (user.refreshToken !== token) throw new Error('Invalid refresh token');
+  if (!user) { const err = new Error('User not found'); err.status = 404; throw err; }
+  if (user.refreshToken !== token) { const err = new Error('Invalid refresh token'); err.status = 400; throw err; }
 
-  const newAccessToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRY || '7d',
-  });
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken(user);
 
-  return { accessToken: newAccessToken };
+  // Rotate the refresh token
+  await user.updateOne({ refreshToken: newRefreshToken });
+
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
