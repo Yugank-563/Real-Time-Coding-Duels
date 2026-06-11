@@ -8,6 +8,7 @@ import {
   getUserBattleStats,
   getLeaderboardUserById
 } from '../../repositories/index.js';
+import { escapeRegex } from '../../utils/regexUtils.js';
 
 export const getLeaderboardDataService = async ({ page, limit, search, sort, order, country, currentUserId }) => {
   const pageNum  = Math.max(1, parseInt(page) || 1);
@@ -18,17 +19,19 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
   const filter = {};
 
   if (search) {
+    const safeSearch = escapeRegex(search);
     filter.$or = [
-      { username: { $regex: search, $options: 'i' } },
-      { name:     { $regex: search, $options: 'i' } },
+      { username: { $regex: safeSearch, $options: 'i' } },
+      { name:     { $regex: safeSearch, $options: 'i' } },
     ];
   }
 
   if (country && country !== 'ALL') {
-    filter.country = { $regex: `^${country}$`, $options: 'i' };
+    const safeCountry = escapeRegex(country);
+    filter.country = { $regex: `^${safeCountry}$`, $options: 'i' };
   }
 
-  // Sort config
+  // Sort config — hardcoded to 'rank' to prevent prototype pollution via user-supplied sort key
   const sortField = 'rank';
   const sortOrder = order === 'asc' ? 1 : -1;
 

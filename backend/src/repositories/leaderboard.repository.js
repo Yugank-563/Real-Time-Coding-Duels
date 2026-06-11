@@ -45,11 +45,25 @@ export const getDistinctCountries = async () => {
 
 export const getGlobalRankCounts = async (uniqueRanks) => {
   const rankCountsMap = {};
-  await Promise.all(
-    uniqueRanks.map(async (r) => {
-      rankCountsMap[r] = await User.countDocuments({ rank: { $gt: r } });
-    })
-  );
+  if (!uniqueRanks || uniqueRanks.length === 0) return rankCountsMap;
+
+  // Dynamically build a $facet stage to execute all counts in a single DB query
+  const facetStage = {};
+  uniqueRanks.forEach(r => {
+    facetStage[`rank_${r}`] = [
+      { $match: { rank: { $gt: r } } },
+      { $count: "count" }
+    ];
+  });
+
+  const results = await User.aggregate([{ $facet: facetStage }]);
+  const facetResults = results[0];
+
+  uniqueRanks.forEach(r => {
+    const countArr = facetResults[`rank_${r}`];
+    rankCountsMap[r] = countArr.length > 0 ? countArr[0].count : 0;
+  });
+
   return rankCountsMap;
 };
 

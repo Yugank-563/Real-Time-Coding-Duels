@@ -1,6 +1,6 @@
 import { getLeaderboardDataService } from '../../services/index.js';
 
-export const getLeaderboard = async (req, res) => {
+export const getLeaderboard = async (req, res, next) => {
   try {
     const {
       page    = 1,
@@ -23,7 +23,6 @@ export const getLeaderboard = async (req, res) => {
 
     res.status(200).json(leaderboardData);
   } catch (err) {
-    console.error('[leaderboard] Error:', err.message);
-    res.status(500).json({ message: err.message });
-  }
+    next(err);
+}
 };
