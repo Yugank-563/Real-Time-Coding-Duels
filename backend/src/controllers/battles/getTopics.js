@@ -1,10 +1,10 @@
 import { getTopicsService } from '../../services/index.js';
 
-export const getTopics = async (req, res) => {
+export const getTopics = async (req, res, next) => {
   try {
     const result = await getTopicsService();
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    next(error);
+}
 };

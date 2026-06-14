@@ -1,22 +1,23 @@
-import { findBattleById } from '../../repositories/index.js';
+import { findBattleById, updateBattleById } from '../../repositories/index.js';
 
 export const startPrivateBattleService = async (roomId, userId) => {
   const battle = await findBattleById(roomId);
   if (!battle) {
-    throw new Error('Custom room not found.');
+    { const err = new Error('Custom room not found.'); err.status = 404; throw err; }
   }
 
   if (battle.host.toString() !== userId) {
-    throw new Error('Only the lobby host can start the battle.');
+    { const err = new Error('Only the lobby host can start the battle.'); err.status = 400; throw err; }
   }
 
   if (battle.players.length < 2) {
-    throw new Error('Waiting for an opponent to join.');
+    { const err = new Error('Waiting for an opponent to join.'); err.status = 400; throw err; }
   }
 
-  battle.status = 'active';
-  battle.startTime = new Date();
-  await battle.save();
+  await updateBattleById(battle._id, {
+    status: 'active',
+    startTime: new Date()
+  });
 
   return {
     roomId: battle._id

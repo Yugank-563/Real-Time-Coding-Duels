@@ -4,16 +4,16 @@ import { processBattleResult } from '../ratingService.js';
 export const surrenderBattleService = async (battleId, userId) => {
   const battle = await findBattleById(battleId);
   if (!battle) {
-    throw new Error('Battle room not found.');
+    { const err = new Error('Battle room not found.'); err.status = 404; throw err; }
   }
 
   if (battle.status !== 'active') {
-    throw new Error('Battle is not active.');
+    { const err = new Error('Battle is not active.'); err.status = 400; throw err; }
   }
 
   const playerIndex = battle.players.findIndex(p => p.user.toString() === userId);
   if (playerIndex === -1) {
-    throw new Error('You are not a participant in this battle.');
+    { const err = new Error('You are not a participant in this battle.'); err.status = 403; throw err; }
   }
 
   // Mark surrendering player status

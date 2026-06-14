@@ -12,9 +12,9 @@ import { useBattleSocket, useLobbyStats, useTopicStats, useCustomRoom, useDocume
 import { ArenaCard, InviteFriendCard, JoinRoomCard, CreateRoomCard } from '../../components/index';
 
 const BATTLE_TYPES = [
-  { id: '1v1', name: 'Ranked 1v1', desc: 'Direct Elo-rated duels against peer opponents.', icon: Swords, players: '842 active', speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50' },
-  { id: 'sprint', name: 'Timed Sprint', desc: 'Fixed 5-minute speedruns to solve single easy challenges.', icon: Zap, players: '302 active', speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50' },
-  { id: 'topic', name: 'Topic Battle', desc: 'Choose a topic and battle opponents who pick the same subject.', icon: Target, players: '247 active in DP · 189 in Graphs', speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50' }
+  { id: '1v1', name: 'Ranked 1v1', desc: 'Direct Elo-rated duels against peer opponents.', icon: Swords, users: '842 active', speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50' },
+  { id: 'sprint', name: 'Timed Sprint', desc: 'Fixed 5-minute speedruns to solve single easy challenges.', icon: Zap, users: '302 active', speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50' },
+  { id: 'topic', name: 'Topic Battle', desc: 'Choose a topic and battle opponents who pick the same subject.', icon: Target, users: '247 active in DP · 189 in Graphs', speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50' }
 ];
 
 const BattleLobby = () => {
@@ -84,7 +84,7 @@ const BattleLobby = () => {
   };
 
   return (
-    <div className="w-full bg-base text-text-primary p-6 relative overflow-hidden font-sans select-none pb-4 pt-2 transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
+    <div className="w-full bg-base text-text-primary py-6 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
       {/* ──── DOT GRID BACKGROUND ──── */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -96,7 +96,7 @@ const BattleLobby = () => {
       {/* ──── TOP RADIAL GLOW ──── */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-accent-primary/10 to-transparent blur-[120px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
+      <div className="space-y-6 relative z-10 w-full">
         {/* Header Hero banner */}
         <div className="text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-6">
           <div className="space-y-2">

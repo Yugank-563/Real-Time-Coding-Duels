@@ -137,27 +137,3 @@ export const findTopicMatch = async (userId, elo, topic, tolerance = 150) => {
   return null;
 };
 
-/**
- * Cleans up stale topic queue entries older than 5 minutes.
- */
-export const cleanupStaleTopicQueues = async () => {
-  try {
-    const timestamps = await redis.hGetAll('matchmaking_topic_timestamps');
-    const now = Date.now();
-    const expiryLimit = 5 * 60 * 1000; // 5 minutes
-
-    for (const [field, valueStr] of Object.entries(timestamps)) {
-      const timestamp = parseInt(valueStr, 10);
-      if (now - timestamp > expiryLimit) {
-        const [userId, normalizedTopic] = field.split(':');
-        const key = `matchmaking_topic:${normalizedTopic}`;
-        await redis.zRem(key, userId);
-        await redis.hDel('matchmaking_topic_timestamps', field);
-        console.log(`Cleaned up stale queue entry for user ${userId} on topic ${normalizedTopic}`);
-      }
-    }
-  } catch (error) {
-    console.error('cleanupStaleTopicQueues error:', error.message);
-  }
-};
-

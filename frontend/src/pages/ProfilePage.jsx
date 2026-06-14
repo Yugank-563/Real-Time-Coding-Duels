@@ -38,7 +38,7 @@ const ProfilePage = () => {
       <div className="auth-card" style={{ maxWidth: 320, textAlign: 'center', margin: 'auto' }}>
         <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.65rem' }}>👤</span>
         <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--auth-heading)', margin: 0 }}>
-          Player Not Found
+          User Not Found
         </h2>
         <p style={{ fontSize: '0.8rem', color: 'var(--auth-muted)', margin: '0.3rem 0 0' }}>
           @{username} doesn't exist on BattleCode.

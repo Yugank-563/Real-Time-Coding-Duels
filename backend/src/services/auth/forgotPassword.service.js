@@ -1,19 +1,21 @@
 import bcryptjs from 'bcryptjs';
+import crypto from 'crypto';
 import redis from '../../config/redis.js';
 import { sendPasswordResetEmail } from '../../utils/email.js';
 import { findUserByEmail } from '../../repositories/index.js';
 
 // POST /auth/forgot-password
 export const forgotPasswordService = async (email) => {
-  if (!email) throw new Error('Email is required');
-
   const emailLower = email.toLowerCase();
-
   const user = await findUserByEmail(emailLower);
 
-  if (!user) throw new Error('No account found with this email');
+  if (!user) {
+    const err = new Error('No account found with that email address');
+    err.status = 404;
+    throw err;
+  }
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otp = crypto.randomInt(100000, 1000000).toString();
   const otpHash = await bcryptjs.hash(otp, 10);
 
   // Set OTP in redis with a 10-minute expiry (600 seconds)

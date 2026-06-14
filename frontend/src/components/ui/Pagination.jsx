@@ -1,6 +1,6 @@
 import '../../styles/auth.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-const ProblemsPagination = ({ pagination, setPage }) => {
+const Pagination = ({ pagination, setPage, label = 'items' }) => {
   if (!pagination || pagination.pages <= 1) return null;
 
   const { page, pages, total } = pagination;
@@ -8,7 +8,7 @@ const ProblemsPagination = ({ pagination, setPage }) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem' }}>
       <div style={{ fontSize: '0.85rem', color: 'var(--auth-muted)' }}>
-        Showing page <span style={{ color: 'var(--auth-heading)', fontWeight: 600 }}>{page}</span> of {pages} ({total} problems)
+        Page <span style={{ color: 'var(--auth-heading)', fontWeight: 600 }}>{page}</span> of {pages} ({total} {label})
       </div>
       
       <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -91,4 +91,4 @@ const ProblemsPagination = ({ pagination, setPage }) => {
   );
 };
 
-export default ProblemsPagination;
+export default Pagination;

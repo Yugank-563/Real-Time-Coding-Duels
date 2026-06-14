@@ -78,7 +78,7 @@ const ArenaCard = ({
                 : (lobbyStats?.topic !== undefined ? `${lobbyStats.topic} active` : '247 active in DP · 189 in Graphs'))
               : (lobbyStats?.[type.id === '1v1' ? 'ranked' : type.id] !== undefined
                 ? `${lobbyStats[type.id === '1v1' ? 'ranked' : type.id]} active`
-                : type.players)
+                : type.users)
             }
           </span>
           <span className="text-[10px] font-mono text-text-muted opacity-65">{type.speed}</span>

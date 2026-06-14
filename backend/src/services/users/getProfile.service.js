@@ -1,51 +1,19 @@
-import { User } from '../../models/index.js';
-import { Battle } from '../../models/index.js';
-import { Submission } from '../../models/index.js';
+import { findUserByUsernameExcludingPassword } from '../../repositories/index.js';
+import { getProfileBattleStats, getRatingHistoryBattles } from '../../repositories/index.js';
+import { getProfileSubmissionStats, getProfileDifficultyBreakdown } from '../../repositories/index.js';
 
 export const getProfileService = async (username) => {
   // 1. Fetch main user details
-  const user = await User.findOne({ username: username }).select(
-    '-passwordHash -refreshToken'
-  );
+  const user = await findUserByUsernameExcludingPassword(username);
 
   if (!user) {
-    throw new Error('User not found.');
+    { const err = new Error('User not found.'); err.status = 404; throw err; }
   }
 
   const userId = user._id;
 
   // 2. Battle stats aggregation
-  const battleStats = await Battle.aggregate([
-    {
-      $match: {
-        'players.user': userId,
-        status: { $in: ['active', 'ended'] },
-      },
-    },
-    {
-      $project: {
-        winner: 1,
-        startTime: 1,
-        endTime: 1,
-        problem: 1,
-        battleType: 1,
-        players: 1,
-        createdAt: 1,
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalBattles: { $sum: 1 },
-        wins: {
-          $sum: {
-            $cond: [{ $eq: ['$winner', userId] }, 1, 0],
-          },
-        },
-        battles: { $push: '$$ROOT' },
-      },
-    },
-  ]);
+  const battleStats = await getProfileBattleStats(userId);
 
   const stats = battleStats[0] || { totalBattles: 0, wins: 0, battles: [] };
   const losses = stats.totalBattles - stats.wins;
@@ -54,19 +22,7 @@ export const getProfileService = async (username) => {
     : 0;
 
   // 3. Submission stats aggregation
-  const submissionStats = await Submission.aggregate([
-    { $match: { userId } },
-    {
-      $group: {
-        _id: null,
-        totalSubmissions: { $sum: 1 },
-        accepted: {
-          $sum: { $cond: [{ $eq: ['$verdict', 'AC'] }, 1, 0] },
-        },
-        uniqueProblems: { $addToSet: '$problemId' },
-      },
-    },
-  ]);
+  const submissionStats = await getProfileSubmissionStats(userId);
 
   const subStats = submissionStats[0] || {
     totalSubmissions: 0,
@@ -79,29 +35,7 @@ export const getProfileService = async (username) => {
     : 0;
 
   // 4. Problem difficulty breakdown
-  const difficultyBreakdown = await Submission.aggregate([
-    { $match: { userId, verdict: 'AC' } },
-    {
-      $group: {
-        _id: '$problemId',
-      },
-    },
-    {
-      $lookup: {
-        from: 'problems',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'problem',
-      },
-    },
-    { $unwind: '$problem' },
-    {
-      $group: {
-        _id: '$problem.difficulty',
-        count: { $sum: 1 },
-      },
-    },
-  ]);
+  const difficultyBreakdown = await getProfileDifficultyBreakdown(userId);
 
   const difficulties = { Easy: 0, Medium: 0, Hard: 0 };
   difficultyBreakdown.forEach((d) => {
@@ -111,13 +45,7 @@ export const getProfileService = async (username) => {
   });
 
   // 6. Rating history from battles (chronological ELO progression)
-  const ratingBattles = await Battle.find({
-    'players.user': userId,
-    status: 'ended',
-  })
-    .select('winner players createdAt battleType')
-    .sort({ createdAt: 1 })
-    .lean();
+  const ratingBattles = await getRatingHistoryBattles(userId);
 
   const ratingHistory = [];
   ratingHistory.push({

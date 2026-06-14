@@ -5,7 +5,7 @@ import { fetchProblems } from '../../features/index';
 import { useTheme, useDocumentTitle } from '../../hooks/index';
 import '../../styles/auth.css';
 import { BookOpen } from 'lucide-react';
-import { ProblemsFilter, ProblemsTable, ProblemsPagination } from '../../components/index';
+import { ProblemsFilter, ProblemsTable, Pagination } from '../../components/index';
 
 import { PROBLEM_TOPICS } from '../../utils/index';
 
@@ -20,12 +20,12 @@ const ProblemsPage = () => {
   
   // Read from URL, provide defaults
   const page = parseInt(searchParams.get('page')) || 1;
-  const search = searchParams.get('search') || '';
   const difficulty = searchParams.get('difficulty') || 'ALL';
   const tag = searchParams.get('tag') || 'ALL';
 
-  // Local state for debounced search input
-  const [localSearch, setLocalSearch] = useState(search);
+  // Local state for debounced search input (clears on refresh)
+  const [localSearch, setLocalSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Update URL helper
   const updateParams = (newParams) => {
@@ -44,25 +44,34 @@ const ProblemsPage = () => {
   const setDifficulty = (newDiff) => updateParams({ difficulty: newDiff, page: 1 });
   const setTag = (newTag) => updateParams({ tag: newTag, page: 1 });
 
-  // Debounce search update to URL
+  // Debounce search update
   useEffect(() => {
     const delay = setTimeout(() => {
-      if (localSearch !== search) {
-        updateParams({ search: localSearch, page: 1 });
+      if (debouncedSearch !== localSearch) {
+        setDebouncedSearch(localSearch);
+        updateParams({ page: 1 }); // reset to page 1 on new search
       }
     }, 400);
     return () => clearTimeout(delay);
-  }, [localSearch]);
+  }, [localSearch, debouncedSearch]);
+
+  // Clear legacy search params from URL on refresh
+  useEffect(() => {
+    if (searchParams.has('search')) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('search');
+      setSearchParams(params, { replace: true });
+    }
+  }, []);
 
   // Fetch problems when URL parameters change
   useEffect(() => {
-    dispatch(fetchProblems({ page, search, difficulty, tag, limit: 20 }));
-  }, [dispatch, page, search, difficulty, tag]);
+    dispatch(fetchProblems({ page, search: debouncedSearch, difficulty, tag, limit: 20 }));
+  }, [dispatch, page, debouncedSearch, difficulty, tag]);
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme} style={{ minHeight: 'calc(100vh - 64px)', padding: '0.75rem 1rem', display: 'block', overflowY: 'auto' }}>
-      
-      <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+    <div className="auth-page-bg" data-auth-theme={theme} style={{ minHeight: 'calc(100vh - 64px)', padding: '1rem 0', display: 'block', overflowY: 'auto' }}>
+      <div className="w-full">
         
         {/* Header */}
         <div style={{ marginBottom: '1.25rem' }}>
@@ -89,7 +98,7 @@ const ProblemsPage = () => {
         <ProblemsTable problems={problems} loading={loading} error={error} page={page} />
 
         {!loading && !error && (
-          <ProblemsPagination pagination={pagination} setPage={setPage} />
+          <Pagination pagination={pagination} setPage={setPage} label="problems" />
         )}
         
       </div>

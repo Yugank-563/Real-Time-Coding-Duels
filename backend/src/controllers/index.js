@@ -34,6 +34,7 @@ export * from './submissions/getSubmissionStatus.js';
 export * from './submissions/submitCode.js';
 
 // users folder
+export * from './users/getLeaderboard.js';
 export * from './users/getProfile.js';
 export * from './users/searchUsers.js';
 export * from './users/updateProfile.js';

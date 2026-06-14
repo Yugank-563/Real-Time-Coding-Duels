@@ -35,7 +35,7 @@ const AboutPage = () => {
     <div className="min-h-screen bg-base text-text-primary pt-24 transition-colors duration-300 overflow-hidden relative flex flex-col">
 
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex-1 pb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex-1 pb-6 w-full">
         
         {/* ── HERO SECTION ── */}
         <motion.div 
@@ -105,7 +105,7 @@ const AboutPage = () => {
               </span>
             </h2>
             <p className="text-text-secondary leading-relaxed text-base">
-              BattleCode transforms standard algorithmic learning into an immersive multiplayer experience. Build your speed, sharpen your problem-solving reflexes, and master Data Structures & Algorithms (DSA) through instant 1v1 arenas, live matchmaking, and dynamic coding rooms.
+              BattleCode transforms standard algorithmic learning into an immersive multi-user experience. Build your speed, sharpen your problem-solving reflexes, and master Data Structures & Algorithms (DSA) through instant 1v1 arenas, live matchmaking, and dynamic coding rooms.
             </p>
           </div>
 

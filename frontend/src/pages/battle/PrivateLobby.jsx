@@ -53,7 +53,7 @@ const PrivateLobby = () => {
     if (socket) {
       const handlePlayerJoined = () => {
         fetchLobbyDetails();
-        toast.info('Player Joined! 👥', 'A new participant entered the lobby.');
+        toast.info('User Joined! 👥', 'A new participant entered the lobby.');
       };
 
       const handleBattleStart = () => {
@@ -101,7 +101,7 @@ const PrivateLobby = () => {
       
       navigate(`/battle/${roomId}`);
     } catch (err) {
-      toast.error('Cannot Start Battle', err.response?.data?.message || 'Lobby needs exactly 2 players to start.');
+      toast.error('Cannot Start Battle', err.response?.data?.message || 'Lobby needs exactly 2 users to start.');
     } finally {
       setIsStarting(false);
     }
@@ -222,7 +222,7 @@ const PrivateLobby = () => {
           {/* Right Block: Active players */}
           <div className="md:col-span-5 bg-surface border border-border shadow-md rounded-2xl p-6 flex flex-col justify-between gap-6">
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-accent-primary">Lobby Players</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-accent-primary">Lobby Users</h3>
               
               <div className="space-y-3">
                 {/* Host */}

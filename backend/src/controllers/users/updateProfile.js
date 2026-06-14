@@ -1,6 +1,6 @@
 import { updateProfileService } from '../../services/index.js';
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -32,10 +32,6 @@ export const updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error updating user profile:', error.message);
-    if (error.message === 'Username is already taken.' || error.message.includes('Username must be')) {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: 'Internal server error.' });
-  }
+    next(error);
+}
 };

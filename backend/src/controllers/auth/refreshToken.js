@@ -1,23 +1,20 @@
 import { refreshTokenService } from '../../services/index.js';
+import { getCookie } from '../../utils/cookieUtils.js';
 
-const getCookie = (req, name) => {
-  const list = {};
-  const rc = req.headers.cookie;
-  if (rc) {
-    rc.split(';').forEach((cookie) => {
-      const parts = cookie.split('=');
-      list[parts.shift().trim()] = decodeURI(parts.join('='));
-    });
-  }
-  return list[name];
-};
-
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   try {
     const token = getCookie(req, 'refreshToken') || req.body?.refreshToken;
-    const { accessToken } = await refreshTokenService(token);
+    const { accessToken, refreshToken: newRefreshToken } = await refreshTokenService(token);
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
     res.json({ token: accessToken });
   } catch (error) {
-    res.status(401).json({ message: error.message });
-  }
+    next(error);
+}
 };

@@ -26,7 +26,7 @@ const StatRow = ({ icon: Icon, label, myContent, oppContent, isWinnerMe, isWinne
   </div>
 );
 
-const PlayerProfile = ({ player, isWinner, isMe }) => (
+const UserProfile = ({ player, isWinner, isMe }) => (
   <div className="flex flex-col items-center space-y-2 relative w-full pb-2">
     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold text-white shadow-sm bg-gradient-to-tr ${
       isWinner 
@@ -130,11 +130,11 @@ const BattleSummary = () => {
         {/* ── PERFORMANCE MATRIX DASHBOARD ── */}
         <div className="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden flex flex-col">
           
-          {/* Player Headers */}
+          {/* User Headers */}
           <div className="grid grid-cols-2 p-6 pb-4 border-b border-border/50 relative">
             <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-gradient-to-b from-transparent via-border to-transparent -translate-x-1/2" />
-            <PlayerProfile player={me} isWinner={isWinnerMe} isMe={true} />
-            <PlayerProfile player={opponent} isWinner={isWinnerOpp} isMe={false} />
+            <UserProfile player={me} isWinner={isWinnerMe} isMe={true} />
+            <UserProfile player={opponent} isWinner={isWinnerOpp} isMe={false} />
           </div>
 
           {/* Analytics Rows */}

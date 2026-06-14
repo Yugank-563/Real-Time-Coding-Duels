@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { limiter } from './src/middleware/index.js';
+import { limiter, errorHandler } from './src/middleware/index.js';
 
 import { 
   authRoutes, battleRoutes, 
@@ -38,10 +38,14 @@ app.use('/api/problems', problemsRoutes);
 // Global 404 handler for unhandled routes
 app.all('*', (req, res) => {
   res.status(404).json({
-    status: 'error',
-    message: `Route ${req.originalUrl} not found on this server.`
+    status: 404,
+    error: 'Not Found',
+    message: `Route ${req.originalUrl} not found on this server.`,
+    timestamp: new Date().toISOString()
   });
 });
 
+// 6. Global Error Handler (Runs if any previous route throws an error)
+app.use(errorHandler);
 
 export default app;

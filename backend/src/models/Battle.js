@@ -44,7 +44,7 @@ const battleSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      default: '',
+      default: null,
     },
     roomCode: {
       type: String,
@@ -99,6 +99,11 @@ const battleSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Index for leaderboard battle stats aggregation
+battleSchema.index({ status: 1 });
+// Compound index for player-specific battle lookups
+battleSchema.index({ 'players.user': 1, status: 1 });
 
 const Battle = mongoose.model('Battle', battleSchema);
 

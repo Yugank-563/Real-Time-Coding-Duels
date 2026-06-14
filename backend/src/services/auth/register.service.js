@@ -1,25 +1,19 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { sendOTPEmail } from '../../utils/email.js';
 import { findUserByEmail } from '../../repositories/index.js';
 import redis from '../../config/redis.js';
 
 // POST /auth/register
 export const registerService = async (email, password) => {
-  if (!email || !password) throw new Error('Email and password required');
-
   const emailLower = email.toLowerCase();
 
   const existing = await findUserByEmail(emailLower);
-  if (existing) throw new Error('User already exists');
-
-  // Basic email pattern validation
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
-    throw new Error('Invalid email address format');
-  }
+  if (existing) { const err = new Error('User already exists'); err.status = 409; throw err; }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otp = crypto.randomInt(100000, 1000000).toString();
   const otpHash = await bcrypt.hash(otp, 10);
 
   const payload = JSON.stringify({ passwordHash, role: 'user', otpHash });

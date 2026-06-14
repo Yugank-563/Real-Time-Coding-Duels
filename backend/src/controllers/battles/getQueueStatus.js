@@ -1,6 +1,6 @@
 import { getQueuePosition } from '../../services/index.js';
 
-export const getQueueStatus = async (req, res) => {
+export const getQueueStatus = async (req, res, next) => {
   try {
     const { battleType } = req.query;
     if (!battleType) {
@@ -10,6 +10,6 @@ export const getQueueStatus = async (req, res) => {
     const status = await getQueuePosition(req.userId, battleType);
     res.status(200).json(status);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    next(error);
+}
 };
