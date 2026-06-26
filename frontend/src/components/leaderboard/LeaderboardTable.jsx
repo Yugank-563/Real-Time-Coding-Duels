@@ -1,4 +1,4 @@
-import { StateCard } from '../index';
+import { AnimationState } from '../index';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import LeaderboardTableRow from './LeaderboardTableRow';
 import LeaderboardSkeleton from './LeaderboardSkeleton';
@@ -6,9 +6,9 @@ import '../../styles/auth.css';
 
 // ── Sortable column header ────────────────────────────────────────────────
 const SortTh = ({ label, field, sort, order, onSort, align = 'center', hide = '' }) => {
-  const active    = sort === field;
+  const active = sort === field;
   const nextOrder = active && order === 'desc' ? 'asc' : 'desc';
-  const Icon      = active ? (order === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown;
+  const Icon = active ? (order === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown;
 
   return (
     <th
@@ -37,20 +37,20 @@ const LeaderboardTable = ({ users = [], loading, error, myUserId, currentUserSta
 
   if (error) {
     return (
-      <StateCard 
-        isError 
-        title="Failed to load leaderboard" 
-        message={error} 
+      <AnimationState
+        variant="error"
+        title="Failed to load leaderboard"
+        description={error}
       />
     );
   }
 
   if (!loading && !users.length) {
     return (
-      <StateCard 
-        icon="🏆" 
-        title="No users found" 
-        message="Try adjusting your search or country filter." 
+      <AnimationState
+        variant="empty"
+        title="No users found"
+        description="Try adjusting your search or country filter."
       />
     );
   }
@@ -90,7 +90,7 @@ const LeaderboardTable = ({ users = [], loading, error, myUserId, currentUserSta
             >
               Country
             </th>
-            <SortTh label="Rating"  field="rank"    {...thProps} />
+            <SortTh label="Rating" field="rank"    {...thProps} />
             <th className="hidden sm:table-cell" style={{ padding: '0.7rem 0.9rem', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center' }}>
               Battles
             </th>
@@ -109,20 +109,20 @@ const LeaderboardTable = ({ users = [], loading, error, myUserId, currentUserSta
           ) : (
             <>
               {currentUserStats && !users.some(u => u._id?.toString() === myUserId?.toString()) && (
-                <LeaderboardTableRow 
-                  user={currentUserStats} 
-                  i="me" 
-                  isPinned={true} 
-                  myUserId={myUserId} 
+                <LeaderboardTableRow
+                  user={currentUserStats}
+                  i="me"
+                  isPinned={true}
+                  myUserId={myUserId}
                   key="row-me-pinned"
                 />
               )}
               {users.map((user, i) => (
-                <LeaderboardTableRow 
-                  user={user} 
-                  i={i} 
-                  isPinned={false} 
-                  myUserId={myUserId} 
+                <LeaderboardTableRow
+                  user={user}
+                  i={i}
+                  isPinned={false}
+                  myUserId={myUserId}
                   key={`row-${user._id ?? i}-list`}
                 />
               ))}

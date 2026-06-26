@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, ShieldAlert, Award, Star, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
 
-const VerdictDisplay = ({ battleId, myUserId, eloDetails, onProceed }) => {
+const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState('verdict'); // 'verdict' | 'progression'
 
-  // Calculations
-  const isWinner = eloDetails?.userId === myUserId && eloDetails?.eloChange > 0;
-  const isDraw = eloDetails?.eloChange === 0;
+  // Determine outcome from winnerId (server-authoritative)
+  // winnerId === null  → Draw (both timed out with equal progress)
+  // winnerId === myUserId → Win
+  // winnerId === other  → Loss
+  const isDraw = winnerId === null || winnerId === undefined;
+  const isWinner = !isDraw && (winnerId === myUserId);
 
-  // Progression counters
+  // Progression counters — safe even when eloDetails is null (draw with no ELO calc)
   const [currentElo, setCurrentElo] = useState(eloDetails?.oldElo || 1200);
   const [xpProgress, setXpProgress] = useState(0);
 

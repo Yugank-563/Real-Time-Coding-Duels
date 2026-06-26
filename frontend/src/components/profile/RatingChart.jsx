@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import {  useState, useCallback, useEffect  } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ReferenceLine,
