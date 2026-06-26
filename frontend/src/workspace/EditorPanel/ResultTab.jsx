@@ -1,17 +1,18 @@
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { VerdictBadge } from '../../components';
 
 const formatOutputValue = (val) => {
   if (val === undefined || val === null) return val;
   if (typeof val !== 'string') return val;
   const trimmed = val.trim();
   if (trimmed === '') return val;
-  
+
   if (trimmed.startsWith('"') && trimmed.endsWith('"')) return val;
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) return val;
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) return val;
   if (trimmed === 'true' || trimmed === 'false') return val;
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return val;
-  
+
   return `"${trimmed}"`;
 };
 
@@ -19,7 +20,6 @@ const ResultTab = ({
   isActive,
   state,
   hasResults,
-  vCfg,
   verdict,
   totalTestCases,
   testCasesPassed,
@@ -37,11 +37,10 @@ const ResultTab = ({
   if (!isActive) return null;
 
   const outputClassName = activeData
-    ? `bg-elevated border rounded-xl px-4 py-2.5 font-mono text-xs whitespace-pre-wrap max-h-48 overflow-y-auto ${
-        activeData.passed
-          ? 'border-border text-[#2DB55D]'
-          : 'border-[#EF4743]/20 text-[#EF4743]'
-      }`
+    ? `bg-elevated border rounded-xl px-4 py-2.5 font-mono text-xs whitespace-pre-wrap max-h-48 overflow-y-auto ${activeData.passed
+      ? 'border-border text-[#2DB55D]'
+      : 'border-[#EF4743]/20 text-[#EF4743]'
+    }`
     : '';
 
   return (
@@ -57,9 +56,11 @@ const ResultTab = ({
           <div className="h-full flex flex-col items-center justify-center gap-3 py-12 px-6">
             <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             <p className="text-sm text-cyan-400 font-semibold tracking-wide">
-              {runProgress && runProgress.total > 0
-                ? `Running test cases… ${runProgress.done} / ${runProgress.total}`
-                : 'Running test cases…'}
+              {runProgress?.isSubmit
+                ? 'Evaluating hidden test cases...'
+                : (runProgress && runProgress.total > 0
+                  ? `Running test cases… ${runProgress.done} / ${runProgress.total}`
+                  : 'Running test cases…')}
             </p>
             {runProgress && runProgress.total > 0 && (
               <div className="w-full max-w-xs h-2 bg-gray-800 rounded-full overflow-hidden border border-border/10">
@@ -72,21 +73,22 @@ const ResultTab = ({
           </div>
         )}
 
-        {hasResults && vCfg && (
+        {hasResults && verdict && (
           <div className="flex flex-col h-full">
             {/* Verdict Details */}
             <div className="px-5 py-4 flex flex-col gap-1 border-b border-border bg-elevated/20 shrink-0">
               <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
-                <div className="flex items-center gap-2">
-                  {verdict === 'AC' ? (
-                    <CheckCircle className="w-5 h-5 text-[#2DB55D]" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-[#EF4743]" />
-                  )}
-                  <span className={`text-lg font-bold tracking-tight ${vCfg.color}`}>
-                    {vCfg.text}
-                  </span>
-                </div>
+                {verdict === 'AC' ? (
+                  <h2 className="text-xl font-bold text-[#2DB55D] flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" /> Accepted
+                  </h2>
+                ) : verdict === 'WA' ? (
+                  <h2 className="text-xl font-bold text-[#EF4743] flex items-center gap-2">
+                    <XCircle className="w-5 h-5" /> Wrong Answer
+                  </h2>
+                ) : (
+                  <VerdictBadge verdict={verdict} />
+                )}
                 {totalTestCases > 0 && (
                   <span className="text-sm font-semibold text-text-secondary mt-0.5">
                     {testCasesPassed} {"/"} {totalTestCases} testcases passed
@@ -100,6 +102,7 @@ const ResultTab = ({
                 </div>
               )}
             </div>
+
 
             {verdict === 'CE' && errorMessage ? (
               <div className="p-4 flex-1">
@@ -124,16 +127,14 @@ const ResultTab = ({
                         <button
                           key={i}
                           onClick={() => setActiveCase(i)}
-                          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg border transition-all shrink-0 ${
-                            isActive
+                          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg border transition-all shrink-0 ${isActive
                               ? 'bg-elevated border-border text-text-primary'
                               : 'border-transparent text-text-muted hover:text-text-primary'
-                          }`}
+                            }`}
                         >
                           <span
-                            className={`w-2 h-2 rounded-full shrink-0 ${
-                              passed ? 'bg-[#2DB55D]' : 'bg-[#EF4743]'
-                            }`}
+                            className={`w-2 h-2 rounded-full shrink-0 ${passed ? 'bg-[#2DB55D]' : 'bg-[#EF4743]'
+                              }`}
                           />
                           <span>Case {tc.caseNumber}</span>
                         </button>
