@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../../../hooks/ui/useTheme';
+import { motion} from 'framer-motion';
+import { useTheme } from '../../../hooks/useTheme';
 import CustomDropdown from '../../ui/CustomDropdown';
 
 const ArenaCard = ({ 

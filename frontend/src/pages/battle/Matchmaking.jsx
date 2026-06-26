@@ -5,8 +5,8 @@ import { Users, Award, Sparkles } from 'lucide-react';
 import { useBattleSocket, useDocumentTitle } from '../../hooks/index';
 import { selectBattle, setSuggestedTopic } from '../../features/index';
 import { selectUser } from '../../features/index';
-import { useToast } from '../../hooks/ui/useToast';
-import { useTheme } from '../../hooks/ui/useTheme';
+import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Matchmaking = () => {
   const navigate = useNavigate();

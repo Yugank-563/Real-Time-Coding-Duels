@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../../utils/index';
-import { useToast } from '../ui/useToast';
+import { useToast } from '../useToast';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../features/index';

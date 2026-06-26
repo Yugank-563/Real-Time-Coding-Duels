@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Swords, Trophy, Terminal } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/index';
-import { useTheme } from '../hooks/ui/useTheme';
+import { useTheme } from '../hooks/useTheme';
 import Footer from '../components/layout/Footer';
 import { useSelector } from 'react-redux';
 import { selectIsAuthenticated } from '../features/index';
@@ -207,7 +207,7 @@ const AboutPage = () => {
             </div>
             <h3 className="text-xl font-bold mb-3">Global Leaderboards</h3>
             <p className="text-text-secondary text-sm leading-relaxed">
-              Climb ratings, top the global leaderboards, and win exclusive badges by competing in live multi-player DSA arenas.
+              Climb ratings and top the global leaderboards by competing in live multi-user DSA arenas.
             </p>
           </motion.div>
         </motion.div>

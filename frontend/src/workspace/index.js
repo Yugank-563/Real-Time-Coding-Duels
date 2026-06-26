@@ -10,4 +10,4 @@ export { default as MonacoEditorComponent } from './EditorPanel/MonacoEditorComp
 export { default as ResultTab } from './EditorPanel/ResultTab';
 
 // problempanel folder
-export { default as ProblemPanel } from './ProblemPanel/ProblemPanel';
+export { default as ProblemPanel } from './ProblemPanel';

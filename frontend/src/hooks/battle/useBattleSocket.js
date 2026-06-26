@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
-import { useToast } from '../ui/useToast';
+import { useToast } from '../useToast';
 import { selectUser } from '../../features/index';
 import {
   updateOpponentStatus,
@@ -10,11 +10,12 @@ import {
   setSuggestedTopic,
   setOutputResults,
   setOutputProgress,
+  setAiAnalysis,
 } from '../../features/index';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
-  (window.location.hostname === 'localhost' 
-    ? 'http://localhost:5001' 
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ||
+  (window.location.hostname === 'localhost'
+    ? 'http://localhost:5001'
     : `http://${window.location.hostname}:5001`);
 
 export const useBattleSocket = (battleId = null, queueType = null) => {
@@ -22,13 +23,13 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
   const toast = useToast();
   const user = useSelector(selectUser);
   const socketRef = useRef(null);
- 
+
   const teammate = useSelector(state => state.battle.teammate);
   const teammateRef = useRef(teammate);
   useEffect(() => {
     teammateRef.current = teammate;
   }, [teammate]);
- 
+
   const userRef = useRef(user);
   useEffect(() => {
     userRef.current = user;
@@ -51,7 +52,7 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
 
     socket.on('connect', () => {
       console.log('Successfully connected to WebSocket gateway');
-      
+
       // Auto-join active battle room if parameters are present
       if (battleId) {
         socket.emit('battle:join', { battleId });
@@ -71,8 +72,8 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     // ── MATCHMAKING EVENTS ──
     socket.on('matchmaking:found', (data) => {
       console.log('Match paired successfully!', data);
-      const oppName = data.opponents 
-        ? data.opponents.map(o => `@${o.username}`).join(' & ') 
+      const oppName = data.opponents
+        ? data.opponents.map(o => `@${o.username}`).join(' & ')
         : `@${data.opponent?.username || 'Opponent'}`;
       toast.success('MATCH FOUND! ⚔️', `You are paired against ${oppName}. Starting duel...`);
       // Initialize battle in store (Note: BattleRoom component will trigger countdown)
@@ -126,14 +127,14 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     socket.on('battle:end', (data) => {
       const activeUser = userRef.current;
       const activeTeammate = teammateRef.current;
-      
+
       const isMeWinner = data.winnerId === activeUser?.id || data.winnerId === activeUser?._id;
       const isTeammateWinner = activeTeammate && data.winnerId === activeTeammate.id;
       const isWinner = isMeWinner || isTeammateWinner;
- 
+
       const eloDiff = data.ratingDetails?.eloChange !== undefined ? data.ratingDetails.eloChange : 0;
       const eloText = eloDiff >= 0 ? `+${eloDiff}` : `${eloDiff}`;
- 
+
       if (isWinner) {
         if (isTeammateWinner) {
           toast.success('VICTORY! 🎉', `Teammate solved it! You win! (${eloText} ELO)`);
@@ -145,7 +146,7 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       }
       dispatch(endBattle(data));
     });
- 
+
     socket.on('battle:submission_result', (data) => {
       const activeTeammate = teammateRef.current;
       if (activeTeammate && data.userId === activeTeammate.id) {
@@ -168,7 +169,7 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     // ── SUBMISSION RESULT EVENT ──
     socket.on('submission:result', (data) => {
       console.log('Received submission verdict:', data.verdict);
-      
+
       // Update output screen console
       if (data.verdict === 'AC') {
         toast.success('COMPILATION ACCEPTED! ✓', `All ${data.testCasesPassed}/${data.totalTestCases} test cases passed.`);
@@ -177,11 +178,20 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       }
 
       dispatch(setOutputResults({
-        verdict:          data.verdict,
-        results:          data.results || [],
-        testCasesPassed:  data.testCasesPassed,
-        totalTestCases:   data.totalTestCases,
+        verdict: data.verdict,
+        results: data.results || [],
+        testCasesPassed: data.testCasesPassed,
+        totalTestCases: data.totalTestCases,
+        isSubmit: true
       }));
+    });
+
+    socket.on('ai:analysis_ready', (data) => {
+      console.log('AI Analysis Ready:', data);
+      if (data.aiAnalysis) {
+        dispatch(setAiAnalysis(data.aiAnalysis));
+        toast.info('AI Code Review is ready! ✨', 'Click to view insights and optimizations.');
+      }
     });
 
     socket.on('battle:problem_error', (data) => {
@@ -216,7 +226,7 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
   // ── TRIGGER EMIT FUNCTIONS ──
   const joinQueue = (battleType, options = {}) => {
     if (socketRef.current) {
-      socketRef.current.emit('matchmaking:join', { 
+      socketRef.current.emit('matchmaking:join', {
         battleType,
         topic: options.topic,
         teamId: options.teamId
@@ -227,7 +237,7 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
 
   const leaveQueue = (battleType, options = {}) => {
     if (socketRef.current) {
-      socketRef.current.emit('matchmaking:leave', { 
+      socketRef.current.emit('matchmaking:leave', {
         battleType,
         topic: options.topic,
         teamId: options.teamId
@@ -252,13 +262,13 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       socketRef.current.emit('battle:surrender', { battleId });
     }
   };
- 
+
   const sendTimeout = () => {
     if (socketRef.current && battleId) {
       socketRef.current.emit('battle:timeout', { battleId });
     }
   };
- 
+
   return {
     socket: socketRef.current,
     joinQueue,

@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { selectTheme, cycleTheme } from '../../features/index';
+import { selectTheme, cycleTheme } from '../features/index';
 
 export const useTheme = () => {
   const theme = useSelector(selectTheme);

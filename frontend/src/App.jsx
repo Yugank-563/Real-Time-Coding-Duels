@@ -1,21 +1,20 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/layout/Navbar';
-import ProtectedRoute from './components/layout/ProtectedRoute';
-import AppLayout from './components/layout/AppLayout';
-import AuthLayout from './components/layout/AuthLayout';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Navbar, ProtectedRoute, AppLayout, AuthLayout } from './components/index';
 
 // ── Auth Pages ──
-import LoginPage         from './pages/auth/Login';
-import SignupPage         from './pages/auth/Signup';
-import VerifyOTPPage      from './pages/auth/VerifyOTP';
-import ForgotPasswordPage from './pages/auth/ForgotPassword';
-import ResetPasswordPage  from './pages/auth/ResetPassword';
+import { 
+  Login as LoginPage, 
+  Signup as SignupPage, 
+  VerifyOTP as VerifyOTPPage, 
+  ForgotPassword as ForgotPasswordPage, 
+  ResetPassword as ResetPasswordPage 
+} from './pages/index';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { api } from './utils/index';
-import { selectIsAuthenticated, setUser, setLoading, selectAuthLoading } from './features/index';
+import { setUser, setLoading, selectAuthLoading } from './features/index';
 
 // ── Protected Dashboard Page ──
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -24,19 +23,18 @@ const MatchmakingPage = lazy(() => import('./pages/battle/Matchmaking'));
 const BattleRoomPage = lazy(() => import('./pages/battle/BattleRoom'));
 const BattleSummaryPage = lazy(() => import('./pages/battle/BattleSummary'));
 const PrivateLobbyPage = lazy(() => import('./pages/battle/PrivateLobby'));
-const ProblemsPage = lazy(() => import('./pages/problems/ProblemsPage'));
-const PracticeRoom = lazy(() => import('./pages/problems/PracticeRoom'));
+const ProblemsPage = lazy(() => import('./pages/ProblemsPage'));
+const PracticeRoom = lazy(() => import('./pages/PracticeRoom'));
 
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
-const NotFound = lazy(() => import('./components/layout/NotFound'));
+const NotFound = lazy(() => import('./components/ui/NotFound'));
 
 // ── Public Pages ──
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 function App() {
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectAuthLoading);
 
   // Silent session restoration on application startup
@@ -81,6 +79,11 @@ function App() {
           {/* Public Landing / About Page */}
           <Route path="/" element={<AboutPage />} />
 
+          {/* Public App Routes (with Layout) */}
+          <Route element={<AppLayout />}>
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+          </Route>
+
           {/* Public Auth Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -99,7 +102,6 @@ function App() {
               <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
               <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
               <Route path="/problems" element={<ProblemsPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>
             {/* Fullscreen workspaces outside AppLayout (no footer/constraints, custom fixed Navbar spacing) */}

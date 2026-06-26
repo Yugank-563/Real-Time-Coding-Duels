@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
-import { useProblemFetch, useEditorState, useSubmission, useTestcaseManager, useDocumentTitle } from '../../hooks/index';
+import { useProblemFetch, useEditorState, useSubmission, useTestcaseManager, useDocumentTitle } from '../hooks/index';
 import { Loader2 } from 'lucide-react';
-import { CodingWorkspace } from '../../workspace/index';
+import { CodingWorkspace } from '../workspace/index';
 export const PracticeRoom = () => {
   const { slug } = useParams();
   useDocumentTitle(slug || 'Practice Room');
@@ -21,7 +21,8 @@ export const PracticeRoom = () => {
 
   const handleSubmit = () => {
     if (!problem) return;
-    submission.submitPractice(slug, editor.code, editor.selectedLanguage);
+    const totalCases = problem?.testCaseConfig?.totalCount || 50;
+    submission.submitPractice(slug, editor.code, editor.selectedLanguage, totalCases);
   };
 
   if (loading) {

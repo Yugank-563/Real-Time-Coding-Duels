@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * AuthLogo — the ⚔ hexagon brand mark shown at the top of every auth card.

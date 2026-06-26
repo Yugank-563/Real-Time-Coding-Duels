@@ -4,7 +4,7 @@ const CodeViewer = ({ code, language }) => {
   return (
     <Editor
       height="100%"
-      language={language === 'py' ? 'python' : language === 'js' ? 'javascript' : 'cpp'}
+      language="cpp"
       value={code || '// No code available.'}
       theme="vs-dark"
       options={{

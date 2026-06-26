@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../utils/index';
 import { Cpu, Database, CheckCircle2, Target, Trophy, BookOpen } from 'lucide-react';
 import { useDocumentTitle } from '../../hooks/index';
-import { useToast } from '../../hooks/ui/useToast';
+import { useToast } from '../../hooks/useToast';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../features/index';
-import { estimateComplexity } from '../../utils/index';
 import VerdictBadge from '../../components/ui/VerdictBadge';
 import CodeViewer from '../../components/ui/CodeViewer';
+import AIBattleReview from '../../components/battle/AIBattleReview';
 
 // --- Reusable Components ---
 const StatRow = ({ icon: Icon, label, myContent, oppContent, isWinnerMe, isWinnerOpp, highlightWinner }) => (
@@ -50,7 +50,6 @@ const UserProfile = ({ player, isWinner, isMe }) => (
 const BattleSummary = () => {
   const { battleId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   useDocumentTitle('Battle Summary');
   const toast = useToast();
 
@@ -58,6 +57,7 @@ const BattleSummary = () => {
   const [battle, setBattle] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [activeCodeTab, setActiveCodeTab] = useState('me'); 
+  const [aiData, setAiData] = useState(null);
 
   const user = useSelector(selectUser);
   const myUserId = user?._id || user?.id;
@@ -104,8 +104,47 @@ const BattleSummary = () => {
   const myFinalSub = mySubmissions[0];
   const oppFinalSub = oppSubmissions[0];
 
-  const myComplexity = estimateComplexity(myFinalSub?.code);
-  const oppComplexity = estimateComplexity(oppFinalSub?.code);
+  let myAiAnalysis = null;
+  let oppAiAnalysis = null;
+  let myAiStatus = 'unavailable';
+  let oppAiStatus = 'unavailable';
+  
+  if (aiData) {
+    // If we have player data inside aiData
+    const isP1Me = (aiData.player1Analysis?.player?._id === myUserId) || (aiData.status?.player1 && battle.players[0].user._id === myUserId);
+    const isP2Me = (aiData.player2Analysis?.player?._id === myUserId) || (aiData.status?.player2 && battle.players[1].user._id === myUserId);
+    
+    myAiAnalysis = isP1Me ? aiData.player1Analysis : (isP2Me ? aiData.player2Analysis : aiData.player1Analysis);
+    oppAiAnalysis = isP1Me ? aiData.player2Analysis : (isP2Me ? aiData.player1Analysis : aiData.player2Analysis);
+
+    myAiStatus = isP1Me ? aiData.status?.player1 : (isP2Me ? aiData.status?.player2 : aiData.status?.player1);
+    oppAiStatus = isP1Me ? aiData.status?.player2 : (isP2Me ? aiData.status?.player1 : aiData.status?.player2);
+  }
+
+  const formatComplexity = (complexityString, finalSub, aiStatus) => {
+    if (!finalSub || !finalSub.code?.trim()) return "NO CODE SUBMITTED";
+    if (aiStatus === 'failed') return "ANALYSIS FAILED";
+    if (aiStatus === 'pending') return "ANALYZING...";
+    if (!complexityString) return "ANALYZING...";
+    
+    // If AI explicitly says the function is empty (like when submitting boilerplate)
+    if (complexityString.toLowerCase().includes('empty')) {
+      return "NO CODE SUBMITTED";
+    }
+
+    // Try to extract just the O(...) part to prevent overflow
+    const match = complexityString.match(/O\([^)]+\)/i);
+    return match ? match[0] : complexityString;
+  };
+
+  const myComplexity = {
+    time: formatComplexity(myAiAnalysis?.analysis?.timeComplexity, myFinalSub, myAiStatus),
+    space: formatComplexity(myAiAnalysis?.analysis?.spaceComplexity, myFinalSub, myAiStatus)
+  };
+  const oppComplexity = {
+    time: formatComplexity(oppAiAnalysis?.analysis?.timeComplexity, oppFinalSub, oppAiStatus),
+    space: formatComplexity(oppAiAnalysis?.analysis?.spaceComplexity, oppFinalSub, oppAiStatus)
+  };
 
   return (
     <div className="w-full relative overflow-x-hidden overflow-y-auto font-sans select-none transition-colors duration-300">
@@ -141,29 +180,32 @@ const BattleSummary = () => {
           <div className="p-4 sm:p-6 space-y-1">
             <StatRow 
               icon={Target} label="Final Verdict" highlightWinner={false}
-              myContent={<VerdictBadge verdict={myFinalSub?.verdict} />}
-              oppContent={<VerdictBadge verdict={oppFinalSub?.verdict} />}
+              myContent={myFinalSub ? <VerdictBadge verdict={myFinalSub.verdict} /> : <span className="text-emerald-300 text-[11px] uppercase tracking-wider font-bold">No Code Submitted</span>}
+              oppContent={oppFinalSub ? <VerdictBadge verdict={oppFinalSub.verdict} /> : <span className="text-accent-blue text-[11px] uppercase tracking-wider font-bold">No Code Submitted</span>}
             />
 
             <StatRow 
               icon={Cpu} label="Time Complexity" highlightWinner={false}
-              myContent={myFinalSub ? <span className="text-[13px] font-bold tracking-widest text-emerald-300">{myComplexity.time}</span> : null}
-              oppContent={oppFinalSub ? <span className="text-[13px] font-bold tracking-widest text-accent-blue">{oppComplexity.time}</span> : null}
+              myContent={<span className={`text-[13px] font-bold tracking-widest text-emerald-300 ${myComplexity.time === 'ANALYZING...' ? 'animate-pulse' : ''}`}>{myComplexity.time}</span>}
+              oppContent={<span className={`text-[13px] font-bold tracking-widest text-accent-blue ${oppComplexity.time === 'ANALYZING...' ? 'animate-pulse' : ''}`}>{oppComplexity.time}</span>}
             />
 
             <StatRow 
               icon={Database} label="Space Complexity" highlightWinner={false}
-              myContent={myFinalSub ? <span className="text-[13px] font-bold tracking-widest text-emerald-300">{myComplexity.space}</span> : null}
-              oppContent={oppFinalSub ? <span className="text-[13px] font-bold tracking-widest text-accent-blue">{oppComplexity.space}</span> : null}
+              myContent={<span className={`text-[13px] font-bold tracking-widest text-emerald-300 ${myComplexity.space === 'ANALYZING...' ? 'animate-pulse' : ''}`}>{myComplexity.space}</span>}
+              oppContent={<span className={`text-[13px] font-bold tracking-widest text-accent-blue ${oppComplexity.space === 'ANALYZING...' ? 'animate-pulse' : ''}`}>{oppComplexity.space}</span>}
             />
 
             <StatRow 
               icon={CheckCircle2} label="Test Cases" highlightWinner={false}
-              myContent={myFinalSub ? `${myFinalSub.testCasesPassed} / ${myFinalSub.totalTestCases}` : null}
-              oppContent={oppFinalSub ? `${oppFinalSub.testCasesPassed} / ${oppFinalSub.totalTestCases}` : null}
+              myContent={myFinalSub ? <span className="text-[13px] font-bold tracking-widest text-emerald-300">{myFinalSub.testCasesPassed} / {myFinalSub.totalTestCases}</span> : <span className="text-emerald-300 text-[11px] uppercase tracking-wider font-bold">No Code Submitted</span>}
+              oppContent={oppFinalSub ? <span className="text-[13px] font-bold tracking-widest text-accent-blue">{oppFinalSub.testCasesPassed} / {oppFinalSub.totalTestCases}</span> : <span className="text-accent-blue text-[11px] uppercase tracking-wider font-bold">No Code Submitted</span>}
             />
           </div>
         </div>
+
+        {/* ── AI BATTLE REVIEW ── */}
+        <AIBattleReview battleId={battleId} onAnalysisLoaded={setAiData} />
 
         {/* ── CODE COMPARISON VIEWER ── */}
         <div className="bg-surface border border-border rounded-2xl flex flex-col overflow-hidden h-[500px] shadow-xl">

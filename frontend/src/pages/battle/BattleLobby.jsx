@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Swords, Zap, Target, Sparkles } from 'lucide-react';
 
-import { useToast } from '../../hooks/ui/useToast';
-import { useTheme } from '../../hooks/ui/useTheme';
+import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../hooks/useTheme';
 import { selectUser } from '../../features/index';
 import { useBattleSocket, useLobbyStats, useTopicStats, useCustomRoom, useDocumentTitle } from '../../hooks/index';
 
