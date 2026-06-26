@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useSplitPanel, useEditorSettings } from '../hooks/index';
+import { useEditorSettings } from '../hooks/index';
 import { ResizableLayout, ProblemPanel, EditorPanel } from './index';
 
-export const CodingWorkspace = ({
+const CodingWorkspace = ({
   headerComponent,
   mode = 'practice',
   problem,
@@ -26,7 +26,6 @@ export const CodingWorkspace = ({
   isEmbedded = false,
 }) => {
   const [settings] = useEditorSettings();
-  const splitPanel = useSplitPanel(`bc-split-width-v2-${mode}`, 50);
 
   // Lock page scroll while workspace is active on large screens; restore on unmount
   useEffect(() => {
@@ -41,7 +40,6 @@ export const CodingWorkspace = ({
 
   return (
     <div
-      ref={splitPanel.containerRef}
       className={`w-full text-text-primary flex flex-col overflow-y-auto lg:overflow-hidden bg-base relative transition-all duration-300 ${
         isEmbedded
           ? 'flex-1'

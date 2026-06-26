@@ -12,8 +12,10 @@ const initialState = {
   teamId: null,
   topic: '',
   timer: {
-    total: 1200, // 20 minutes (1200 seconds)
+    total: 1200,
     remaining: 1200,
+    startTime: null,   // ISO string from server — source of truth for both users
+    timeLimit: 1200,   // seconds
     isWarning: false,
     isDanger: false,
   },
@@ -35,7 +37,9 @@ const initialState = {
   lobbyStatus: 'idle', // 'idle' | 'queuing' | 'matched'
   invitedUser: null,
   suggestedTopic: null,
-  eloDetails: null, // { oldElo, newElo, eloChange, xpEarned, level, isLevelUp, opponent: { oldElo, newElo, eloChange } }
+  eloDetails: null,
+  winnerId: null,
+  aiAnalysis: null,
 };
 
 const battleSlice = createSlice({
@@ -67,7 +71,11 @@ const battleSlice = createSlice({
       state.players = players;
       state.teamId = action.payload.teamId || null;
       state.status = 'active';
-      state.timer.remaining = action.payload.timeLimit || problem?.timeLimit || 1200;
+      const _tl = action.payload.timeLimit || problem?.timeLimit || 1200;
+      state.timer.total = _tl;
+      state.timer.timeLimit = _tl;
+      state.timer.startTime = action.payload.startTime || null;
+      state.timer.remaining = _tl;
       state.timer.isWarning = false;
       state.timer.isDanger = false;
       state.lobbyStatus = 'matched';
@@ -107,6 +115,65 @@ const battleSlice = createSlice({
 
       state.topic = action.payload.topic || '';
     },
+
+    // Used on page refresh — resume from server startTime instead of resetting timer
+    resumeBattle: (state, action) => {
+      const { battleId, battleType, problem, players, myUserId, startTime, timeLimit, topic } = action.payload;
+      state.battleId = battleId;
+      state.battleType = battleType;
+      state.problem = problem;
+      state.players = players;
+      state.teamId = action.payload.teamId || null;
+      state.status = 'active';
+      state.lobbyStatus = 'matched';
+      state.output = initialState.output;
+      state.eloDetails = null;
+      state.topic = topic || '';
+
+      // Store server startTime and timeLimit — useBattleTimer reads these every second
+      const totalSeconds = timeLimit || 1200;
+      state.timer.total = totalSeconds;
+      state.timer.timeLimit = totalSeconds;
+      state.timer.startTime = startTime || null;
+      if (startTime) {
+        const elapsedSeconds = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
+        state.timer.remaining = Math.max(0, totalSeconds - elapsedSeconds);
+      } else {
+        state.timer.remaining = totalSeconds;
+      }
+      state.timer.isWarning = state.timer.remaining <= 60 && state.timer.remaining > 30;
+      state.timer.isDanger = state.timer.remaining <= 30;
+
+      const opponentPlayer = players.find(p => p.user._id !== myUserId);
+      if (opponentPlayer) {
+        state.opponent = {
+          id: opponentPlayer.user._id,
+          username: opponentPlayer.user.name || opponentPlayer.user.email.split('@')[0],
+          elo: opponentPlayer.user.rank || 1200,
+          status: opponentPlayer.status,
+          progress: opponentPlayer.progress,
+          language: opponentPlayer.language,
+        };
+      }
+
+      state.teammate = action.payload.teammate ? {
+        id: action.payload.teammate.user._id,
+        username: action.payload.teammate.user.name || action.payload.teammate.user.email.split('@')[0],
+        elo: action.payload.teammate.user.rank || 1200,
+        status: action.payload.teammate.status,
+        progress: action.payload.teammate.progress,
+        language: action.payload.teammate.language,
+      } : null;
+
+      state.opponents = action.payload.opponents ? action.payload.opponents.map(opp => ({
+        id: opp.user._id,
+        username: opp.user.name || opp.user.email.split('@')[0],
+        elo: opp.user.rank || 1200,
+        status: opp.status,
+        progress: opp.progress,
+        language: opp.language,
+      })) : [];
+    },
     updateOpponentStatus: (state, action) => {
       const { userId, status, progress, language } = action.payload;
       
@@ -129,6 +196,15 @@ const battleSlice = createSlice({
         }
       }
     },
+    // Server-authoritative tick: called every second with the value computed
+    // from battle.startTime so both users always see identical time.
+    setTimerRemaining: (state, action) => {
+      const remaining = action.payload;
+      state.timer.remaining = remaining;
+      state.timer.isWarning = remaining <= 60 && remaining > 30;
+      state.timer.isDanger = remaining <= 30;
+    },
+    // Legacy — kept so old imports don't break, but no longer dispatched
     tickTimer: (state) => {
       if (state.timer.remaining > 0) {
         state.timer.remaining -= 1;
@@ -147,7 +223,7 @@ const battleSlice = createSlice({
       state.output.runProgress = { done, total };
     },
     setOutputResults: (state, action) => {
-      const { results, errorMessage, verdict, executionTime, memory, testCasesPassed, totalTestCases } = action.payload;
+      const { results, errorMessage, verdict, executionTime, memory, testCasesPassed, totalTestCases, isSubmit, runProgress } = action.payload;
       state.output.results = results || [];
       state.output.errorMessage = errorMessage || '';
       state.output.verdict = verdict || null;
@@ -156,11 +232,25 @@ const battleSlice = createSlice({
       state.output.testCasesPassed = testCasesPassed || 0;
       state.output.totalTestCases = totalTestCases || 0;
       state.output.state = verdict ? (verdict === 'AC' ? 'success' : 'error') : state.output.state;
+      
+      if (runProgress) {
+         state.output.runProgress = runProgress;
+      } else {
+         state.output.runProgress = { 
+            done: testCasesPassed || 0, 
+            total: totalTestCases || 0, 
+            isSubmit: isSubmit || false 
+         };
+      }
     },
     endBattle: (state, action) => {
       const { winnerId, ratingDetails } = action.payload;
       state.status = 'ended';
       state.eloDetails = ratingDetails;
+      state.winnerId = winnerId || null; // null = draw
+    },
+    setAiAnalysis: (state, action) => {
+      state.aiAnalysis = action.payload;
     },
     resetBattleState: () => initialState,
   },
@@ -171,12 +261,15 @@ export const {
   setSuggestedTopic,
   setInvitedUser,
   initBattle,
+  resumeBattle,
   updateOpponentStatus,
   tickTimer,
+  setTimerRemaining,
   setOutputState,
   setOutputProgress,
   setOutputResults,
   endBattle,
+  setAiAnalysis,
   resetBattleState,
 } = battleSlice.actions;
 

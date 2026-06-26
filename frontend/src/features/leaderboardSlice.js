@@ -37,9 +37,7 @@ const initialState = {
 const leaderboardSlice = createSlice({
   name: 'leaderboard',
   initialState,
-  reducers: {
-    resetLeaderboard: () => initialState,
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchLeaderboard.pending, (state) => {
@@ -69,6 +67,6 @@ const leaderboardSlice = createSlice({
   },
 });
 
-export const { resetLeaderboard } = leaderboardSlice.actions;
+export const {} = leaderboardSlice.actions;
 export const selectLeaderboard    = (state) => state.leaderboard;
 export default leaderboardSlice.reducer;
