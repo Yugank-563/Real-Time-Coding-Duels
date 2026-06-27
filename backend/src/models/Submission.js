@@ -51,9 +51,10 @@ const submissionSchema = new mongoose.Schema(
       type: [mongoose.Schema.Types.Mixed],
       default: [],
     },
-    totalTestCases: {
-      type: Number,
-      default: 0,
+    // The original test cases array (inputs, expected outputs) for zipping results
+    testCases: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
     },
     errorMessage: {
       type: String,
@@ -63,11 +64,37 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    improvedCode: {
+      type: String,
+      default: null,
+    },
+    aiAnalysis: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    aiAnalysisStatus: {
+      type: String,
+      enum: ['none', 'pending', 'completed', 'failed', 'expired'],
+      default: 'none',
+    },
+    aiAnalysisGeneratedAt: {
+      type: Date,
+      default: null,
+    },
+    aiAnalysisExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Index for polling submission status by ID (already indexed via _id)
+// Index for fetching user-specific submissions
+submissionSchema.index({ userId: 1, problemId: 1 });
+submissionSchema.index({ verdict: 1 });
 
 const Submission = mongoose.model('Submission', submissionSchema);
 

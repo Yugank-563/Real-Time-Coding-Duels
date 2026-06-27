@@ -13,44 +13,20 @@ const problemSchema = new mongoose.Schema(
       sparse: true,
       index: true,
     },
-    source: {
-      type: String,
-      default: 'leetcode',
-    },
-    sourceUrl: {
-      type: String,
-    },
     content: {
       type: String,
     },
-    examples: {
-      type: String,
-    },
-    hints: [
-      {
-        type: String,
-      },
-    ],
+
     difficulty: {
       type: String,
-      enum: ['Easy', 'Medium', 'Hard', 'Expert'],
-      default: 'Medium',
+      enum: ['Easy', 'Medium', 'Hard'],
+      default: 'Easy',
     },
     tags: [
       {
         type: String,
       },
     ],
-    constraints: {
-      timeLimit: {
-        type: Number, // in seconds
-        default: 2,
-      },
-      memoryLimit: {
-        type: Number, // in MB
-        default: 256,
-      },
-    },
     testCases: [
       {
         input: {
@@ -66,6 +42,7 @@ const problemSchema = new mongoose.Schema(
           default: false,
         },
       },
+      { _id: false }
     ],
     boilerplates: {
       cpp: {
@@ -73,12 +50,16 @@ const problemSchema = new mongoose.Schema(
         default: '',
       },
     },
-    lastFetchAttempt: {
-      type: Date,
-    },
-    isFallback: {
-      type: Boolean,
-      default: false,
+
+    testCaseConfig: {
+      totalCount: {
+        type: Number,
+        default: 0,
+      },
+      folderPath: {
+        type: String,
+        default: '',
+      },
     },
   },
   {

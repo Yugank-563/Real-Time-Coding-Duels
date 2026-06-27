@@ -9,6 +9,3 @@ export { default as Problem } from './Problem.js';
 
 // Submission model
 export { default as Submission } from './Submission.js';
-
-// TestCase model
-export { default as TestCase } from './TestCase.js';

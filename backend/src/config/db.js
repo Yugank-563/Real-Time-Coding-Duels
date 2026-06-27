@@ -20,6 +20,9 @@ const seedProblems = async () => {
     // Heal existing database problems in the background (non-blocking, using fast bulk update)
     const healDBProblems = async () => {
       try {
+        const lock = await redis.set('lock:heal_problems', 'locked', { NX: true, EX: 60 });
+        if (!lock) return;
+
         // Step 1: Fix missing titleSlug using the title
         const noSlug = await Problem.find({ titleSlug: { $exists: false } }, { title: 1 });
         for (const p of noSlug) {
@@ -27,38 +30,7 @@ const seedProblems = async () => {
           await Problem.updateOne({ _id: p._id }, { $set: { titleSlug: slug } });
         }
 
-        // Step 2: Single-pass bulk update — set source and sourceUrl on every problem that's missing them
-        const db = Problem.db.db;
-        const col = db.collection('problems');
-
-        // Set source = 'leetcode' where source is not yet set and titleSlug does NOT start with 'cf-'
-        await col.updateMany(
-          { source: { $exists: false }, titleSlug: { $not: /^cf-/ } },
-          [{
-            $set: {
-              source: 'leetcode',
-              sourceUrl: { $concat: ['https://leetcode.com/problems/', '$titleSlug', '/'] }
-            }
-          }]
-        );
-
-        // Set source = 'codeforces' where source is not yet set and titleSlug starts with 'cf-'
-        await col.updateMany(
-          { source: { $exists: false }, titleSlug: /^cf-/ },
-          { $set: { source: 'codeforces', sourceUrl: 'https://codeforces.com/' } }
-        );
-
-        // Set sourceUrl on leetcode problems that already have source but still missing sourceUrl
-        await col.updateMany(
-          { source: 'leetcode', sourceUrl: { $exists: false } },
-          [{
-            $set: {
-              sourceUrl: { $concat: ['https://leetcode.com/problems/', '$titleSlug', '/'] }
-            }
-          }]
-        );
-
-        console.log('[db] Healed database problems (source/sourceUrl) successfully.');
+        console.log('[db] Healed database problems (titleSlug) successfully.');
       } catch (err) {
         console.error('[db] Error healing database problems:', err.message);
       }
@@ -70,9 +42,16 @@ const seedProblems = async () => {
     // Sync LeetCode problems in the background (non-blocking)
     const syncLeetCode = async () => {
       try {
-        const leetcodeCount = await Problem.countDocuments({ source: 'leetcode' });
-        if (leetcodeCount < 500) {
-          console.log('[db] Under 500 LeetCode problems in DB. Background syncing 1000 problems from LeetCode API...');
+        // Distributed lock to prevent race conditions across multiple instances
+        const lock = await redis.set('lock:sync_leetcode', 'locked', { NX: true, EX: 600 });
+        if (!lock) {
+          console.log('[db] Background LeetCode sync is already running on another instance. Skipping.');
+          return;
+        }
+
+        const problemsCount = await Problem.countDocuments({});
+        if (problemsCount < 500) {
+          console.log('[db] Under 500 problems in DB. Background syncing 1000 problems from LeetCode API...');
           const LEETCODE_BASE = process.env.LEETCODE_API_URL || 'https://alfa-leetcode-api.onrender.com';
           
           let allFreeProblems = [];
@@ -102,7 +81,6 @@ const seedProblems = async () => {
                     titleSlug: p.titleSlug,
                     difficulty: dbDiff,
                     tags,
-                    source: 'leetcode',
                   }
                 },
                 upsert: true
@@ -123,7 +101,61 @@ const seedProblems = async () => {
     };
 
     // Trigger background sync
-    syncLeetCode();
+    // syncLeetCode();
+
+    // Auto-fill missing problem descriptions in the background
+    const autoFillMissingDescriptions = async () => {
+      try {
+        const lock = await redis.set('lock:sync_missing_details', 'locked', { NX: true, EX: 3600 });
+        if (!lock) return;
+
+        // Find problems missing content, cpp boilerplate, testcases, or flagged as fallback
+        const problemsToSync = await Problem.find({
+          $or: [
+            { content: { $exists: false } },
+            { content: "" },
+            { boilerplates: { $exists: false } },
+            { 'boilerplates.cpp': { $exists: false } },
+            { testCases: { $exists: false } },
+            { testCases: { $size: 0 } }
+          ]
+        }, { titleSlug: 1 });
+
+        if (problemsToSync.length === 0) return;
+
+        console.log(`[db] Found ${problemsToSync.length} problems missing details. Starting background sync...`);
+        const { fetchAndStoreProblemDetails } = await import('../services/problemService.js');
+
+        for (let i = 0; i < problemsToSync.length; i++) {
+          const slug = problemsToSync[i].titleSlug;
+          console.log(`[db] Syncing details for ${slug} (${i + 1}/${problemsToSync.length})...`);
+          
+          try {
+            await fetchAndStoreProblemDetails(slug);
+            // Wait 8 seconds between requests to avoid LeetCode 429
+            await new Promise(resolve => setTimeout(resolve, 8000));
+          } catch (err) {
+            if (err.message && err.message.includes('429')) {
+              console.warn(`[db] Rate limited (429) while syncing ${slug}. Pausing background sync for 2 minutes...`);
+              await new Promise(resolve => setTimeout(resolve, 120000)); // 2 min wait
+              try {
+                await fetchAndStoreProblemDetails(slug); // Retry once
+              } catch (retryErr) {
+                console.error(`[db] Retry failed for ${slug}. Skipping.`);
+              }
+            } else {
+              console.error(`[db] Error syncing ${slug}:`, err.message);
+            }
+          }
+        }
+        console.log(`[db] Background sync of missing details completed.`);
+      } catch (err) {
+        console.error('[db] Error in autoFillMissingDescriptions:', err.message);
+      }
+    };
+
+    // Trigger auto-fill missing details
+    autoFillMissingDescriptions();
 
     // Clear problems cache on server startup/restart
     clearProblemsCache();
