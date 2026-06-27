@@ -21,6 +21,7 @@ export * from './battles/joinPrivateRoom.js';
 export * from './battles/joinQueue.js';
 export * from './battles/leaveQueue.js';
 export * from './battles/startPrivateBattle.js';
+export * from './battles/getAiReview.js';
 export * from './battles/surrenderBattle.js';
 
 // problems folder

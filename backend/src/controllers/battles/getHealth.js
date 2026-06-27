@@ -10,9 +10,9 @@ export const getHealth = async (req, res, next) => {
   try {
     await axios.get(`${LEETCODE_BASE}/daily`, { timeout: 6000 });
     results.leetcode = 'up';
-  } catch (err) {
-    next(err);
-}
+  } catch {
+    results.leetcode = 'down';
+  }
 
   // 2. Ping local MongoDB cache
   results.mongodb = mongoose.connection.readyState === 1 ? 'up' : 'down';
