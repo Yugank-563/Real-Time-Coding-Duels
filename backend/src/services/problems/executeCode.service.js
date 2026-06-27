@@ -1,21 +1,21 @@
-import { createSubmission, findSubmissionById } from '../../repositories/index.js';
-import { findProblemBySlugOrTitle } from '../../repositories/index.js';
+import { createSubmission, findProblemBySlugOrTitle } from '../../repositories/index.js';
 import { submissionQueue } from '../../config/queue.js';
-import { generateTestCases } from '../testCaseGeneratorService.js';
+import { getTestCases as getB2TestCases, getReferenceSolution } from '../testCaseService.js';
 
-const normalizeInput = (str) => {
-  if (!str) return '';
-  return str.replace(/\r\n/g, '\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
-};
+const TC_SUBMIT_COUNT_B2 = 100;  // Submit (B2): up to 100 stored cases
 
-const buildRunTestCases = (problem, customInputs) => {
+
+const buildRunTestCases = async (problem, customInputs) => {
+  const allTCs = problem.testCases || [];
+
   const testCases = [];
+
   if (customInputs && customInputs.length > 0) {
-    customInputs.forEach((input, i) => {
+    customInputs.forEach((input) => {
       if (input && input.trim()) {
-        const normalizedUserVal = normalizeInput(input);
-        const matchingTC = (problem.testCases || []).find(tc => 
-          normalizeInput(tc.input) === normalizedUserVal
+        const userKey = input.replace(/\s+/g, '');
+        const matchingTC = allTCs.find(tc =>
+          tc.input && tc.input.replace(/\s+/g, '') === userKey
         );
 
         testCases.push({
@@ -29,7 +29,7 @@ const buildRunTestCases = (problem, customInputs) => {
   }
 
   if (testCases.length === 0) {
-    const sampleCases = (problem.testCases || [])
+    const sampleCases = allTCs
       .filter(tc => tc.isSample)
       .map((tc, i) => ({
         input:      tc.input,
@@ -43,34 +43,72 @@ const buildRunTestCases = (problem, customInputs) => {
 };
 
 const buildSubmitTestCases = async (problem) => {
-  const TC_SUBMIT_COUNT = parseInt(process.env.TC_SUBMIT_COUNT, 10) || 50;
-  let testCases;
-  try {
-    testCases = await generateTestCases(problem, TC_SUBMIT_COUNT);
-  } catch (genErr) {
-    console.warn('[executeCode.service] TC generation failed, falling back to sample TCs:', genErr.message);
-    testCases = (problem.testCases || []).map((tc, i) => ({
-      input:      tc.input,
-      output:     tc.output || '',
-      caseNumber: i + 1,
-      type:       'sample',
-    }));
+  const storageConfigured =
+    problem?.testCaseConfig?.totalCount > 0 &&
+    problem?.testCaseConfig?.folderPath;
+
+  if (!storageConfigured) {
+    const err = new Error(
+      `Problem "${problem?.titleSlug}" has no stored test cases configured. ` +
+      `Ensure testCaseConfig.totalCount and testCaseConfig.folderPath are set in MongoDB.`
+    );
+    err.status = 500;
+    throw err;
   }
-  return testCases;
+
+  const storedCases = await getB2TestCases(problem, TC_SUBMIT_COUNT_B2);
+  return storedCases.map((tc) => ({
+    input:      tc.input,
+    output:     tc.expectedOutput,
+    caseNumber: tc.caseNumber,
+    type:       'hidden',
+  }));
 };
 
 export const executeCodeService = async ({ userId, slug, code, language, customInputs, isSubmit }) => {
   const problem = await findProblemBySlugOrTitle(slug);
   if (!problem) {
-    throw new Error('Problem not found');
+    const err = new Error('Problem not found'); err.status = 404; throw err;
   }
 
-  const testCases = isSubmit 
+  let testCases = isSubmit
     ? await buildSubmitTestCases(problem)
-    : buildRunTestCases(problem, customInputs);
+    : await buildRunTestCases(problem, customInputs);
+
+  // Dynamic payload limit: Prevent Redis (10MB) & MongoDB (16MB) crashes
+  let totalSize = 0;
+  const safeTestCases = [];
+  for (const tc of testCases) {
+    const size = (tc.input?.length || 0) + (tc.output?.length || 0);
+    if (totalSize + size > 8000000) break; // Cap at 8MB total payload
+    safeTestCases.push(tc);
+    totalSize += size;
+  }
+  testCases = safeTestCases;
 
   if (!testCases.length) {
-    throw new Error('No test cases available for this problem.');
+    const err = new Error('No test cases available for this problem.'); err.status = 400; throw err;
+  }
+
+  // Save a highly truncated version to MongoDB to prevent BSON size limits
+  const dbTestCases = testCases.map(tc => ({
+    caseNumber: tc.caseNumber,
+    type: tc.type,
+    input:  String(tc.input).substring(0, 1000) + (String(tc.input).length > 1000 ? '...' : ''),
+    output: String(tc.output).substring(0, 1000) + (String(tc.output).length > 1000 ? '...' : ''),
+  }));
+
+  // If custom inputs have missing expected outputs, try fetching the reference solution from B2/local
+  let referenceSolution = null;
+  if (!isSubmit && customInputs && customInputs.length > 0) {
+    const missingOutputs = testCases.some(tc => !tc.output || tc.output.trim() === '');
+    if (missingOutputs) {
+      try {
+        referenceSolution = await getReferenceSolution(problem);
+      } catch (err) {
+        console.warn('[executeCode.service] Failed to fetch reference solution:', err.message);
+      }
+    }
   }
 
   const submission = await createSubmission({
@@ -80,6 +118,7 @@ export const executeCodeService = async ({ userId, slug, code, language, customI
     language,
     verdict:         'pending',
     totalTestCases:  testCases.length,
+    testCases:       dbTestCases,
   });
 
   await submissionQueue.add('execute', {
@@ -89,50 +128,12 @@ export const executeCodeService = async ({ userId, slug, code, language, customI
     language,
     problemId:    problem._id.toString(),
     testCases,
+    referenceSolution,
   });
 
-  let updatedSub = null;
-  let verdict    = 'pending';
-  let attempts   = 0;
-  const maxAttempts = isSubmit ? 40 : 30;
-
-  while (verdict === 'pending' && attempts < maxAttempts) {
-    await new Promise(r => setTimeout(r, 500));
-    updatedSub = await findSubmissionById(submission._id);
-    if (updatedSub) verdict = updatedSub.verdict;
-    attempts++;
-  }
-
-  if (!updatedSub || verdict === 'pending') {
-    throw new Error('Execution timed out — please try again.');
-  }
-
-  const storedResults = updatedSub.results || [];
-  const results = testCases.map((tc, i) => {
-    const r = storedResults[i] || {};
-    return {
-      caseNumber: tc.caseNumber,
-      type:       tc.type,
-      input:      tc.input,
-      output:     r.output  !== undefined ? r.output  : (updatedSub.output || ''),
-      expected:   r.expected !== undefined ? r.expected : (tc.output || ''),
-      passed:     r.passed  !== undefined ? r.passed  : (updatedSub.verdict === 'AC'),
-      status:     r.status  || updatedSub.verdict,
-      time:       r.time    || null,
-      memory:     r.memory  || null,
-    };
-  });
-
-  const passedCount = results.filter(r => r.passed).length;
+  console.log(`Successfully enqueued code execution ${submission._id} for problem ${problem._id}`);
 
   return {
-    state:           verdict === 'CE' || verdict === 'RE' ? 'error' : 'success',
-    verdict,
-    executionTime:   updatedSub.executionTime || 0,
-    memory:          updatedSub.memory        || 0,
-    errorMessage:    updatedSub.errorMessage  || '',
-    testCasesPassed: passedCount,
-    totalTestCases:  testCases.length,
-    results,
+    submissionId: submission._id
   };
 };

@@ -1,19 +1,24 @@
 import redis from '../../config/redis.js';
 import { getPaginatedProblems, countProblems } from '../../repositories/index.js';
+import { escapeRegex } from '../../utils/regexUtils.js';
+import { toLeetCode } from '../../config/topicMap.js';
 
 export const getProblemsService = async ({ pageNum, limitNum, search, difficulty, tag }) => {
   const query = {};
   if (search) {
+    const safeSearch = escapeRegex(search);
     query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { tags: { $regex: search, $options: 'i' } }
+      { title: { $regex: safeSearch, $options: 'i' } },
+      { tags: { $regex: safeSearch, $options: 'i' } }
     ];
   }
   if (difficulty && difficulty !== 'ALL') {
-    query.difficulty = { $regex: new RegExp(`^${difficulty}$`, 'i') };
+    const safeDifficulty = escapeRegex(difficulty);
+    query.difficulty = { $regex: new RegExp(`^${safeDifficulty}$`, 'i') };
   }
   if (tag && tag !== 'ALL') {
-    query.tags = tag;
+    const slugTag = toLeetCode[tag] || tag.toLowerCase().replace(/\s+/g, '-');
+    query.tags = { $regex: new RegExp(`^(${escapeRegex(tag)}|${escapeRegex(slugTag)})$`, 'i') };
   }
 
   const skip = (pageNum - 1) * limitNum;
