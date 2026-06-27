@@ -213,13 +213,16 @@ export const registerMatchmakingHandlers = (io, socket) => {
             } else {
               // No match yet — send wait update
               if (elapsedSeconds >= 60) {
+                clearInterval(matchmakingInterval);
+                activeQueueIntervals.delete(socket.id);
                 socket.emit('matchmaking:topic_timeout', { topic });
+              } else {
+                socket.emit('matchmaking:position', {
+                  position: 1,
+                  estimatedWait: Math.max(10, 60 - elapsedSeconds),
+                  elapsedSeconds,
+                });
               }
-              socket.emit('matchmaking:position', {
-                position: 1,
-                estimatedWait: Math.max(10, 60 - elapsedSeconds),
-                elapsedSeconds,
-              });
             }
 
           } else {

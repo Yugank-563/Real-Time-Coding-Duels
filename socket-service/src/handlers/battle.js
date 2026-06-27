@@ -1,4 +1,5 @@
 import Battle from '../../../backend/src/models/Battle.js';
+import Submission from '../../../backend/src/models/Submission.js';
 import { processBattleResult } from '../../../backend/src/services/ratingService.js';
 import { battleSocketSchema, codeChangeSocketSchema } from '../schemas/socket.schema.js';
 
@@ -33,33 +34,52 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
 
   const p1 = battle.players[0];
   const p2 = battle.players[1];
-  let winnerId = null;
+  let winnerId = null; 
 
-  if (p1.progress > p2.progress) {
-    winnerId = p1.user.toString();
-  } else if (p2.progress > p1.progress) {
-    winnerId = p2.user.toString();
-  } else {
-    winnerId = null; // Draw
+  try {
+    const p1Sub = await Submission.findOne({ userId: p1.user, problemId: battle.problem }).sort({ createdAt: -1 });
+    const p2Sub = await Submission.findOne({ userId: p2.user, problemId: battle.problem }).sort({ createdAt: -1 });
+
+    // Fallback to 50 if no submission found to be safe
+    const p1Total = p1Sub?.totalTestCases || 50;
+    const p2Total = p2Sub?.totalTestCases || 50;
+
+    const p1Percent = p1Total > 0 ? p1.progress / p1Total : 0;
+    const p2Percent = p2Total > 0 ? p2.progress / p2Total : 0;
+
+    if (p1Percent >= 0.5 || p2Percent >= 0.5) {
+      if (p1.progress > p2.progress) {
+        winnerId = p1.user.toString();
+      } else if (p2.progress > p1.progress) {
+        winnerId = p2.user.toString();
+      }
+    }
+  } catch (err) {
+    console.error('Error calculating 50% threshold for timeout win:', err);
   }
 
   battle.winner = winnerId;
   await battle.save();
 
-  let eloDetails = null;
-  if (winnerId) {
-    const loserId = winnerId === p1.user.toString() ? p2.user.toString() : p1.user.toString();
-    eloDetails = await processBattleResult(loserId, winnerId, 0); // 0 score for loser
+  // Always compute ELO: win=1.0, loss=0.0, draw=0.5
+  let ratingDetails = null;
+  try {
+    const p1Id = p1.user.toString();
+    const p2Id = p2.user.toString();
+    const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
+    ratingDetails = await processBattleResult(p1Id, p2Id, score);
+  } catch (eloErr) {
+    console.error('ELO processing failed after timeout:', eloErr.message);
   }
 
   const roomName = `battle:${battle._id.toString()}`;
   io.to(roomName).emit('battle:end', {
     winnerId,
-    ratingDetails: eloDetails,
+    ratingDetails,
     reason
   });
 
-  console.log(`Battle ${battle._id.toString()} resolved by ${reason.toLowerCase()}. Winner: ${winnerId}`);
+  console.log(`Battle ${battle._id.toString()} resolved by ${reason.toLowerCase()}. Winner: ${winnerId ?? 'Draw'}`);
 };
 
 export const registerBattleHandlers = (io, socket) => {
@@ -182,14 +202,18 @@ export const registerBattleHandlers = (io, socket) => {
 
       await battle.save();
 
-      // Process Elo calculations: Surrendering user (loss = 0), opponent (win = 1)
-      const eloDetails = await processBattleResult(socket.userId, opponentId, 0);
+      // Process Elo: surrendering user loses (0), opponent wins (1)
+      let ratingDetails = null;
+      try {
+        ratingDetails = await processBattleResult(socket.userId, opponentId, 0);
+      } catch (eloErr) {
+        console.error('ELO processing failed after surrender:', eloErr.message);
+      }
 
-      // Broadcast battle completion
       const roomName = `battle:${battleId}`;
       io.to(roomName).emit('battle:end', {
         winnerId: opponentId,
-        ratingDetails: eloDetails,
+        ratingDetails,
       });
 
       console.log(`Battle ${battleId} resolved by surrender. Winner: ${opponentId}`);

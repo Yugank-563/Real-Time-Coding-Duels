@@ -1,11 +1,11 @@
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from 'redis';
+import { createAdapter } from '@socket.io/redis-adapter';
 
 // Handlers imports
 import { registerMatchmakingHandlers } from './handlers/matchmaking.js';
@@ -36,16 +36,6 @@ await connectDB()
     process.exit(1);
   });
 
-const httpServer = createServer();
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-});
-
-// 2. Setup Redis Pub/Sub listener for microservice communication
 const redisOptions = {};
 if (redisUrl.startsWith('rediss://')) {
   redisOptions.socket = {
@@ -54,6 +44,25 @@ if (redisUrl.startsWith('rediss://')) {
   };
 }
 
+const pubClient = createClient({ url: redisUrl, ...redisOptions });
+const adapterSubClient = pubClient.duplicate();
+
+pubClient.on('error', (err) => console.error('Socket Redis Pub Client Error:', err.message));
+adapterSubClient.on('error', (err) => console.error('Socket Redis Adapter Sub Client Error:', err.message));
+
+await Promise.all([pubClient.connect(), adapterSubClient.connect()]);
+
+const httpServer = createServer();
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  adapter: createAdapter(pubClient, adapterSubClient)
+});
+
+// 2. Setup Redis Pub/Sub listener for microservice communication (Manual events)
 const subClient = createClient({ url: redisUrl, ...redisOptions });
 subClient.on('error', (err) => console.error('Socket Redis Sub Client Error:', err.message));
 await subClient.connect();
@@ -106,8 +115,32 @@ await subClient.subscribe('submission:events', (message) => {
         totalTestCases,
       });
     }
+
+    // Trigger AI Analysis in background
+    if (verdict !== 'pending' && verdict !== 'RE' && verdict !== 'CE') {
+      // Use Redis Pub/Sub to trigger AI Analysis (Decoupled architecture)
+      pubClient.publish('trigger_ai_analysis', submissionId).catch(err => {
+        console.error('Failed to trigger AI Analysis via Redis', err);
+      });
+    }
   } catch (error) {
     console.error('Error handling Redis Pub/Sub submission message:', error.message);
+  }
+});
+
+// Listen for AI analysis completion
+await subClient.subscribe('ai:analysis_ready', (message) => {
+  try {
+    const data = JSON.parse(message);
+    const { submissionId, userId, aiAnalysis } = data;
+    console.log(`Redis Pub/Sub received AI analysis for submission ${submissionId}`);
+    
+    io.to(`user:${userId}`).emit('ai:analysis_ready', {
+      submissionId,
+      aiAnalysis
+    });
+  } catch (error) {
+    console.error('Error handling Redis Pub/Sub ai:analysis_ready message:', error.message);
   }
 });
 
