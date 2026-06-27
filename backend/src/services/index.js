@@ -36,9 +36,7 @@ export * from './users/updateProfile.service.js';
 export * from './users/getLeaderboard.service.js';
 
 // general folder
-export * from './constraintParser.js';
-export * from './leetcodeService.js';
 export * from './matchmakingService.js';
 export * from './problemService.js';
 export * from './ratingService.js';
-export * from './testCaseGeneratorService.js';
+export * from './testCaseService.js';
