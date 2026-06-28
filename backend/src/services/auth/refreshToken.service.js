@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { findUserById } from '../../repositories/index.js';
+import { findUserById, updateRefreshToken } from '../../repositories/index.js';
 import { generateAccessToken, generateRefreshToken } from '../../utils/tokenUtils.js';
 
 // POST /auth/refresh
@@ -16,7 +16,7 @@ export const refreshTokenService = async (token) => {
   const newRefreshToken = generateRefreshToken(user);
 
   // Rotate the refresh token
-  await user.updateOne({ refreshToken: newRefreshToken });
+  await updateRefreshToken(user._id, newRefreshToken);
 
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
