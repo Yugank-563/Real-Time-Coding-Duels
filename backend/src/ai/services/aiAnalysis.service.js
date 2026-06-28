@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { analyzeCode } from './codeReview.service.js';
 import { compareBattleSolutions } from './battleReview.service.js';
 
-const DAILY_LIMIT = 20;
+const DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT, 10) || 20;
 
 export const triggerAiAnalysis = async (submissionId) => {
   const lockKey = `ai_lock:submission:${submissionId}`;

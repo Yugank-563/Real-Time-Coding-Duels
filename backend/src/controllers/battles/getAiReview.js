@@ -1,5 +1,4 @@
-import Battle from '../../models/Battle.js';
-import Submission from '../../models/Submission.js';
+import { Battle, Submission } from '../../models/index.js';
 import { triggerAiAnalysis, triggerAiBattleReview } from '../../ai/services/aiAnalysis.service.js';
 
 export const getAiReview = async (req, res) => {

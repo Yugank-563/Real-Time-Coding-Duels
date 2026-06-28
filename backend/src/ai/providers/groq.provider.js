@@ -1,31 +1,45 @@
 import Groq from 'groq-sdk';
 
+let groqClient = null;
 
-export const callGroq = async (prompt, systemInstruction = '') => {
-  try {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) throw new Error('GROQ_API_KEY is not configured');
+export const GroqProvider = {
+  name: 'Groq',
+  isConfigured() {
+    return !!process.env.GROQ_API_KEY;
+  },
+  init() {
+    if (!groqClient) {
+      groqClient = new Groq({ 
+        apiKey: process.env.GROQ_API_KEY,
+        maxRetries: 0,
+        timeout: 5000 // 5 seconds
+      });
+    }
+  },
+  async analyze(prompt, systemInstruction = '') {
+    if (!groqClient) this.init();
 
-    const groq = new Groq({ apiKey });
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: systemInstruction || 'You are a helpful AI coding assistant.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      response_format: { type: 'json_object' },
-    });
-
-    return chatCompletion.choices[0]?.message?.content || null;
-  } catch (error) {
-    console.error(`[Groq Provider] Error: ${error.message}`);
-    return null;
+    try {
+      const chatCompletion = await groqClient.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: systemInstruction || ''
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        model: 'llama-3.1-8b-instant',
+        response_format: { type: 'json_object' }
+      });
+      return chatCompletion.choices[0]?.message?.content || '';
+    } catch (error) {
+      const isTransient = error.status === 429 || error.status >= 500 || error.status === undefined || error.name === 'APITimeoutError';
+      const err = new Error(error.message);
+      err.isTransient = isTransient;
+      throw err;
+    }
   }
 };

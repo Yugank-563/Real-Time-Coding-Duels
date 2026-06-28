@@ -6,7 +6,7 @@ let subClient = null;
 export const startAiWorker = async () => {
   try {
     subClient = createClient({
-      url: process.env.REDIS_URI || 'redis://localhost:6379'
+      url: process.env.REDIS_URL || 'redis://localhost:6379'
     });
     
     subClient.on('error', (err) => console.error('[AI Worker] Redis Client Error', err));
