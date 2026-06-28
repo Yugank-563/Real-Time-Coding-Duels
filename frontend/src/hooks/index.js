@@ -5,6 +5,7 @@ export { useDocumentTitle } from './useDocumentTitle';
 
 // general hooks
 export { useProfile } from './useProfile';
+export { useInvitations } from './useInvitations';
 
 // workspace folder
 export { useProblemFetch, getVariableNames, getInitialCases } from './workspace/useProblemFetch';
