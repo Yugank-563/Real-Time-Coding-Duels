@@ -12,6 +12,7 @@ export const submissionWorker = new Worker(
   {
     connection: redisConnection,
     concurrency: 1,
+    lockDuration: 300000, // 5 minutes to allow slow Free-Tier batches
     limiter: {
       max: 1,
       duration: 1500, // Process max 1 job every 1.5 seconds globally

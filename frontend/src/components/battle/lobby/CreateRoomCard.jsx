@@ -1,15 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Shield, Link2, Copy } from 'lucide-react';
-import { useTheme } from '../../../hooks/ui/useTheme';
-import { useToast } from '../../../hooks/ui/useToast';
+import { useTheme } from '../../../hooks/useTheme';
+import { useToast } from '../../../hooks/useToast';
 import CustomDropdown from '../../ui/CustomDropdown';
 
 const difficultyOptions = [
   { value: 'Easy', label: 'Easy Level' },
   { value: 'Medium', label: 'Medium Level' },
-  { value: 'Hard', label: 'Hard Level' },
-  { value: 'Expert', label: 'Expert Level' }
+  { value: 'Hard', label: 'Hard Level' }
 ];
 
 const timeLimitOptions = [

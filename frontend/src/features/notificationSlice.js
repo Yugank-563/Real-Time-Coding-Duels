@@ -18,12 +18,9 @@ const notificationSlice = createSlice({
     removeToast: (state, { payload }) => {
       state.toasts = state.toasts.filter((t) => t.id !== payload);
     },
-    clearAllToasts: (state) => {
-      state.toasts = [];
-    },
   },
 });
 
-export const { addToast, removeToast, clearAllToasts } = notificationSlice.actions;
+export const { addToast, removeToast } = notificationSlice.actions;
 export const selectToasts = (state) => state.notifications.toasts;
 export default notificationSlice.reducer;

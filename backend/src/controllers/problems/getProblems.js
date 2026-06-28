@@ -1,6 +1,6 @@
 import { getProblemsService } from '../../services/index.js';
 
-export const getProblems = async (req, res) => {
+export const getProblems = async (req, res, next) => {
   try {
     const { page = 1, limit = 25, search = '', difficulty = 'ALL', tag = 'ALL' } = req.query;
     const pageNum = parseInt(page, 10) || 1;
@@ -16,6 +16,6 @@ export const getProblems = async (req, res) => {
 
     res.json(responsePayload);
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+    next(err);
+}
 };

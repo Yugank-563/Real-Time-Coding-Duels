@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { Shield, Link2, Copy, Play } from 'lucide-react';
 import { selectUser } from '../../features/index';
 import { useToast, useDocumentTitle } from '../../hooks/index';
-import { useTheme } from '../../hooks/ui/useTheme';
+import { useTheme } from '../../hooks/useTheme';
 import { useBattleSocket } from '../../hooks/index';
 import { api } from '../../utils/index';
 
@@ -20,8 +20,6 @@ const PrivateLobby = () => {
   useDocumentTitle('Private Lobby');
 
   const [battle, setBattle] = useState(location.state?.roomData || null);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
 
   // Hook into active WebSockets gateway connection
@@ -74,18 +72,14 @@ const PrivateLobby = () => {
   const handleCopyCode = () => {
     if (!battle) return;
     navigator.clipboard.writeText(battle.roomCode);
-    setIsCopied(true);
     toast.success('Code Copied! 📋', 'Send this code to your opponent.');
-    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleCopyLink = () => {
     if (!battle) return;
     const link = `${window.location.origin}/battle/private/${roomId}/lobby`;
     navigator.clipboard.writeText(link);
-    setIsLinkCopied(true);
     toast.success('Lobby Link Copied! 📋', 'Opponent can join via this link.');
-    setTimeout(() => setIsLinkCopied(false), 2000);
   };
 
   const handleStartBattle = async () => {

@@ -1,14 +1,21 @@
 import { getProblemDetailsService } from '../../services/index.js';
 
-export const getProblemDetails = async (req, res) => {
+export const getProblemDetails = async (req, res, next) => {
   try {
     const { slug } = req.params;
     const problem = await getProblemDetailsService(slug);
-    res.json(problem);
-  } catch (err) {
-    if (err.message.includes('Problem not found')) {
-      return res.status(404).json({ message: err.message });
+    const problemObj = problem.toObject ? problem.toObject() : problem;
+    
+    // Security: Only send sample testcases to the frontend
+    if (problemObj.testCases) {
+      problemObj.testCases = problemObj.testCases.filter(tc => tc.isSample);
     }
-    res.status(500).json({ message: err.message });
+    
+    // Security: Hide internal B2 paths and counts from frontend
+    delete problemObj.testCaseConfig;
+
+    res.json(problemObj);
+  } catch (err) {
+    next(err);
   }
 };

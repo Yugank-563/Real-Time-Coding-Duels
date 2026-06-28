@@ -12,6 +12,7 @@ import Problem from '../../../backend/src/models/Problem.js';
 import Battle from '../../../backend/src/models/Battle.js';
 import { getRandomProblem } from '../../../backend/src/services/problemService.js';
 import { matchmakingSchema } from '../schemas/socket.schema.js';
+import { validateSocketPayload } from '../utils/validation.js';
 
 const eloToDifficulty = (elo) => {
   if (elo < 1200) return 'EASY';
@@ -24,16 +25,6 @@ const activeQueueIntervals = new Map();
 
 // Map userId → socketId so we can stop the matched user's interval
 const userSocketMap = new Map();
-
-const validateSocketPayload = (schema, data, socket, eventName) => {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    socket.emit('error', { message: `Validation failed for ${eventName}`, details: result.error.issues });
-    console.warn(`[Security] Socket payload validation failed for ${eventName}:`, result.error.issues);
-    return null;
-  }
-  return result.data;
-};
 
 const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleType, user, opponent, io) => {
   let dbProblem;
@@ -213,13 +204,16 @@ export const registerMatchmakingHandlers = (io, socket) => {
             } else {
               // No match yet — send wait update
               if (elapsedSeconds >= 60) {
+                clearInterval(matchmakingInterval);
+                activeQueueIntervals.delete(socket.id);
                 socket.emit('matchmaking:topic_timeout', { topic });
+              } else {
+                socket.emit('matchmaking:position', {
+                  position: 1,
+                  estimatedWait: Math.max(10, 60 - elapsedSeconds),
+                  elapsedSeconds,
+                });
               }
-              socket.emit('matchmaking:position', {
-                position: 1,
-                estimatedWait: Math.max(10, 60 - elapsedSeconds),
-                elapsedSeconds,
-              });
             }
 
           } else {

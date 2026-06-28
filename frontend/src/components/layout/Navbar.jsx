@@ -7,7 +7,7 @@ import {
   Swords, Trophy, BookOpen, LayoutGrid, Home,
   User, Award
 } from 'lucide-react';
-import { useTheme } from '../../hooks/ui/useTheme';
+import { useTheme } from '../../hooks/useTheme';
 import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
 
 // ── NAV_LINKS CONFIG ──
@@ -72,7 +72,6 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Refs for click outside
@@ -87,15 +86,6 @@ const Navbar = () => {
   ]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
-
-  // Handle Scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Click Outside hooks
   useEffect(() => {
@@ -156,7 +146,8 @@ const Navbar = () => {
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={(e) => {
-                    if (!isAuthenticated) {
+                    // Leaderboard is a public route, allow guests
+                    if (!isAuthenticated && link.path !== '/leaderboard') {
                       e.preventDefault();
                       navigate('/login');
                     }
@@ -432,11 +423,11 @@ const Navbar = () => {
                       key={link.label}
                       to={link.path}
                       onClick={(e) => {
-                        setMobileMenuOpen(false);
-                        if (!isAuthenticated) {
+                        if (!isAuthenticated && link.path !== '/leaderboard') {
                           e.preventDefault();
                           navigate('/login');
                         }
+                        setMobileMenuOpen(false);
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive
                           ? isDark

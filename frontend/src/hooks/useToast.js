@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux';
-import { addToast } from '../../features/index';
+import { addToast } from '../features/index';
 
 export const useToast = () => {
   const dispatch = useDispatch();

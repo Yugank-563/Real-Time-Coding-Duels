@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProblems } from '../../features/index';
-import { useTheme, useDocumentTitle } from '../../hooks/index';
-import '../../styles/auth.css';
+import { fetchProblems } from '../features/index';
+import { useTheme, useDocumentTitle } from '../hooks/index';
+import '../styles/auth.css';
 import { BookOpen } from 'lucide-react';
-import { ProblemsFilter, ProblemsTable, Pagination } from '../../components/index';
+import { ProblemsFilter, ProblemsTable, Pagination } from '../components/index';
 
-import { PROBLEM_TOPICS } from '../../utils/index';
+import { PROBLEM_TOPICS } from '../utils/index';
 
 const ProblemsPage = () => {
   const { theme } = useTheme();
   useDocumentTitle('Problems');
-  
+
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const { items: problems, pagination, loading, error } = useSelector((state) => state.problems);
-  
+
   // Read from URL, provide defaults
   const page = parseInt(searchParams.get('page')) || 1;
   const difficulty = searchParams.get('difficulty') || 'ALL';
@@ -55,11 +55,13 @@ const ProblemsPage = () => {
     return () => clearTimeout(delay);
   }, [localSearch, debouncedSearch]);
 
-  // Clear legacy search params from URL on refresh
+  // Clear all search params from URL on fresh mount/refresh
   useEffect(() => {
-    if (searchParams.has('search')) {
+    if (searchParams.has('search') || searchParams.has('difficulty') || searchParams.has('tag')) {
       const params = new URLSearchParams(searchParams);
       params.delete('search');
+      params.delete('difficulty');
+      params.delete('tag');
       setSearchParams(params, { replace: true });
     }
   }, []);
@@ -72,7 +74,7 @@ const ProblemsPage = () => {
   return (
     <div className="auth-page-bg" data-auth-theme={theme} style={{ minHeight: 'calc(100vh - 64px)', padding: '1rem 0', display: 'block', overflowY: 'auto' }}>
       <div className="w-full">
-        
+
         {/* Header */}
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
@@ -88,7 +90,7 @@ const ProblemsPage = () => {
           </p>
         </div>
 
-        <ProblemsFilter 
+        <ProblemsFilter
           search={localSearch} setSearch={setLocalSearch}
           difficulty={difficulty} setDifficulty={setDifficulty}
           tag={tag} setTag={setTag}
@@ -100,7 +102,7 @@ const ProblemsPage = () => {
         {!loading && !error && (
           <Pagination pagination={pagination} setPage={setPage} label="problems" />
         )}
-        
+
       </div>
     </div>
   );

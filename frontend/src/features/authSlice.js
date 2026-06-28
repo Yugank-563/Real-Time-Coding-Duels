@@ -17,25 +17,16 @@ const authSlice = createSlice({
     setLoading: (state, action) => {
       state.isLoading = action.payload;
     },
-    setError: (state, action) => {
-      state.error = action.payload;
-      state.isLoading = false;
-    },
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
       localStorage.removeItem('bc-token');
     },
-    updateRating: (state, action) => {
-      if (state.user) {
-        state.user.rating = action.payload;
-      }
-    },
   },
 });
 
-export const { setUser, setLoading, setError, logout, updateRating } = authSlice.actions;
+export const { setUser, setLoading, logout } = authSlice.actions;
 export const selectUser = (state) => state.auth.user;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state) => state.auth.isLoading;

@@ -108,7 +108,7 @@ const LeaderboardPage = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
             }}>
-              <Trophy size={20} color="var(--auth-accent)" />
+              <Trophy size={20} className="text-amber-400" />
             </div>
             <h1 style={{
               fontSize: '1.75rem', fontWeight: 800, margin: 0,

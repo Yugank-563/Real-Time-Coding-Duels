@@ -33,3 +33,11 @@ export const findProblemBySlugOrTitle = async (slug) => {
   }
   return problem;
 };
+
+export const findProblemsByQuery = async (query, limit = 50) => {
+  return await Problem.find(query).limit(limit);
+};
+
+export const findOneAndUpdateProblem = async (filter, updateData, options = { upsert: true, new: true }) => {
+  return await Problem.findOneAndUpdate(filter, updateData, options);
+};

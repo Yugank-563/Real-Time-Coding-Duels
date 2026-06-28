@@ -4,8 +4,7 @@ import { formatCppCode } from '../../utils/index';
 import MonacoEditorComponent from './MonacoEditorComponent';
 import TestcaseTab from './TestcaseTab';
 import ResultTab from './ResultTab';
-
-
+import AIReviewTab from './AIReviewTab';
 export const EditorPanel = ({
   code,
   onCodeChange,
@@ -80,24 +79,16 @@ export const EditorPanel = ({
     runProgress
   } = output || { state: 'idle' };
 
-  const getVerdictConfig = (verd) => {
-    if (verd === 'AC')  return { text: 'Accepted',              color: 'text-[#2DB55D]' };
-    if (verd === 'WA')  return { text: 'Wrong Answer',          color: 'text-[#EF4743]' };
-    if (verd === 'TLE') return { text: 'Time Limit Exceeded',   color: 'text-orange-400' };
-    if (verd === 'MLE') return { text: 'Memory Limit Exceeded', color: 'text-yellow-400' };
-    if (verd === 'CE')  return { text: 'Compilation Error',     color: 'text-slate-400' };
-    return                     { text: 'Runtime Error',         color: 'text-[#EF4743]' };
-  };
-
   const hasResults = (state === 'success' || state === 'error') && verdict;
-  const vCfg = verdict ? getVerdictConfig(verdict) : null;
 
   // Sync to results tab if output changes to running or completed
   useEffect(() => {
-    if (state === 'running' || hasResults) {
+    if (state === 'running') {
+      setActiveTab('result');
+    } else if (hasResults) {
       setActiveTab('result');
     }
-  }, [state, hasResults]);
+  }, [state, hasResults, verdict]);
 
   const getDisplayCases = () => {
     if (!results || !results.length) return [];
@@ -169,6 +160,22 @@ export const EditorPanel = ({
           >
             <span>Result</span>
           </button>
+
+          {((verdict === 'AC' && runProgress?.isSubmit) || output?.aiAnalysis) && (
+            <>
+              <span className="text-text-muted/30">|</span>
+              <button
+                onClick={() => setActiveTab('ai-review')}
+                className={`flex items-center gap-1.5 transition-colors ${
+                  activeTab === 'ai-review' ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="text-purple-400">✧</span> AI Review
+                </span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Right side controls */}
@@ -200,7 +207,6 @@ export const EditorPanel = ({
         <div className={`w-full relative flex-col flex-1 min-h-0 ${activeTab === 'code' ? 'flex' : 'hidden'}`}>
           <MonacoEditorComponent
             code={code}
-            language={language}
             theme={settings?.theme || 'vs-dark'}
             onChange={onCodeChange}
             onMount={handleEditorMount}
@@ -225,7 +231,6 @@ export const EditorPanel = ({
           isActive={activeTab === 'result'}
           state={state}
           hasResults={hasResults}
-          vCfg={vCfg}
           verdict={verdict}
           totalTestCases={totalTestCases}
           testCasesPassed={testCasesPassed}
@@ -239,6 +244,16 @@ export const EditorPanel = ({
           activeData={activeData}
           activeMemoryMB={activeMemoryMB}
           runProgress={runProgress}
+        />
+
+        {/* AI Review Tab */}
+        <AIReviewTab
+          isActive={activeTab === 'ai-review'}
+          verdict={verdict}
+          aiAnalysis={output?.aiAnalysis || null}
+          originalCode={output?.originalCode || null}
+          submissionId={output?.submissionId || null}
+          isSubmit={runProgress?.isSubmit}
         />
       </div>
 

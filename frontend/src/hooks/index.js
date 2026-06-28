@@ -1,8 +1,7 @@
-// ui folder
-export { useTheme } from './ui/useTheme';
-export { useToast } from './ui/useToast';
-export { useSplitPanel } from './ui/useSplitPanel';
-export { useDocumentTitle } from './ui/useDocumentTitle';
+// ui hooks
+export { useTheme } from './useTheme';
+export { useToast } from './useToast';
+export { useDocumentTitle } from './useDocumentTitle';
 
 // general hooks
 export { useProfile } from './useProfile';

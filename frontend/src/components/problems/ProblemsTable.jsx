@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { StateCard } from '../index';
+import { AnimationState } from '../index';
 import '../../styles/auth.css'; // Ensure theme styles are applied
 
 const DIFF_META = {
-  EASY:   { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.2)',   label: 'Easy'   },
-  MEDIUM: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.2)',  label: 'Medium' },
-  HARD:   { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.2)',   label: 'Hard'   },
+  EASY: { color: '#22c55e', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.2)', label: 'Easy' },
+  MEDIUM: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', label: 'Medium' },
+  HARD: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', label: 'Hard' },
 };
 
 const diffMeta = (d = '') => DIFF_META[(d || '').toUpperCase()] || DIFF_META.EASY;
@@ -44,11 +44,15 @@ const ProblemsTable = ({ problems, loading, error, page = 1 }) => {
   }
 
   if (error) {
-    return <StateCard isError message={error} />;
+    return <AnimationState variant="error" description={error} />;
   }
 
   if (!problems || problems.length === 0) {
-    return <StateCard message="No coding problems found matching your criteria." />;
+    return <AnimationState
+      variant="empty"
+      title="No Problems Found"
+      description="No coding problems match your current criteria."
+    />;
   }
 
   return (
@@ -64,7 +68,7 @@ const ProblemsTable = ({ problems, loading, error, page = 1 }) => {
           {problems.map((p, i) => {
             const diff = diffMeta(p.difficulty);
             return (
-              <tr 
+              <tr
                 key={p._id || i}
                 onClick={() => navigate(`/problems/${p.titleSlug}`)}
                 style={{

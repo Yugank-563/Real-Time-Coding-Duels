@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { api } from '../../utils/index';
-import { useToast } from '../ui/useToast';
+import { useToast } from '../useToast';
 
 
 // Shared helper to build a normalized result object from API response
-const buildResultObj = (data) => ({
+const buildResultObj = (data, isSubmitAction = false) => ({
   state: data.verdict ? (data.verdict === 'AC' ? 'success' : 'error') : 'idle',
   verdict: data.verdict,
   executionTime: data.executionTime,
@@ -13,7 +13,10 @@ const buildResultObj = (data) => ({
   testCasesPassed: data.testCasesPassed,
   totalTestCases: data.totalTestCases,
   results: data.results || [],
-  runProgress: { done: data.testCasesPassed || 0, total: data.totalTestCases || 0 }
+  runProgress: { done: data.testCasesPassed || 0, total: data.totalTestCases || 0, isSubmit: isSubmitAction },
+  aiAnalysis: data.aiAnalysis,
+  originalCode: data.originalCode,
+  submissionId: data.submissionId
 });
 
 export const useSubmission = (initialOutput = null) => {
@@ -65,7 +68,21 @@ export const useSubmission = (initialOutput = null) => {
         { code, language, customInputs },
       );
 
-      const data = res.data;
+      const { submissionId } = res.data;
+      
+      let data = { verdict: 'pending' };
+      let attempts = 0;
+      while (data.verdict === 'pending' && attempts < 30) {
+        await new Promise(r => setTimeout(r, 500));
+        const statusRes = await api.get(`/api/submissions/${submissionId}/status`);
+        data = statusRes.data;
+        attempts++;
+      }
+
+      if (data.verdict === 'pending') {
+        throw new Error('Execution timed out — please try again.');
+      }
+
       const resultObj = buildResultObj(data);
 
       if (!initialOutput) {
@@ -80,7 +97,7 @@ export const useSubmission = (initialOutput = null) => {
       return resultObj;
     } catch (err) {
       console.error('Run failed:', err);
-      toast.error('Execution Failed', err.response?.data?.message || 'Compiler offline or sandbox timeout.');
+      toast.error('Execution Failed', err.message || err.response?.data?.message || 'Compiler offline or sandbox timeout.');
       if (!initialOutput) {
         setLocalOutput(prev => ({ ...prev, state: 'idle' }));
       }
@@ -90,7 +107,7 @@ export const useSubmission = (initialOutput = null) => {
     }
   }, [isExecuting, initialOutput, toast]);
 
-  const submitPractice = useCallback(async (slug, code, language) => {
+  const submitPractice = useCallback(async (slug, code, language, totalCases = 50) => {
     if (isExecutingRef.current) return;
     isExecutingRef.current = true;
     setIsExecuting(true);
@@ -99,7 +116,7 @@ export const useSubmission = (initialOutput = null) => {
       setLocalOutput(prev => ({
         ...prev,
         state: 'running',
-        runProgress: { done: 0, total: 50 }
+        runProgress: { done: 0, total: totalCases, isSubmit: true }
       }));
     }
 
@@ -109,8 +126,22 @@ export const useSubmission = (initialOutput = null) => {
         { code, language },
       );
 
-      const data = res.data;
-      const resultObj = buildResultObj(data);
+      const { submissionId } = res.data;
+      
+      let data = { verdict: 'pending' };
+      let attempts = 0;
+      while (data.verdict === 'pending' && attempts < 40) {
+        await new Promise(r => setTimeout(r, 500));
+        const statusRes = await api.get(`/api/submissions/${submissionId}/status`);
+        data = statusRes.data;
+        attempts++;
+      }
+
+      if (data.verdict === 'pending') {
+        throw new Error('Execution timed out — please try again.');
+      }
+
+      const resultObj = buildResultObj(data, true);
 
       if (!initialOutput) {
         setLocalOutput(resultObj);
@@ -118,13 +149,14 @@ export const useSubmission = (initialOutput = null) => {
 
       if (data.verdict === 'AC') {
         toast.success('ACCEPTED! 🎉', 'All constraints verified successfully.');
+        toast.info('AI Code Review started ✨', 'Generating performance insights...');
       } else {
         toast.warning('WRONG ANSWER ✗', `Passed: ${data.testCasesPassed} / ${data.totalTestCases}`);
       }
       return resultObj;
     } catch (err) {
       console.error('Submit failed:', err);
-      toast.error('Submission Failed', err.response?.data?.message || 'Compiler offline or sandbox timeout.');
+      toast.error('Submission Failed', err.message || err.response?.data?.message || 'Compiler offline or sandbox timeout.');
       if (!initialOutput) {
         setLocalOutput(prev => ({ ...prev, state: 'idle' }));
       }

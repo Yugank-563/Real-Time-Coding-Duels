@@ -1,25 +1,30 @@
 import express from 'express';
-import { executionLimiter } from '../middleware/index.js';
-import { authMiddleware } from '../middleware/index.js';
+import { executionLimiter, authMiddleware, validateRequest } from '../middleware/index.js';
 import {
   getProblems,
   getProblemDetails,
   runCode,
   submitProblemCode
 } from '../controllers/index.js';
+import {
+  getProblemsSchema,
+  runCodeSchema,
+  submitCodeSchema,
+  slugSchema,
+} from '../schemas/index.js';
 
 const router = express.Router();
 
 // Retrieve all problems
-router.get('/', getProblems);
+router.get('/', validateRequest(getProblemsSchema), getProblems);
 
 // Retrieve a single problem by slug.
-router.get('/:slug', authMiddleware, getProblemDetails);
+router.get('/:slug', authMiddleware, validateRequest(slugSchema), getProblemDetails);
 
 // Run user code
-router.post('/:slug/run', executionLimiter, authMiddleware, runCode);
+router.post('/:slug/run', executionLimiter, authMiddleware, validateRequest(runCodeSchema), runCode);
 
 // Submit code
-router.post('/:slug/submit', executionLimiter, authMiddleware, submitProblemCode);
+router.post('/:slug/submit', executionLimiter, authMiddleware, validateRequest(submitCodeSchema), submitProblemCode);
 
 export default router;

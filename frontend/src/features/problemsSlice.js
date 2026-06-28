@@ -34,13 +34,7 @@ const initialState = {
 const problemsSlice = createSlice({
   name: 'problems',
   initialState,
-  reducers: {
-    resetProblemsState(state) {
-      state.items = [];
-      state.pagination = initialState.pagination;
-      state.error = null;
-    }
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchProblems.pending, (state) => {
@@ -63,6 +57,6 @@ const problemsSlice = createSlice({
   },
 });
 
-export const { resetProblemsState } = problemsSlice.actions;
+export const {} = problemsSlice.actions;
 
 export default problemsSlice.reducer;

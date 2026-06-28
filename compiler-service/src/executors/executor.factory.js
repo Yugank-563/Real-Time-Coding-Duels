@@ -1,12 +1,13 @@
 import Judge0Executor from './judge0.executor.js';
 import MockExecutor from './mock.executor.js';
-import { judge0Config } from '../config/judge0.config.js';
-import logger from '../utils/logger.js';
+import LocalExecutor from './local.executor.js';
+
 
 class ExecutorFactory {
   constructor() {
     this.judge0 = new Judge0Executor();
     this.mock = new MockExecutor();
+    this.local = new LocalExecutor();
   }
 
   /**
@@ -15,12 +16,9 @@ class ExecutorFactory {
    * @returns {BaseExecutor}
    */
   getExecutor() {
-    const { apiKey } = judge0Config;
-    if (!apiKey || apiKey === 'your_rapidapi_key') {
-      logger.warn('RapidAPI Judge0 API Key not detected or invalid. Falling back to local mockup execution engine.');
-      return this.mock;
-    }
-    return this.judge0;
+    // We are now defaulting to the LocalExecutor to bypass Judge0 RapidAPI
+    // 50MB network payload limits and prevent crashing on massive test cases (e.g. 3Sum).
+    return this.local;
   }
 }
 

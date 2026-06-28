@@ -1,27 +1,27 @@
 // auth slice
-export { setUser, setLoading, setError, logout, updateRating, selectUser, selectIsAuthenticated, selectAuthLoading } from './authSlice';
+export { setUser, setLoading, logout, selectUser, selectIsAuthenticated, selectAuthLoading } from './authSlice';
 export { default as authReducer } from './authSlice';
 
 // battle slice
 export { 
-  setLobbyStatus, setSuggestedTopic, setInvitedUser, initBattle, 
-  updateOpponentStatus, tickTimer, setOutputState, setOutputProgress, 
-  setOutputResults, endBattle, resetBattleState, selectBattle 
+  setLobbyStatus, setSuggestedTopic, setInvitedUser, initBattle, resumeBattle,
+  updateOpponentStatus, tickTimer, setTimerRemaining, setOutputState, setOutputProgress, 
+  setOutputResults, endBattle, setAiAnalysis, resetBattleState, selectBattle 
 } from './battleSlice';
 export { default as battleReducer } from './battleSlice';
 
 // notification slice
-export { addToast, removeToast, clearAllToasts, selectToasts } from './notificationSlice';
+export { addToast, removeToast, selectToasts } from './notificationSlice';
 export { default as notificationReducer } from './notificationSlice';
 
 // problems slice
-export { fetchProblems, resetProblemsState } from './problemsSlice';
+export { fetchProblems } from './problemsSlice';
 export { default as problemsReducer } from './problemsSlice';
 
 // theme slice
-export { setTheme, cycleTheme, selectTheme, selectThemeLabel } from './themeSlice';
+export { cycleTheme, selectTheme, selectThemeLabel } from './themeSlice';
 export { default as themeReducer } from './themeSlice';
 
 // leaderboard slice
-export { fetchLeaderboard, resetLeaderboard, selectLeaderboard } from './leaderboardSlice';
+export { fetchLeaderboard, selectLeaderboard } from './leaderboardSlice';
 export { default as leaderboardReducer } from './leaderboardSlice';

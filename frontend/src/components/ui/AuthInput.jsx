@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import {  useState  } from 'react';
 
 /**
  * AuthInput — shared form input for all auth pages.

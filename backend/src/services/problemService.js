@@ -1,8 +1,7 @@
 import axios from 'axios';
 import redis from '../config/redis.js';
-import { Problem } from '../models/index.js';
+import { findProblemsByQuery, findOneAndUpdateProblem } from '../repositories/index.js';
 import toLeetCode from '../config/topicMap.js';
-import { markDown, isUp } from '../utils/sourceHealth.js';
 
 const LEETCODE_BASE = process.env.LEETCODE_API_URL || 'https://alfa-leetcode-api.onrender.com';
 const TIMEOUT_MS = parseInt(process.env.PROBLEM_FETCH_TIMEOUT, 10) || 5000;
@@ -93,106 +92,6 @@ function buildTestCases(examplesStr, paramCount = 1, expectedOutputs = []) {
 }
 
 
-/**
- * PRIMARY SOURCE: fetchFromLeetCode
- */
-async function fetchFromLeetCode(topic, difficulty) {
-  const lcTag = getLeetCodeTag(topic);
-  const lcDiff = difficulty.toUpperCase(); // EASY | MEDIUM | HARD
-
-  // Fetch list of problems matching tag & difficulty
-  const res = await axios.get(`${LEETCODE_BASE}/problems`, {
-    params: { tags: lcTag, difficulty: lcDiff, limit: 50 },
-    timeout: TIMEOUT_MS
-  });
-
-  const problems = res.data?.problemsetQuestionList || [];
-  const freeProblems = problems.filter(p => !p.isPaidOnly);
-
-  if (!freeProblems.length) return null;
-
-  // Pick random from list
-  const picked = freeProblems[Math.floor(Math.random() * freeProblems.length)];
-
-  // Fetch detailed problem statement
-  const detail = await axios.get(`${LEETCODE_BASE}/select`, {
-    params: { titleSlug: picked.titleSlug },
-    timeout: TIMEOUT_MS
-  });
-
-  const p = detail.data;
-  if (!p) return null;
-
-  let cppBoilerplate = `class Solution {\npublic:\n    // Write your code here\n};`;
-
-  try {
-    const gqlRes = await axios.post(
-      'https://leetcode.com/graphql',
-      {
-        query: `
-          query questionEditorData($titleSlug: String!) {
-            question(titleSlug: $titleSlug) {
-              codeSnippets {
-                langSlug
-                code
-              }
-            }
-          }
-        `,
-        variables: { titleSlug: p.titleSlug },
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-          'Referer': `https://leetcode.com/problems/${p.titleSlug}/`,
-        },
-        timeout: 5000,
-      }
-    );
-
-    const snippets = gqlRes.data?.data?.question?.codeSnippets || [];
-    const cppSnippet = snippets.find(s => s.langSlug === 'cpp');
-    if (cppSnippet && cppSnippet.code) {
-      cppBoilerplate = cppSnippet.code;
-    }
-  } catch (gqlErr) {
-    console.warn('[problemService] LeetCode GraphQL boilerplate query failed, falling back to default:', gqlErr.message);
-  }
-
-  const dbDiff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
-
-  const mapped = {
-    source:      'leetcode',
-    title:       p.questionTitle || p.title,
-    titleSlug:   p.titleSlug,
-    difficulty:  dbDiff,
-    content:     p.question || p.content || '',
-    examples:    p.exampleTestcases || '',
-    hints:       p.hints || [],
-    tags:        p.topicTags?.map(t => t.slug) || [],
-    sourceUrl:  `https://leetcode.com/problems/${p.titleSlug}/`,
-    testCases:   buildTestCases(
-      p.exampleTestcases || '',
-      countParamsFromBoilerplate(cppBoilerplate),
-      parseExpectedOutputs(p.question || p.content || '')
-    ),
-    boilerplates: { cpp: cppBoilerplate }
-  };
-
-  // Cache this problem pool in Redis for 1 hour
-  const cacheKey = `problem:random:${topic}:${difficulty.toLowerCase()}`;
-  await redis.set(cacheKey, JSON.stringify([mapped]), { EX: 3600 }).catch(() => null);
-
-  // Save to MongoDB as offline fallback seed
-  await Problem.findOneAndUpdate(
-    { titleSlug: mapped.titleSlug },
-    { ...mapped, cachedAt: new Date() },
-    { upsert: true, new: true }
-  ).catch(() => null);
-
-  return mapped;
-}
 
 /**
  * LAST RESORT: fetchFromMongoDB
@@ -201,10 +100,10 @@ async function fetchFromMongoDB(topic, difficulty) {
   const lcTag = getLeetCodeTag(topic);
   const dbDiff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
 
-  const problems = await Problem.find({
+  const problems = await findProblemsByQuery({
     tags: { $regex: lcTag, $options: 'i' },
     difficulty: dbDiff
-  }).limit(50);
+  }, 50);
 
   if (!problems.length) return null;
 
@@ -248,18 +147,8 @@ export async function getRandomProblem(topic, difficulty) {
     }
   }
 
-  // Step 2: Try LeetCode API
-  if (isUp('leetcode')) {
-    try {
-      const problem = await fetchFromLeetCode(topic, normDifficulty);
-      if (problem) return problem;
-    } catch (err) {
-      console.error('[problemService] LeetCode failed:', err.message);
-      markDown('leetcode');
-    }
-  } else {
-    console.log('[problemService] LeetCode marked down, skipping to MongoDB Fallback');
-  }
+  // Step 2: Try LeetCode API is strictly disabled to prevent automatic additions
+  console.log('[problemService] LeetCode auto-fetch is disabled manually per rules. Skipping to MongoDB Fallback');
 
   // Step 3: Last Resort — MongoDB Cache
   try {
@@ -273,7 +162,7 @@ export async function getRandomProblem(topic, difficulty) {
   try {
     console.log(`[problemService] Relaxing topic constraint. Searching MongoDB for any '${normDifficulty}' problem...`);
     const dbDiff = normDifficulty.charAt(0).toUpperCase() + normDifficulty.slice(1).toLowerCase();
-    const problems = await Problem.find({ difficulty: dbDiff }).limit(50);
+    const problems = await findProblemsByQuery({ difficulty: dbDiff }, 50);
     if (problems.length > 0) {
       const picked = problems[Math.floor(Math.random() * problems.length)];
       console.log(`[problemService] Fallback match succeeded with problem: "${picked.title}"`);
@@ -286,7 +175,7 @@ export async function getRandomProblem(topic, difficulty) {
   // Step 6: Ultimate Fallback — fetch absolutely any problem from MongoDB regardless of topic or difficulty
   try {
     console.log(`[problemService] Ultimate fallback. Searching MongoDB for absolutely any problem...`);
-    const problems = await Problem.find({}).limit(50);
+    const problems = await findProblemsByQuery({}, 50);
     if (problems.length > 0) {
       const picked = problems[Math.floor(Math.random() * problems.length)];
       console.log(`[problemService] Ultimate fallback match succeeded with problem: "${picked.title}"`);
@@ -296,7 +185,7 @@ export async function getRandomProblem(topic, difficulty) {
     console.error('[problemService] MongoDB ultimate fallback failed:', err.message);
   }
 
-  throw new Error('All problem sources and database fallbacks are empty. Seeding is required.');
+  { const err = new Error('All problem sources and database fallbacks are empty. Seeding is required.'); err.status = 400; throw err; }
 }
 
 export async function fetchAndStoreProblemDetails(titleSlug) {
@@ -309,7 +198,7 @@ export async function fetchAndStoreProblemDetails(titleSlug) {
 
   const p = detail.data;
   if (!p) {
-    throw new Error(`Problem not found on LeetCode: ${titleSlug}`);
+    { const err = new Error(`Problem not found on LeetCode: ${titleSlug}`); err.status = 404; throw err; }
   }
 
   let cppBoilerplate = `class Solution {\npublic:\n    // Write your code here\n};`;
@@ -353,15 +242,11 @@ export async function fetchAndStoreProblemDetails(titleSlug) {
   const dbDiff = rawDiff.charAt(0).toUpperCase() + rawDiff.slice(1).toLowerCase();
 
   const mapped = {
-    source:      'leetcode',
-    title:       p.questionTitle || p.title,
+    title:       p.questionTitle || p.title || titleSlug,
     titleSlug:   p.titleSlug || titleSlug,
     difficulty:  dbDiff,
     content:     p.question || p.content || '',
-    examples:    p.exampleTestcases || '',
-    hints:       p.hints || [],
-    tags:        p.topicTags?.map(t => t.slug || t.name) || [],
-    sourceUrl:   `https://leetcode.com/problems/${p.titleSlug || titleSlug}/`,
+    tags:        p.topicTags?.map(t => t.slug) || [],
     testCases:   buildTestCases(
       p.exampleTestcases || '',
       countParamsFromBoilerplate(cppBoilerplate),
@@ -370,7 +255,7 @@ export async function fetchAndStoreProblemDetails(titleSlug) {
     boilerplates: { cpp: cppBoilerplate }
   };
 
-  const updatedProblem = await Problem.findOneAndUpdate(
+  const updatedProblem = await findOneAndUpdateProblem(
     { titleSlug: mapped.titleSlug },
     { ...mapped, cachedAt: new Date() },
     { upsert: true, new: true }
@@ -378,8 +263,3 @@ export async function fetchAndStoreProblemDetails(titleSlug) {
 
   return updatedProblem;
 }
-
-export default {
-  getRandomProblem,
-  fetchAndStoreProblemDetails,
-};

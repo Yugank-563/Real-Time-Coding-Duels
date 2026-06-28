@@ -25,7 +25,6 @@ const VerifyOTPPage = () => {
   const [otp,           setOtp]           = useState('');
   const [error,         setError]         = useState('');
   const [loading,       setLoading]       = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,14 +53,13 @@ const VerifyOTPPage = () => {
   };
 
   const handleResend = async () => {
-    setResendLoading(true);
     try {
       await api.post('/auth/resend-otp', { email });
       toast.success('Code Resent', `A new OTP has been sent to ${email}`);
       setOtp(''); setError('');
     } catch (err) {
       toast.error('Resend Failed', err.response?.data?.message || 'Please try again.');
-    } finally { setResendLoading(false); }
+    }
   };
 
   const maskedEmail = email

@@ -28,7 +28,8 @@ export const publishSubmissionResult = async (
   verdict,
   testCasesPassed,
   totalTestCases,
-  results = []
+  results = [],
+  isSubmit = true
 ) => {
   try {
     await pubClient.publish(
@@ -41,6 +42,7 @@ export const publishSubmissionResult = async (
         testCasesPassed,
         totalTestCases,
         results,        // ← per-case detail array passed through to frontend
+        isSubmit,       // ← differentiates Run Code vs Submit
       })
     );
     logger.debug(`Broadcasted submission result [${verdict}] for submission ${submissionId}`);

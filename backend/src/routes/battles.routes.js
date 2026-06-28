@@ -13,7 +13,8 @@ import {
   createPrivateRoom,
   joinPrivateRoom,
   startPrivateBattle,
-  getHealth
+  getHealth,
+  getAiReview
 } from '../controllers/index.js';
 import {
   createPrivateRoomSchema,
@@ -49,5 +50,6 @@ router.post('/private/:id/start', validateRequest(battleActionSchema), startPriv
 router.get('/:id', validateRequest(battleActionSchema), getBattleDetails);
 router.post('/:id/surrender', validateRequest(battleActionSchema), surrenderBattle);
 router.get('/:id/summary', validateRequest(battleActionSchema), getBattleSummary);
+router.get('/:id/ai-review', validateRequest(battleActionSchema), getAiReview);
 
 export default router;

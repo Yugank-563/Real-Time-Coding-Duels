@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import {  useState  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../features/index';
@@ -13,16 +13,16 @@ import {
    LOGIN PAGE
 ══════════════════════════════════════════ */
 const LoginPage = () => {
-  const navigate  = useNavigate();
-  const dispatch  = useDispatch();
-  const toast     = useToast();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const toast = useToast();
   const { theme } = useTheme();
   useDocumentTitle('Login');
-  const isLight   = theme === 'light';
+  const isLight = theme === 'light';
 
-  const [formData, setData]   = useState({ email: '', password: '' });
-  const [errors,   setErrors] = useState({ email: '', password: '' });
-  const [loading,  setLoading] = useState(false);
+  const [formData, setData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,14 +33,10 @@ const LoginPage = () => {
   const validate = () => {
     const next = { email: '', password: '' };
     let ok = true;
-    if (!formData.email)
-      { next.email = 'Email is required.'; ok = false; }
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      { next.email = 'Enter a valid email.'; ok = false; }
-    if (!formData.password)
-      { next.password = 'Password is required.'; ok = false; }
-    else if (formData.password.length < 6)
-      { next.password = 'Min. 6 characters.'; ok = false; }
+    if (!formData.email) { next.email = 'Email is required.'; ok = false; }
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) { next.email = 'Enter a valid email.'; ok = false; }
+    if (!formData.password) { next.password = 'Password is required.'; ok = false; }
+    else if (formData.password.length < 6) { next.password = 'Min. 6 characters.'; ok = false; }
     setErrors(next);
     if (!ok) {
       const first = Object.values(next).find(v => v);
@@ -74,9 +70,11 @@ const LoginPage = () => {
 
         {/* Heading */}
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 700,
+          <h1 style={{
+            fontSize: '1.25rem', fontWeight: 700,
             color: 'var(--auth-heading)', margin: 0,
-            letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+            letterSpacing: '-0.01em', lineHeight: 1.2
+          }}>
             Sign in to your account
           </h1>
           <p style={{ fontSize: '0.83rem', color: 'var(--auth-muted)', marginTop: '0.4rem' }}>

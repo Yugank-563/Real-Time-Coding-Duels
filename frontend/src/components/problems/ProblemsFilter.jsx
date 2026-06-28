@@ -62,9 +62,9 @@ const ProblemsFilter = ({ search, setSearch, difficulty, setDifficulty, tag, set
               onChange={setDifficulty}
               options={[
                 { label: 'All Difficulties', value: 'ALL' },
-                { label: 'Easy', value: 'EASY' },
-                { label: 'Medium', value: 'MEDIUM' },
-                { label: 'Hard', value: 'HARD' }
+                { label: 'Easy', value: 'Easy' },
+                { label: 'Medium', value: 'Medium' },
+                { label: 'Hard', value: 'Hard' }
               ]}
               buttonClassName="auth-input flex items-center justify-between"
               menuClassName="auth-dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"

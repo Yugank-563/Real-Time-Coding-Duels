@@ -2,9 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 
 
-export const MonacoEditorComponent = React.memo(({
+const MonacoEditorComponent = React.memo(({
   code,
-  language,
   theme,
   onChange,
   onMount,
@@ -35,7 +34,7 @@ export const MonacoEditorComponent = React.memo(({
   return (
     <Editor
       height="100%"
-      language={language === 'py' ? 'python' : language === 'js' ? 'javascript' : 'cpp'}
+      language="cpp"
       value={code}
       theme={theme === 'vs-dark' ? 'vs-dark' : 'light'}
       onMount={handleEditorDidMount}

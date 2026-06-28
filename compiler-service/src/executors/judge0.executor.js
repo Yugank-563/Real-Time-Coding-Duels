@@ -51,6 +51,56 @@ const cleanInputBlock = (val) => {
     .join('\n');
 };
 
+const checkAnyOrderMatch = (stdout, expected) => {
+  try {
+    const outArr = JSON.parse(stdout);
+    const expArr = JSON.parse(expected);
+    if (!Array.isArray(outArr) || !Array.isArray(expArr)) return stdout.replace(/\s/g, '') === expected.replace(/\s/g, '');
+    if (outArr.length !== expArr.length) return false;
+
+    const sortFn = (a, b) => {
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return a.length - b.length;
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] !== b[i]) return a[i] - b[i];
+        }
+        return 0;
+      }
+      return a - b;
+    };
+
+    // We do NOT sort inner arrays. We just sort the outer array so that the set of permutations/subsets matches.
+    // (Note: For subsets, LeetCode treats [1,2] and [2,1] as the same, but the user's DFS usually emits them sorted if the input is sorted.
+    // If strict subset inner-sorting is required, we'd need a separate flag. For now, outer sort is safe for both if they emit same elements).
+    outArr.sort(sortFn);
+    expArr.sort(sortFn);
+
+    return JSON.stringify(outArr) === JSON.stringify(expArr);
+  } catch (e) {
+    return stdout.replace(/\s/g, '') === expected.replace(/\s/g, '');
+  }
+};
+
+const adjustCompileError = (compileOutput, sourceCode) => {
+  if (!compileOutput || !sourceCode) return compileOutput;
+  const lines = sourceCode.split('\n');
+  const markerIndex = lines.findIndex(l => l.includes('// %%USER_CODE_START%%'));
+  if (markerIndex === -1) return compileOutput;
+  
+  const offset = markerIndex + 1;
+  let adjusted = compileOutput.replace(/main\.cpp:(\d+):(\d+):/g, (match, p1, p2) => {
+    const adjustedLine = Math.max(1, parseInt(p1) - offset);
+    return `main.cpp:${adjustedLine}:${p2}:`;
+  });
+  
+  adjusted = adjusted.replace(/(^\s*)(\d+)(\s*\|)/gm, (match, p1, p2, p3) => {
+    const adjustedLine = Math.max(1, parseInt(p2) - offset);
+    return `${p1}${adjustedLine}${p3}`;
+  });
+  
+  return adjusted;
+};
+
 export class Judge0Executor extends BaseExecutor {
 
   // ── Sequential single-TC executor (original — kept for backward compat) ────
@@ -84,7 +134,8 @@ export class Judge0Executor extends BaseExecutor {
           cpu_time_limit: 2,
           memory_limit: 262144, // 256MB
         };
-        if (tc.output && tc.output.trim()) {
+        const hasMultipleOutputs = tc.output && tc.output.includes('|||OR|||');
+        if (tc.output && tc.output.trim() && !tc.isAnyOrder && !hasMultipleOutputs) {
           submissionPayload.expected_output = encodeBase64(tc.output.trim());
         }
 
@@ -122,14 +173,33 @@ export class Judge0Executor extends BaseExecutor {
         lastStdout   = decodeBase64(subDetails.stdout || '').trim();
 
         if (statusId === 3) {
-          passed++; // AC — trust Judge0's comparison or treat as pass when no expected
+          if (tc.isAnyOrder) {
+            const isMatch = checkAnyOrderMatch(lastStdout, tc.output || '');
+            if (!isMatch) {
+              currentVerdict = VERDICTS.WA;
+              break;
+            } else {
+              passed++;
+            }
+          } else if (tc.output && tc.output.includes('|||OR|||')) {
+            const possibleOutputs = tc.output.split('|||OR|||').map(s => s.trim().replace(/\s/g, ''));
+            const isMatch = possibleOutputs.includes(lastStdout.replace(/\s/g, ''));
+            if (!isMatch) {
+              currentVerdict = VERDICTS.WA;
+              break;
+            } else {
+              passed++;
+            }
+          } else {
+            passed++; // AC — trust Judge0's comparison
+          }
         } else if (statusId === 4) {
           currentVerdict = VERDICTS.WA;
         } else if (statusId === 5) {
           currentVerdict = VERDICTS.TLE;
         } else if (statusId === 6) {
           currentVerdict = VERDICTS.CE;
-          compileError = decodeBase64(subDetails.compile_output || '');
+          compileError = adjustCompileError(decodeBase64(subDetails.compile_output || ''), code);
         } else {
           currentVerdict = VERDICTS.RE;
         }
@@ -211,7 +281,8 @@ export class Judge0Executor extends BaseExecutor {
           cpu_time_limit: 1.0, // Strict C++ timeout
           memory_limit:   262144,
         };
-        if (tc.output && tc.output.trim()) {
+        const hasMultipleOutputs = tc.output && tc.output.includes('|||OR|||');
+        if (tc.output && tc.output.trim() && !tc.isAnyOrder && !hasMultipleOutputs) {
           sub.expected_output = encodeBase64(tc.output.trim());
         }
         return sub;
@@ -291,10 +362,37 @@ export class Judge0Executor extends BaseExecutor {
           time_ms = Math.round(parseFloat(sub.time || '0') * 1000);
           mem_kb = Math.round(parseFloat(sub.memory || '0'));
 
-          if (statusId === 3) { tcPassed = true; tcVerdict = VERDICTS.AC; passed++; }
+          if (statusId === 3) {
+            if (tc.isAnyOrder) {
+              const isMatch = checkAnyOrderMatch(stdout, tc.output || '');
+              if (!isMatch) {
+                tcPassed = false;
+                tcVerdict = VERDICTS.WA;
+                statusId = 4;
+                statusDesc = 'Wrong Answer';
+                if (!firstFailOut) firstFailOut = stdout;
+              } else {
+                tcPassed = true; tcVerdict = VERDICTS.AC; passed++;
+              }
+            } else if (tc.output && tc.output.includes('|||OR|||')) {
+              const possibleOutputs = tc.output.split('|||OR|||').map(s => s.trim().replace(/\s/g, ''));
+              const isMatch = possibleOutputs.includes(stdout.trim().replace(/\s/g, ''));
+              if (!isMatch) {
+                tcPassed = false;
+                tcVerdict = VERDICTS.WA;
+                statusId = 4;
+                statusDesc = 'Wrong Answer';
+                if (!firstFailOut) firstFailOut = stdout;
+              } else {
+                tcPassed = true; tcVerdict = VERDICTS.AC; passed++;
+              }
+            } else {
+              tcPassed = true; tcVerdict = VERDICTS.AC; passed++;
+            }
+          }
           else if (statusId === 4) { tcVerdict = VERDICTS.WA; if (!firstFailOut) firstFailOut = stdout; }
           else if (statusId === 5) { tcVerdict = VERDICTS.TLE; }
-          else if (statusId === 6) { tcVerdict = VERDICTS.CE; compileErr = cOut; }
+          else if (statusId === 6) { tcVerdict = VERDICTS.CE; compileErr = adjustCompileError(cOut, code); }
           else if (statusId >= 7 && statusId <= 12) { 
             tcVerdict = VERDICTS.RE; 
             // Judge0 automatically provides accurate descriptions like 'Runtime Error (SIGFPE)'

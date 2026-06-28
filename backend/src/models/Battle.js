@@ -58,8 +58,8 @@ const battleSchema = new mongoose.Schema(
     },
     difficulty: {
       type: String,
-      enum: ['Easy', 'Medium', 'Hard', 'Expert'],
-      default: 'Medium',
+      enum: ['Easy', 'Medium', 'Hard'],
+      default: 'Easy',
     },
     host: {
       type: mongoose.Schema.Types.ObjectId,

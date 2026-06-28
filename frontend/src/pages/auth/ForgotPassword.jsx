@@ -5,7 +5,7 @@ import { api } from '../../utils/index';
 import '../../styles/auth.css';
 import {
   AuthInput, AuthButton, AuthLogo,
-  OTPBoxInput, StepIndicator,
+  OTPBoxInput, StepIndicator, ResendTimer
 } from '../../components/index';
 
 // FORGOT PASSWORD PAGE  (3-step flow)
@@ -32,7 +32,7 @@ const ForgotPasswordPage = () => {
 
   // Step 1: Send OTP
   const handleSendOTP = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!email) { setEmailErr('Email is required.'); toast.error('Validation Error', 'Email is required.'); return; }
     if (!/\S+@\S+\.\S+/.test(email)) { setEmailErr('Enter a valid email.'); toast.error('Validation Error', 'Enter a valid email.'); return; }
     setEmailErr(''); setLoading(true);
@@ -151,15 +151,7 @@ const ForgotPasswordPage = () => {
                 <AuthButton type="submit" loading={loading}>
                   Verify Code
                 </AuthButton>
-                <p style={{ textAlign: 'center', fontSize: '0.75rem',
-                  color: 'var(--auth-muted)', margin: 0 }}>
-                  Didn't receive it?{' '}
-                  <button type="button" className="auth-link"
-                    style={{ fontSize: '0.75rem' }}
-                    onClick={() => { setStepIdx(0); setOtp(''); setOtpErr(''); }}>
-                    Resend
-                  </button>
-                </p>
+                <ResendTimer onResend={handleSendOTP} />
               </form>
             )}
 

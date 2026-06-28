@@ -4,8 +4,16 @@ import { api } from '../../utils/index';
 // Robust helper to extract parameter variable names
 export const getVariableNames = (problem) => {
   if (!problem) return [];
-  
+
+  // 0. Use explicit inputVars if defined in the problem document
+  //    (set for problems whose driver needs inputs not in the function signature,
+  //     e.g. Linked List Cycle needs 'pos' even though hasCycle(head) has only 'head')
+  if (Array.isArray(problem.inputVars) && problem.inputVars.length > 0) {
+    return problem.inputVars;
+  }
+
   // 1. Try parsing C++ boilerplate signature
+
   if (problem.boilerplates?.cpp) {
     const match = problem.boilerplates.cpp.match(/class\s+Solution\s*\{[\s\S]*?\b\w+\s+\w+\s*\(([^)]*)\)/);
     if (match && match[1]) {
@@ -59,38 +67,8 @@ export const getInitialCases = (problem, vars) => {
 
   let casesList = [];
 
-  // Try parsing from problem.examples if it's an array (PracticeRoom format)
-  if (Array.isArray(problem.examples) && problem.examples.length > 0) {
-    casesList = problem.examples.map(ex => {
-      if (ex.input) {
-        const lines = ex.input.split('\n').map(l => l.trim()).filter(Boolean);
-        if (lines.length === vars.length) return lines;
-        return [ex.input];
-      }
-      return [''];
-    });
-  }
-  // Try parsing from problem.examples if it's a string (BattleRoom/Preview format)
-  else if (problem.examples && typeof problem.examples === 'string') {
-    const lines = problem.examples.trim().split('\n').map(l => l.trim()).filter(Boolean);
-    const isRawLines = lines.every(line => !line.startsWith('Input:') && !line.startsWith('Output:') && !line.startsWith('Explanation:'));
-    
-    if (isRawLines && lines.length > 0) {
-      const numVars = vars.length || 1;
-      const parsedList = [];
-      for (let i = 0; i < lines.length; i += numVars) {
-        const caseInputs = [];
-        for (let j = 0; j < numVars; j++) {
-          caseInputs.push(lines[i + j] || '');
-        }
-        parsedList.push(caseInputs);
-      }
-      if (parsedList.length > 0) casesList = parsedList;
-    }
-  }
-
-  // Fallback: Parse from problem.testCases array
-  if ((!casesList || casesList.length === 0) && problem.testCases && problem.testCases.length > 0) {
+  // Parse from problem.testCases array
+  if (problem.testCases && problem.testCases.length > 0) {
     casesList = problem.testCases.map(tc => {
       if (tc.input.includes('\n')) {
         return tc.input.split('\n');

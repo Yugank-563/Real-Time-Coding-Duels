@@ -36,12 +36,6 @@ const themeSlice = createSlice({
     available: THEMES,
   },
   reducers: {
-    setTheme: (state, action) => {
-      const theme = action.payload;
-      state.current = theme;
-      state.label = THEME_LABELS[theme];
-      applyTheme(theme);
-    },
     cycleTheme: (state) => {
       const nextIndex = (THEMES.indexOf(state.current) + 1) % THEMES.length;
       const next = THEMES[nextIndex];
@@ -52,7 +46,7 @@ const themeSlice = createSlice({
   },
 });
 
-export const { setTheme, cycleTheme } = themeSlice.actions;
+export const { cycleTheme } = themeSlice.actions;
 export const selectTheme = (state) => state.theme.current;
 export const selectThemeLabel = (state) => state.theme.label;
 export default themeSlice.reducer;
