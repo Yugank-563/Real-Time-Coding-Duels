@@ -86,7 +86,10 @@ await subClient.subscribe('submission:events', (message) => {
     const { submissionId, userId, battleId, type } = data;
 
     if (type === 'progress') {
-      console.log(`Redis Pub/Sub received submission progress for ${submissionId}: ${data.done}/${data.total}`);
+      // Chunk terminal logging to prevent log spam for massive datasets
+      if (data.done === 1 || data.done === data.total || data.done % 20 === 0) {
+        console.log(`Redis Pub/Sub received submission progress for ${submissionId}: ${data.done}/${data.total}`);
+      }
       io.to(`user:${userId}`).emit('submission:progress', {
         submissionId,
         done: data.done,
@@ -95,8 +98,8 @@ await subClient.subscribe('submission:events', (message) => {
       return;
     }
 
-    const { verdict, testCasesPassed, totalTestCases, results } = data;
-    console.log(`Redis Pub/Sub received submission result for ${submissionId}`);
+    const { verdict, testCasesPassed, totalTestCases, results, isSubmit } = data;
+    console.log(`Redis Pub/Sub received submission result for ${submissionId} (isSubmit: ${isSubmit})`);
 
     // Send feedback directly to user socket
     io.to(`user:${userId}`).emit('submission:result', {
@@ -116,8 +119,8 @@ await subClient.subscribe('submission:events', (message) => {
       });
     }
 
-    // Trigger AI Analysis in background
-    if (verdict !== 'pending' && verdict !== 'RE' && verdict !== 'CE') {
+    // Trigger AI Analysis in background (Only for fully Accepted submissions as requested)
+    if ((verdict === 'Accepted' || verdict === 'AC') && isSubmit) {
       // Use Redis Pub/Sub to trigger AI Analysis (Decoupled architecture)
       pubClient.publish('trigger_ai_analysis', submissionId).catch(err => {
         console.error('Failed to trigger AI Analysis via Redis', err);

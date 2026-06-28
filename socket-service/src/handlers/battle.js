@@ -2,6 +2,7 @@ import Battle from '../../../backend/src/models/Battle.js';
 import Submission from '../../../backend/src/models/Submission.js';
 import { processBattleResult } from '../../../backend/src/services/ratingService.js';
 import { battleSocketSchema, codeChangeSocketSchema } from '../schemas/socket.schema.js';
+import { validateSocketPayload } from '../utils/validation.js';
 
 // Helper to verify participant and fetch battle
 const verifyParticipant = async (battleId, userId, actionName) => {
@@ -17,15 +18,6 @@ const verifyParticipant = async (battleId, userId, actionName) => {
   return { battle, playerIdx };
 };
 
-const validateSocketPayload = (schema, data, socket, eventName) => {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    socket.emit('error', { message: `Validation failed for ${eventName}`, details: result.error.issues });
-    console.warn(`[Security] Socket payload validation failed for ${eventName}:`, result.error.issues);
-    return null;
-  }
-  return result.data;
-};
 
 // Helper to resolve timeouts and ELO calculations
 const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
