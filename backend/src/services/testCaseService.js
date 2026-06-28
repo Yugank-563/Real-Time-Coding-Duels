@@ -1,23 +1,22 @@
-/**
- * testCaseService.js
- *
- * Fetches test cases for a problem from Backblaze B2 (S3-compatible storage).
- * Checks Redis cache before any B2 call. Caches results for 6 hours.
- *
- * File naming convention in B2 bucket:
- *   <folderPath>/inputs/input_001.txt
- *   <folderPath>/outputs/output_001.txt
- *   ...
- *   <folderPath>/inputs/input_100.txt
- *   <folderPath>/outputs/output_100.txt
- *
- * Rules:
- *   - Always cache-first (6 hour TTL)
- *   - All B2 fetches in parallel via Promise.all
- *   - Retry once on connection failure
- *   - Never return partial data
- *   - Never exceed problem.testCaseConfig.totalCount
- */
+// testCaseService.js
+// 
+// Fetches test cases for a problem from Backblaze B2 (S3-compatible storage).
+// Checks Redis cache before any B2 call. Caches results for 6 hours.
+// 
+// File naming convention in B2 bucket:
+//   <folderPath>/inputs/input_001.txt
+//   <folderPath>/outputs/output_001.txt
+//   ...
+//   <folderPath>/inputs/input_100.txt
+//   <folderPath>/outputs/output_100.txt
+// 
+// Rules:
+//   - Always cache-first (6 hour TTL)
+//   - All B2 fetches in parallel via Promise.all
+//   - Retry once on connection failure
+//   - Never return partial data
+//   - Never exceed problem.testCaseConfig.totalCount
+//  
 
 import fs from 'fs';
 import path from 'path';
@@ -30,16 +29,14 @@ import redis from '../config/redis.js';
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Pads a number to 3 digits, e.g. 1 → "001", 42 → "042", 100 → "100"
- */
+// Pads a number to 3 digits, e.g. 1 → "001", 42 → "042", 100 → "100"
+//  
 function padCaseNumber(n) {
   return String(n).padStart(3, '0');
 }
 
-/**
- * Converts a ReadableStream (from AWS SDK S3 response body) to a plain string.
- */
+// Converts a ReadableStream (from AWS SDK S3 response body) to a plain string.
+//  
 async function streamToString(stream) {
   const chunks = [];
   for await (const chunk of stream) {
@@ -48,11 +45,10 @@ async function streamToString(stream) {
   return Buffer.concat(chunks).toString('utf-8');
 }
 
-/**
- * Fetches a single object from B2 and returns its text content.
- * @param {string} key - Object key (path in bucket)
- * @throws Error with clear message if key not found or connection fails
- */
+// Fetches a single object from B2 and returns its text content.
+// @param {string} key - Object key (path in bucket)
+// @throws Error with clear message if key not found or connection fails
+//  
 async function fetchObjectFromB2(key, retrying = false) {
   try {
     const command = new GetObjectCommand({
@@ -158,13 +154,12 @@ async function fetchFromB2(problem, folderPath, actualCount) {
   }));
 }
 
-/**
- * Fetches test cases from the active source for a problem, with Redis caching.
- *
- * @param {Object} problem   - MongoDB Problem document
- * @param {number} limit     - Maximum number of test cases to fetch
- * @returns {Array<{ caseNumber, input, expectedOutput }>}
- */
+// Fetches test cases from the active source for a problem, with Redis caching.
+// 
+// @param {Object} problem   - MongoDB Problem document
+// @param {number} limit     - Maximum number of test cases to fetch
+// @returns {Array<{ caseNumber, input, expectedOutput }>}
+//  
 export async function getTestCases(problem, limit) {
   const folderPath = problem?.testCaseConfig?.folderPath;
   const totalCount = problem?.testCaseConfig?.totalCount || 0;
@@ -214,12 +209,11 @@ export async function getTestCases(problem, limit) {
   return testCases;
 }
 
-/**
- * Fetches the reference solution for a problem from B2 (or local).
- *
- * @param {Object} problem - MongoDB Problem document
- * @returns {string|null} The reference solution code, or null if not found
- */
+// Fetches the reference solution for a problem from B2 (or local).
+// 
+// @param {Object} problem - MongoDB Problem document
+// @returns {string|null} The reference solution code, or null if not found
+//  
 export async function getReferenceSolution(problem) {
   const folderPath = problem?.testCaseConfig?.folderPath;
   if (!folderPath) return null;
@@ -238,11 +232,12 @@ export async function getReferenceSolution(problem) {
   try {
     let content = null;
     if (source === 'b2') {
+      console.log(`[TestCaseService] Fetching Reference Solution from B2 (${folderPath}/reference_solution.cpp)…`);
       content = await fetchObjectFromB2(`${folderPath}/reference_solution.cpp`);
     } else {
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
       const localBasePath = path.resolve(__dirname, '..', '..', '..', 'tests');
-      console.log('localBasePath:', localBasePath, 'folderPath:', folderPath);
+      console.log(`[TestCaseService] Fetching Reference Solution from LOCAL DISK (${folderPath}/reference_solution.cpp)…`);
       content = await fs.promises.readFile(path.join(localBasePath, folderPath, 'reference_solution.cpp'), 'utf-8');
     }
 

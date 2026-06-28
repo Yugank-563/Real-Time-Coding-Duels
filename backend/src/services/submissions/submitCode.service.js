@@ -2,7 +2,7 @@ import { findProblemById, findBattleById, createSubmission } from '../../reposit
 import { submissionQueue } from '../../config/queue.js';
 import { getTestCases as getB2TestCases } from '../testCaseService.js';
 
-const TC_SUBMIT_B2 = 500;
+const TC_SUBMIT_B2 = parseInt(process.env.TC_SUBMIT_LIMIT, 10) || 100;
 
 export const submitCodeService = async (battleId, code, language, problemId, userId) => {
   if (!code || !language || !problemId) {
@@ -68,6 +68,7 @@ export const submitCodeService = async (battleId, code, language, problemId, use
     language,
     problemId,
     testCases,
+    isSubmit: true,
   });
 
   console.log(`Successfully enqueued code submission ${submission._id} for problem ${problemId}`);

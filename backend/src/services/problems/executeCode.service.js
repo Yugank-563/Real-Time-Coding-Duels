@@ -2,7 +2,7 @@ import { createSubmission, findProblemBySlugOrTitle } from '../../repositories/i
 import { submissionQueue } from '../../config/queue.js';
 import { getTestCases as getB2TestCases, getReferenceSolution } from '../testCaseService.js';
 
-const TC_SUBMIT_COUNT_B2 = 100;  // Submit (B2): up to 100 stored cases
+const TC_SUBMIT_COUNT_B2 = parseInt(process.env.TC_SUBMIT_LIMIT, 10) || 100;
 
 
 const buildRunTestCases = async (problem, customInputs) => {
@@ -80,7 +80,7 @@ export const executeCodeService = async ({ userId, slug, code, language, customI
   const safeTestCases = [];
   for (const tc of testCases) {
     const size = (tc.input?.length || 0) + (tc.output?.length || 0);
-    if (totalSize + size > 8000000) break; // Cap at 8MB total payload
+    if (totalSize + size > 32000000) break; // Cap at 32MB total payload
     safeTestCases.push(tc);
     totalSize += size;
   }
@@ -129,6 +129,7 @@ export const executeCodeService = async ({ userId, slug, code, language, customI
     problemId:    problem._id.toString(),
     testCases,
     referenceSolution,
+    isSubmit: !!isSubmit,
   });
 
   console.log(`Successfully enqueued code execution ${submission._id} for problem ${problem._id}`);
