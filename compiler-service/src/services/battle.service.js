@@ -1,18 +1,11 @@
-import Battle from '../../../backend/src/models/Battle.js';
+import { Battle } from '../../../backend/src/models/index.js';
 import { processBattleResult } from '../../../backend/src/services/ratingService.js';
 import { publishBattleEvent } from '../pubsub/publisher.js';
 import { VERDICTS } from '../config/constants.js';
 import logger from '../utils/logger.js';
 
 export class BattleService {
-  /**
-   * Updates battle progress and checks for winners.
-   * @param {string} battleId - Target Battle ID
-   * @param {string} userId - Submitting User ID
-   * @param {string} language - Submission language
-   * @param {string} verdict - Outcome verdict
-   * @param {number} testCasesPassed - Passed count
-   */
+  // Updates battle progress and checks for winners.
   async updateBattleState(battleId, userId, language, verdict, testCasesPassed) {
     if (!battleId) return;
 

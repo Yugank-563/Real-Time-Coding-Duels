@@ -1,6 +1,5 @@
-import Problem from '../../../backend/src/models/Problem.js';
-import Submission from '../../../backend/src/models/Submission.js';
-import TestCase from '../../../backend/src/models/TestCase.js';
+import { getTestCases as getB2TestCases } from '../../../backend/src/services/testCaseService.js';
+import { Problem, Submission } from '../../../backend/src/models/index.js';
 import { driverFactory } from '../drivers/driver.factory.js';
 import { executorFactory } from '../executors/executor.factory.js';
 import { battleService } from './battle.service.js';
@@ -8,20 +7,9 @@ import { publishSubmissionResult, publishSubmissionProgress } from '../pubsub/pu
 import logger from '../utils/logger.js';
 
 export class ExecutionService {
-  /**
-   * Orchestrates the complete execution pipeline.
-   *
-   * jobData may include:
-   *   { submissionId, code, language, problemId, testCases }
-   *
-   * If testCases is supplied (from backend route after auto-generation),
-   * they are used directly. Otherwise we fall back to the problem's stored
-   * sample test cases.
-   *
-   * Uses Judge0 batch API when more than 1 TC is present.
-   */
+  // Orchestrates the execution pipeline (uses Judge0 batch API when multiple TCs exist).
   async runPipeline(jobData) {
-    const { submissionId, code, language, problemId, testCases: incomingTCs } = jobData;
+    const { submissionId, code, language, problemId, testCases: incomingTCs, isSubmit } = jobData;
     logger.info(`[ExecutionService] Pipeline start → submission ${submissionId}`);
 
     try {
@@ -31,30 +19,94 @@ export class ExecutionService {
 
       // 2. Determine test cases to run
       let testCases = incomingTCs || [];
-      
-      // If none explicitly passed but they exist in DB, fetch them
-      if (!testCases.length && problem?.hasHiddenTestCases) {
-        const tcs = await TestCase.find({ problemId: problem._id }).sort({ caseNumber: 1 });
-        testCases = tcs.map(tc => ({
-          input: tc.input,
-          output: tc.output,
-          caseNumber: tc.caseNumber,
-          type: tc.type,
-        }));
-      }
 
-      // Fallback to sample test cases
-      if (!testCases.length) {
-        testCases = (problem?.testCases || []).map((tc, i) => ({
+      // If test cases weren't sent over BullMQ (to save payload limit), fetch directly from B2
+      if (!testCases.length && problem?.testCaseConfig?.folderPath) {
+         const storedCases = await getB2TestCases(problem, 500); // Max 500 cases
+         testCases = storedCases.map((tc) => ({
+            input: tc.input,
+            output: tc.expectedOutput,
+            caseNumber: tc.caseNumber,
+            type: 'hidden',
+            isAnyOrder: problem.titleSlug === '3sum' || problem.titleSlug === 'two-sum'
+         }));
+      } else if (!testCases.length) {
+         // Fallback to basic DB sample test cases if B2 is disabled
+         testCases = (problem?.testCases || []).map((tc, i) => ({
             input:      tc.input,
             output:     tc.output || '',
             caseNumber: i + 1,
             type:       tc.isSample ? 'sample' : 'hidden',
-          }));
+            isAnyOrder: problem?.titleSlug === '3sum' || problem?.titleSlug === 'two-sum'
+         }));
       }
 
       if (!testCases.length) {
         logger.warn(`[ExecutionService] No test cases for submission ${submissionId}`);
+      }
+
+      console.log(`[VERIFY-STEP4] Received ${testCases.length} test cases for execution.`);
+      if (testCases.length > 0) {
+        console.log(`[VERIFY-STEP4] First TC Input: ${String(testCases[0].input).slice(0, 50)} | Expected: ${String(testCases[0].output).slice(0, 50)}`);
+      }
+
+      // 2.5 Compute missing expected outputs via reference solution if available
+      const refCode = jobData.referenceSolution || problem?.referenceSolution;
+      if (refCode && refCode.trim() !== '') {
+        const tcsMissingOutput = testCases.filter(tc => !tc.output || tc.output.trim() === '');
+        if (tcsMissingOutput.length > 0) {
+          logger.info(`[ExecutionService] Computing expected outputs for ${tcsMissingOutput.length} custom cases using reference solution.`);
+          try {
+            const refDriver = driverFactory.getDriver('cpp'); // Reference solutions are C++
+            const refProcessedCode = refDriver ? refDriver.wrap(refCode, problemTitle) : refCode;
+            const refExecutor = executorFactory.getExecutor();
+            
+            // We use executeBatch for computing, passing just the missing cases
+            let refResult;
+            if (typeof refExecutor.executeBatch === 'function') {
+               refResult = await refExecutor.executeBatch(refProcessedCode, 'cpp', tcsMissingOutput, null);
+            } else {
+               refResult = await refExecutor.execute(refProcessedCode, 'cpp', tcsMissingOutput);
+               // Wrap the single result if missing
+               if (!refResult.results && tcsMissingOutput.length === 1) {
+                  refResult.results = [{
+                    caseNumber: tcsMissingOutput[0].caseNumber,
+                    statusId: refResult.verdict === 'Accepted' ? 3 : 4,
+                    output: refResult.output
+                  }];
+               }
+            }
+            
+            if (refResult && refResult.results) {
+               console.log(`[VERIFY-STEP5] Reference solution returned ${refResult.results.length} results.`);
+               refResult.results.forEach(res => {
+                  console.log(`[VERIFY-STEP5] Ref case ${res.caseNumber} returned statusId ${res.statusId}, output: '${res.output}'`);
+                  if (res.statusId === 3) { // If reference solution succeeded without crashing
+                    const originalTc = testCases.find(tc => tc.caseNumber === res.caseNumber);
+                    if (originalTc) {
+                        originalTc.output = (res.output || '').trim(); // Set as the expected output!
+                        console.log(`[VERIFY-STEP5] Assigned expected output to testcase ${originalTc.caseNumber}: ${originalTc.output}`);
+                    }
+                  } else {
+                     console.log(`[VERIFY-STEP5] Ref solution failed. compileErr/stderr:`, refResult.errorMessage);
+                  }
+               });
+            }
+          } catch (refErr) {
+            logger.warn(`[ExecutionService] Failed to compute expected outputs using reference solution: ${refErr.message}`);
+          }
+        }
+      }
+
+      // Flag "any order" problems to tell executor to do a custom check
+      const anyOrderKeywords = ['subset', 'permutation', 'combination'];
+      const isAnyOrder = anyOrderKeywords.some(kw => problemTitle.toLowerCase().includes(kw));
+
+      if (isAnyOrder) {
+        testCases = testCases.map(tc => {
+          tc.isAnyOrder = true;
+          return tc;
+        });
       }
 
       // 3. Wrap user code via language driver
@@ -65,7 +117,7 @@ export class ExecutionService {
       const executor = executorFactory.getExecutor();
       let executionResult;
 
-      if (testCases.length > 1 && typeof executor.executeBatch === 'function') {
+      if (typeof executor.executeBatch === 'function') {
         // Progress callback: publish an event so the frontend can show a progress bar
         const onProgress = async (done, total) => {
           await publishSubmissionProgress(submissionId, jobData.userId, done, total).catch(() => {});
@@ -73,6 +125,13 @@ export class ExecutionService {
         executionResult = await executor.executeBatch(processedCode, language, testCases, onProgress);
       } else {
         executionResult = await executor.execute(processedCode, language, testCases);
+        if (!executionResult.results && testCases.length === 1) {
+           executionResult.results = [{
+              caseNumber: testCases[0].caseNumber,
+              statusId: executionResult.verdict === 'Accepted' ? 3 : 4,
+              output: executionResult.output
+           }];
+        }
       }
 
       // 5. Persist result to MongoDB
@@ -86,8 +145,8 @@ export class ExecutionService {
           totalTestCases:   testCases.length,
           errorMessage:     executionResult.errorMessage,
           output:           executionResult.output || '',
-          // Persist per-case results so the polling backend can relay them
           results:          executionResult.results || [],
+          testCases:        testCases, // Save dynamically computed expected outputs
         },
         { new: true }
       );
@@ -113,7 +172,8 @@ export class ExecutionService {
         executionResult.verdict,
         executionResult.testCasesPassed,
         testCases.length,
-        executionResult.results || []
+        executionResult.results || [],
+        !!isSubmit // Uses explicit isSubmit flag from jobData
       );
 
       return executionResult;
