@@ -23,6 +23,7 @@ const MatchmakingPage = lazy(() => import('./pages/battle/Matchmaking'));
 const BattleRoomPage = lazy(() => import('./pages/battle/BattleRoom'));
 const BattleSummaryPage = lazy(() => import('./pages/battle/BattleSummary'));
 const PrivateLobbyPage = lazy(() => import('./pages/battle/PrivateLobby'));
+const InvitationHistoryPage = lazy(() => import('./pages/battle/InvitationHistory'));
 const ProblemsPage = lazy(() => import('./pages/ProblemsPage'));
 const PracticeRoom = lazy(() => import('./pages/PracticeRoom'));
 
@@ -99,6 +100,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/battle/lobby" element={<BattleLobbyPage />} />
               <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
+              <Route path="/invitations" element={<InvitationHistoryPage />} />
               <Route path="/battle/private/:roomId/lobby" element={<PrivateLobbyPage />} />
               <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
               <Route path="/problems" element={<ProblemsPage />} />

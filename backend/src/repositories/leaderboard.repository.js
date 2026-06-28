@@ -1,20 +1,36 @@
 import { User, Battle } from '../models/index.js';
 
-export const getLeaderboardUsers = async (filter, sortField, sortOrder, skip, limitNum) => {
-  return await User.find(filter)
-    .select('username name email rank xp level streaks badges country createdAt')
+// Constants
+const LEADERBOARD_USER_SELECT = 'username name email rank xp level streaks badges country createdAt';
+
+
+// Find
+export const getUserById = (userId) => 
+  User.findById(userId)
+    .select(LEADERBOARD_USER_SELECT)
+    .lean();
+
+export const getDistinctCountries = () => 
+  User.distinct('country', { country: { $exists: true, $ne: '' } });
+
+
+// Search
+export const getUsers = (filter, sortField, sortOrder, skip, limitNum) => 
+  User.find(filter)
+    .select(LEADERBOARD_USER_SELECT)
     .sort({ [sortField]: sortOrder })
     .skip(skip)
     .limit(limitNum)
     .lean();
-};
 
-export const countLeaderboardUsers = async (filter) => {
-  return await User.countDocuments(filter);
-};
+export const countUsers = (filter) => User.countDocuments(filter);
 
-export const getBattleStatsForUsers = async (userIds) => {
-  return await Battle.aggregate([
+export const getUserGlobalRank = (rank) => User.countDocuments({ rank: { $gt: rank } });
+
+
+// Aggregate
+export const getBattleStatsForUsers = (userIds) => 
+  Battle.aggregate([
     {
       $match: {
         status: 'ended',
@@ -37,11 +53,6 @@ export const getBattleStatsForUsers = async (userIds) => {
       },
     },
   ]);
-};
-
-export const getDistinctCountries = async () => {
-  return await User.distinct('country', { country: { $exists: true, $ne: '' } });
-};
 
 export const getGlobalRankCounts = async (uniqueRanks) => {
   const rankCountsMap = {};
@@ -52,7 +63,7 @@ export const getGlobalRankCounts = async (uniqueRanks) => {
   uniqueRanks.forEach(r => {
     facetStage[`rank_${r}`] = [
       { $match: { rank: { $gt: r } } },
-      { $count: "count" }
+      { $count: 'count' }
     ];
   });
 
@@ -65,10 +76,6 @@ export const getGlobalRankCounts = async (uniqueRanks) => {
   });
 
   return rankCountsMap;
-};
-
-export const getUserGlobalRank = async (rank) => {
-  return await User.countDocuments({ rank: { $gt: rank } });
 };
 
 export const getUserBattleStats = async (userId) => {
@@ -87,8 +94,8 @@ export const getUserBattleStats = async (userId) => {
   return statsArr[0] || { battlesPlayed: 0, wins: 0 };
 };
 
-export const getLeaderboardUserById = async (userId) => {
-  return await User.findById(userId)
-    .select('username name email rank xp level streaks badges country createdAt')
-    .lean();
-};
+
+// Backward Compatibility Aliases
+export const getLeaderboardUsers = getUsers;
+export const countLeaderboardUsers = countUsers;
+export const getLeaderboardUserById = getUserById;

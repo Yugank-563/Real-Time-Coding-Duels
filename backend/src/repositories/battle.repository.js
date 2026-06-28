@@ -1,35 +1,45 @@
 import { Battle } from '../models/index.js';
 
-export const createBattle = async (data) => {
-  return await Battle.create(data);
-};
 
-export const findBattleById = async (id) => {
-  return await Battle.findById(id);
-};
+// Create
+export const create = (data) => Battle.create(data);
 
-export const findBattleByIdWithPopulated = async (id, populations = []) => {
+
+// Find
+export const findById = (id) => Battle.findById(id);
+
+export const findByIdWithPopulated = (id, populations = []) => {
   let query = Battle.findById(id);
   populations.forEach(p => {
     query = query.populate(p);
   });
-  return await query;
+  return query;
 };
 
-export const findBattleByRoomCode = async (roomCode) => {
-  return await Battle.findOne({ roomCode });
-};
+export const findByRoomCode = (roomCode) => Battle.findOne({ roomCode });
 
-export const countBattles = async (query) => {
-  return await Battle.countDocuments(query);
-};
+export const getRatingHistory = (userId) => 
+  Battle.find({
+    'players.user': userId,
+    status: 'ended',
+  })
+    .select('winner players createdAt battleType')
+    .sort({ createdAt: 1 })
+    .lean();
 
-export const updateBattleById = async (id, updateData) => {
-  return await Battle.findByIdAndUpdate(id, updateData, { new: true });
-};
 
-export const getProfileBattleStats = async (userId) => {
-  return await Battle.aggregate([
+// Search
+export const count = (query) => Battle.countDocuments(query);
+
+
+// Update
+export const updateById = (id, updateData) => 
+  Battle.findByIdAndUpdate(id, updateData, { new: true });
+
+
+// Aggregate
+export const getProfileStats = (userId) => 
+  Battle.aggregate([
     {
       $match: {
         'players.user': userId,
@@ -60,14 +70,14 @@ export const getProfileBattleStats = async (userId) => {
       },
     },
   ]);
-};
 
-export const getRatingHistoryBattles = async (userId) => {
-  return await Battle.find({
-    'players.user': userId,
-    status: 'ended',
-  })
-    .select('winner players createdAt battleType')
-    .sort({ createdAt: 1 })
-    .lean();
-};
+
+// Backward Compatibility Aliases
+export const createBattle = create;
+export const findBattleById = findById;
+export const findBattleByIdWithPopulated = findByIdWithPopulated;
+export const findBattleByRoomCode = findByRoomCode;
+export const countBattles = count;
+export const updateBattleById = updateById;
+export const getProfileBattleStats = getProfileStats;
+export const getRatingHistoryBattles = getRatingHistory;

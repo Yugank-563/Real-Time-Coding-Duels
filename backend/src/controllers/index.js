@@ -34,6 +34,9 @@ export * from './problems/submitCode.js';
 export * from './submissions/getSubmissionStatus.js';
 export * from './submissions/submitCode.js';
 
+// invitation controller
+export * from './invitation.controller.js';
+
 // users folder
 export * from './users/getLeaderboard.js';
 export * from './users/getProfile.js';

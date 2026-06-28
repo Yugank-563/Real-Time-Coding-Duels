@@ -56,10 +56,12 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
   // Always compute ELO: win=1.0, loss=0.0, draw=0.5
   let ratingDetails = null;
   try {
-    const p1Id = p1.user.toString();
-    const p2Id = p2.user.toString();
-    const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
-    ratingDetails = await processBattleResult(p1Id, p2Id, score);
+    if (!battle.isCasual) {
+      const p1Id = p1.user.toString();
+      const p2Id = p2.user.toString();
+      const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
+      ratingDetails = await processBattleResult(p1Id, p2Id, score);
+    }
   } catch (eloErr) {
     console.error('ELO processing failed after timeout:', eloErr.message);
   }
@@ -197,7 +199,9 @@ export const registerBattleHandlers = (io, socket) => {
       // Process Elo: surrendering user loses (0), opponent wins (1)
       let ratingDetails = null;
       try {
-        ratingDetails = await processBattleResult(socket.userId, opponentId, 0);
+        if (!battle.isCasual) {
+          ratingDetails = await processBattleResult(socket.userId, opponentId, 0);
+        }
       } catch (eloErr) {
         console.error('ELO processing failed after surrender:', eloErr.message);
       }

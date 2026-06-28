@@ -12,3 +12,6 @@ export * from './problem.repository.js';
 
 // leaderboard repository
 export * from './leaderboard.repository.js';
+
+// invitation repository
+export * from './invitation.repository.js';

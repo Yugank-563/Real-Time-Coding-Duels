@@ -3,12 +3,13 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sun, Moon, Bell, LogOut, Menu, X, ChevronDown,
-  Swords, Trophy, BookOpen, LayoutGrid, Home,
+  Sun, Moon, Bell, LogOut, Menu, X,
+  Swords, Trophy, BookOpen, Home,
   User, Award
 } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme, useInvitations } from '../../hooks/index';
 import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
+import { InvitationBadge } from '../index';
 
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
@@ -71,21 +72,10 @@ const Navbar = () => {
   // State
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Refs for click outside
   const profileRef = useRef(null);
-  const notifRef = useRef(null);
-
-  // Notifications Mock
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: '⚔️ Challenge request from yugank-563!', time: '2m ago', unread: true },
-
-    { id: 3, text: '📈 Your leaderboard rating rose by +25 points!', time: '1d ago', unread: false }
-  ]);
-
-  const unreadCount = notifications.filter(n => n.unread).length;
 
   // Click Outside hooks
   useEffect(() => {
@@ -93,13 +83,15 @@ const Navbar = () => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileDropdownOpen(false);
       }
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setNotifDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Invitations
+  const { unreadCount, markAsRead } = useInvitations();
+
+
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -110,10 +102,6 @@ const Navbar = () => {
     dispatch(logout());
     setProfileDropdownOpen(false);
     navigate('/login');
-  };
-
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
   };
 
   return (
@@ -216,57 +204,19 @@ const Navbar = () => {
             {/* Authenticated Controls */}
             {isAuthenticated ? (
               <>
-                {/* Notification Dropdown Bell */}
-                <div className="hidden lg:block relative" ref={notifRef}>
-                  <motion.button
+                {/* Notification Bell (Links to Invitations Page) */}
+                <Link to="/invitations" className="hidden lg:block relative" onClick={markAsRead}>
+                  <motion.div
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
                     className={`relative p-2 rounded-lg border transition-colors duration-200 ${isDark
                         ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-slate-300'
                         : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100 text-slate-700'
                       }`}
                   >
                     <Bell className="w-4 h-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.7)]" />
-                    )}
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {notifDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className={`absolute right-0 mt-2 w-80 rounded-xl border p-4 shadow-xl z-50 ${isDark
-                            ? 'bg-[#161A24] border-[rgba(255,255,255,0.08)] text-slate-200 shadow-black'
-                            : 'bg-white border-[rgba(15,23,42,0.08)] text-slate-800 shadow-slate-200'
-                          }`}
-                      >
-                        <div className="flex items-center justify-between border-b pb-2 mb-2" style={{ borderColor: 'var(--border-subtle)' }}>
-                          <span className="font-bold text-xs uppercase tracking-wider">Inbox ({unreadCount})</span>
-                          {unreadCount > 0 && (
-                            <button onClick={markAllRead} className={`text-[10px] font-bold hover:underline ${isDark ? 'text-[#00F5C4]' : 'text-[#4F6EF7]'}`}>
-                              Mark all read
-                            </button>
-                          )}
-                        </div>
-                        <div className="space-y-3 max-h-60 overflow-y-auto">
-                          {notifications.map(n => (
-                            <div key={n.id} className={`p-2 rounded-lg text-xs leading-relaxed transition-all ${n.unread
-                                ? isDark ? 'bg-slate-900/40 border-l-2 border-[#00F5C4]' : 'bg-slate-50 border-l-2 border-[#4F6EF7]'
-                                : 'opacity-70'
-                              }`}>
-                              <div>{n.text}</div>
-                              <div className="text-[10px] text-slate-400 mt-1">{n.time}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                    <InvitationBadge count={unreadCount} isDark={isDark} />
+                  </motion.div>
+                </Link>
 
                 {/* Profile Dropdown */}
                 <div className="hidden lg:block relative" ref={profileRef}>
