@@ -1,51 +1,34 @@
 import { User } from '../models/index.js';
 import { escapeRegex } from '../utils/regexUtils.js';
 
-// Create a new user
-export const createUser = async (data) => {
-  return await User.create(data);
-};
+const PUBLIC_USER_SELECT = '-passwordHash -refreshToken';
 
-// Find user by email
-export const findUserByEmail = async (email) => {
-  return await User.findOne({ email });
-};
-
-// Find user by username
-export const findUserByUsername = async (username) => {
-  return await User.findOne({ username });
-};
-
-// Find user by username excluding sensitive data
-export const findUserByUsernameExcludingPassword = async (username) => {
-  return await User.findOne({ username }).select('-passwordHash -refreshToken');
-};
-
-// Find user by MongoDB ObjectId
-export const findUserById = async (id) => {
-  return await User.findById(id);
-};
-
-// Find user by refresh token
-export const findUserByRefreshToken = async (token) => {
-  return await User.findOne({ refreshToken: token });
-};
-
-// Update user details
-export const updateUserById = async (id, update) => {
-  return await User.findByIdAndUpdate(id, update, { returnDocument: 'after' });
-};
-
-// Store or clear refresh token
-export const updateRefreshToken = async (id, token) => {
-  return await User.findByIdAndUpdate(id, { refreshToken: token }, { returnDocument: 'after' });
-};
+// Create
+export const create = (data) => User.create(data);
 
 
-// Search users by name, username or email, excluding a specific ID
-export const searchUsersByNameOrEmail = async (q, excludeId) => {
-  const safeQ = escapeRegex(q.trim());
-  return await User.find({
+// Find
+export const findById = (id) => User.findById(id);
+
+export const findByEmail = (email) => User.findOne({ email });
+
+export const findByUsername = (username) => User.findOne({ username });
+
+export const findByRefreshToken = (token) => User.findOne({ refreshToken: token });
+
+export const findByUsernameSafe = (username) => 
+  User.findOne({ username }).select(PUBLIC_USER_SELECT).lean();
+
+
+// Search
+export const searchByNameOrEmail = (q, excludeId) => {
+  const safeQ = escapeRegex(q?.trim() || '');
+  
+  if (!safeQ) {
+    return Promise.resolve([]);
+  }
+
+  return User.find({
     $or: [
       { username: { $regex: safeQ, $options: 'i' } },
       { name: { $regex: safeQ, $options: 'i' } },
@@ -53,7 +36,25 @@ export const searchUsersByNameOrEmail = async (q, excludeId) => {
     ],
     _id: { $ne: excludeId }
   })
+  .select('username name email rank')
   .limit(5)
-  .select('username name email rank');
+  .lean();
 };
 
+// Update
+export const updateById = (id, update) => 
+  User.findByIdAndUpdate(id, update, { new: true });
+
+export const updateRefreshToken = (id, token) => 
+  User.findByIdAndUpdate(id, { refreshToken: token }, { new: true });
+
+
+// Backward Compatibility Aliases
+export const createUser = create;
+export const findUserById = findById;
+export const findUserByEmail = findByEmail;
+export const findUserByUsername = findByUsername;
+export const findUserByRefreshToken = findByRefreshToken;
+export const findUserByUsernameExcludingPassword = findByUsernameSafe;
+export const searchUsersByNameOrEmail = searchByNameOrEmail;
+export const updateUserById = updateById;
