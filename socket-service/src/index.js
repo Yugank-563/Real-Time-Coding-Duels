@@ -147,6 +147,17 @@ await subClient.subscribe('ai:analysis_ready', (message) => {
   }
 });
 
+// Listen for invitation events
+await subClient.subscribe('invitation:events', (message) => {
+  try {
+    const { userId, event, data } = JSON.parse(message);
+    console.log(`Redis Pub/Sub received [${event}] for user ${userId}`);
+    io.to(`user:${userId}`).emit(event, data);
+  } catch (error) {
+    console.error('Error handling Redis Pub/Sub invitation message:', error.message);
+  }
+});
+
 // 3. Authenticate socket connections using JWT
 io.use((socket, next) => {
   try {

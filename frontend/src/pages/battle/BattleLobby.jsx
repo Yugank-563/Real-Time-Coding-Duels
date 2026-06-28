@@ -6,7 +6,7 @@ import { Swords, Zap, Target, Sparkles } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { useTheme } from '../../hooks/useTheme';
 import { selectUser } from '../../features/index';
-import { useBattleSocket, useLobbyStats, useTopicStats, useCustomRoom, useDocumentTitle } from '../../hooks/index';
+import { useBattleSocket, useLobbyStats, useTopicStats, useCustomRoom, useDocumentTitle, useInvitations } from '../../hooks/index';
 
 // Components
 import { ArenaCard, InviteFriendCard, JoinRoomCard, CreateRoomCard } from '../../components/index';
@@ -74,13 +74,27 @@ const BattleLobby = () => {
     navigate(`/battle/matchmaking?type=topic&topic=${encodeURIComponent(selectedTopic)}`);
   };
 
-  const handleSendInvite = (username) => {
+  const { sendInvite } = useInvitations();
+
+  const handleSendInvite = async (username) => {
     if (!username.trim()) {
       toast.error('Search Empty', 'Please input a username to invite.');
       return;
     }
-    toast.success('Invite Sent! ✉️', `Battle invitation dispatched to @${username}.`);
-    setSearchTerm('');
+    
+    // Check if trying to invite self
+    if (myUser?.username?.toLowerCase() === username.trim().toLowerCase()) {
+      toast.error('Invalid Recipient', 'You cannot invite yourself to a battle.');
+      return;
+    }
+
+    try {
+      // Because we modified the backend to resolve usernames to ObjectIds, we can just pass username directly.
+      await sendInvite(username.trim(), '1v1');
+      setSearchTerm('');
+    } catch (err) {
+      // The toast is already handled inside the sendInvite hook on error
+    }
   };
 
   return (

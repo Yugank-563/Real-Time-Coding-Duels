@@ -1,10 +1,9 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { findProblemsByDifficulty, findAllProblems, createBattle, findBattleByRoomCode } from '../../repositories/index.js';
-import { Problem } from '../../models/index.js';
+import { findProblemsByDifficulty, findAllProblems, createBattle, findBattleByRoomCode, findOneAndUpdateProblem } from '../../repositories/index.js';
 import { getRandomProblem } from '../problemService.js';
 
-export const createPrivateRoomService = async (name, password, difficulty, timeLimit, userId, originHeader) => {
+export const createPrivateRoomService = async (name, password, difficulty, timeLimit, userId, originHeader, isCasual = false) => {
   if (!name) {
     { const err = new Error('Room Name is required.'); err.status = 400; throw err; }
   }
@@ -13,7 +12,7 @@ export const createPrivateRoomService = async (name, password, difficulty, timeL
   try {
     const problemData = await getRandomProblem('Array', difficulty || 'Medium');
     const dbDiff = (difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase();
-    randomProblem = await Problem.findOneAndUpdate(
+    randomProblem = await findOneAndUpdateProblem(
       { titleSlug: problemData.titleSlug },
       { 
         ...problemData,
@@ -69,6 +68,7 @@ export const createPrivateRoomService = async (name, password, difficulty, timeL
     timeLimit: timeLimit ? parseInt(timeLimit, 10) : 1200,
     difficulty: difficulty || 'Medium',
     host: userId,
+    isCasual
   });
 
   const shareLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/battle/private/${battle._id}/lobby`;

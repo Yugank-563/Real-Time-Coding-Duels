@@ -42,6 +42,10 @@ const battleSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    isCasual: {
+      type: Boolean,
+      default: false,
+    },
     password: {
       type: String,
       default: null,

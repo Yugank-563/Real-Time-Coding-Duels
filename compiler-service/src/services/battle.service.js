@@ -1,5 +1,5 @@
 import { Battle } from '../../../backend/src/models/index.js';
-import { processBattleResult } from '../../../backend/src/services/ratingService.js';
+import { processBattleResult } from '../../../backend/src/services/index.js';
 import { publishBattleEvent } from '../pubsub/publisher.js';
 import { VERDICTS } from '../config/constants.js';
 import logger from '../utils/logger.js';
@@ -32,9 +32,11 @@ export class BattleService {
         let eloDetails = null;
         
         // Compute standard Elo progression changes
-        const opponentIdx = playerIdx === 0 ? 1 : 0;
-        const opponentId = battle.players[opponentIdx].user.toString();
-        eloDetails = await processBattleResult(userId.toString(), opponentId, 1);
+        if (!battle.isCasual) {
+          const opponentIdx = playerIdx === 0 ? 1 : 0;
+          const opponentId = battle.players[opponentIdx].user.toString();
+          eloDetails = await processBattleResult(userId.toString(), opponentId, 1);
+        }
 
         // Broadcast battle outcome via Redis Pub/Sub
         await publishBattleEvent(battle._id, 'battle:end', {

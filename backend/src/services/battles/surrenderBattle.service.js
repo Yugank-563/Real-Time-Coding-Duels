@@ -29,7 +29,10 @@ export const surrenderBattleService = async (battleId, userId) => {
   await battle.save();
 
   // Calculate ELO changes: User surrenders (losses = 0 score), opponent wins (= 1 score)
-  const ratingDetails = await processBattleResult(userId, opponentId, 0);
+  let ratingDetails = null;
+  if (!battle.isCasual) {
+    ratingDetails = await processBattleResult(userId, opponentId, 0);
+  }
 
   return {
     battle,
