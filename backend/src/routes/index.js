@@ -4,6 +4,9 @@ export { default as authRoutes } from './auth.routes.js';
 // battles routes
 export { default as battleRoutes } from './battles.routes.js';
 
+// invitation routes
+export { default as invitationRoutes } from './invitation.routes.js';
+
 // problems routes
 export { default as problemsRoutes } from './problems.routes.js';
 

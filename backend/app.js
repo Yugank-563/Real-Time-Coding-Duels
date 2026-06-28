@@ -6,7 +6,8 @@ import { limiter, errorHandler } from './src/middleware/index.js';
 import { 
   authRoutes, battleRoutes, 
   submissionRoutes, userRoutes, 
-  problemsRoutes 
+  problemsRoutes,
+  invitationRoutes 
 } from './src/routes/index.js';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/battles', battleRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/problems', problemsRoutes);
+app.use('/api/invitations', invitationRoutes);
 
 // Global 404 handler for unhandled routes
 app.all('*', (req, res) => {

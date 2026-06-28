@@ -9,3 +9,6 @@ export { default as Problem } from './Problem.js';
 
 // Submission model
 export { default as Submission } from './Submission.js';
+
+// Invitation model
+export { default as Invitation } from './Invitation.js';

@@ -19,6 +19,7 @@ export * from './battles/joinQueue.service.js';
 export * from './battles/joinPrivateRoom.service.js';
 export * from './battles/startPrivateBattle.service.js';
 export * from './battles/surrenderBattle.service.js';
+export * from './battles/getAiReview.service.js';
 
 // problems folder
 export * from './problems/executeCode.service.js';
@@ -40,3 +41,6 @@ export * from './matchmakingService.js';
 export * from './problemService.js';
 export * from './ratingService.js';
 export * from './testCaseService.js';
+
+// invitation service
+export * from './invitation.service.js';
