@@ -11,16 +11,13 @@ export { default as ExitBattleModal } from './battle/ExitBattleModal';
 export { default as BattleCountdown } from './battle/BattleCountdown';
 export { default as VerdictDisplay } from './battle/VerdictDisplay';
 export { default as BattleHeader } from './battle/BattleHeader';
+export { default as InvitationCard } from './battle/InvitationCard';
 
 // battle lobby folder
 export { default as InviteFriendCard } from './battle/lobby/InviteFriendCard';
 export { default as JoinRoomCard } from './battle/lobby/JoinRoomCard';
 export { default as CreateRoomCard } from './battle/lobby/CreateRoomCard';
 export { default as ArenaCard } from './battle/lobby/ArenaCard';
-
-// invitation components
-export { default as InvitationCard } from './InvitationCard';
-export { InvitationLoading, InvitationBadge } from './InvitationUI';
 
 // ui folder
 export { default as AuthInput } from './ui/AuthInput';
@@ -34,6 +31,7 @@ export { default as Pagination } from './ui/Pagination';
 export { default as SearchInput } from './ui/SearchInput';
 export { default as AnimationState } from './ui/AnimationState';
 export { default as VerdictBadge } from './ui/VerdictBadge';
+export { default as PageLoader } from './ui/PageLoader';
 
 // layout folder
 export { default as Navbar } from './layout/Navbar';
