@@ -10,27 +10,32 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ||
 
 export const useInvitations = () => {
   const [invitations, setInvitations] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const socketRef = useRef(null);
   const toast = useToast();
 
-  const fetchUnread = useCallback(async () => {
+  const fetchActive = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const { data } = await api.get('/api/invitations/unread');
+      const { data } = await api.get('/api/invitations');
       if (data.success) {
-        setInvitations(data.invites);
-        setUnreadCount(data.invites.length);
+        setInvitations(data.invitations || []);
       }
     } catch (err) {
-      console.error('Failed to fetch unread invitations:', err);
+      console.error('Failed to fetch active invitations:', err);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('bc-token');
-    if (!token || token === 'undefined' || token === 'null') return;
+    if (!token || token === 'undefined' || token === 'null') {
+      setIsLoading(false);
+      return;
+    }
 
-    fetchUnread();
+    fetchActive();
 
     const socket = io(SOCKET_URL, {
       auth: { token },
@@ -45,16 +50,13 @@ export const useInvitations = () => {
 
     socket.on('battle:invite:new', (invite) => {
       setInvitations(prev => [invite, ...prev]);
-      setUnreadCount(prev => prev + 1);
       toast.info('New Battle Invitation! ⚔️', `You received an invitation from ${invite.sender.username}`);
     });
 
     socket.on('battle:invite:accepted', (data) => {
       const { invitation, room } = data;
-      // If we are the sender, we get notified
       toast.success('Invitation Accepted! 🎉', `${invitation.recipient?.username || 'Opponent'} accepted your invite.`);
       
-      // Navigate to room
       setTimeout(() => {
         window.location.href = `/battle/private/${room.roomId}/lobby`;
       }, 1000);
@@ -63,37 +65,31 @@ export const useInvitations = () => {
     socket.on('battle:invite:declined', (invitation) => {
       toast.error('Invitation Declined', `${invitation.recipient?.username || 'Opponent'} declined your invite.`);
     });
+    
+    socket.on('battle:invite:cancelled', ({ inviteId }) => {
+      setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
+      toast.info('Invitation Cancelled', `An invitation was cancelled by the sender.`);
+    });
 
     return () => {
       if (socket) {
         socket.disconnect();
       }
     };
-  }, [fetchUnread]);
-
-  const markAsRead = async () => {
-    if (unreadCount === 0) return;
-    try {
-      await api.patch('/api/invitations/read');
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('Failed to mark invitations as read:', err);
-    }
-  };
+  }, [fetchActive]);
 
   const acceptInvite = async (inviteId) => {
     try {
       const { data } = await api.post(`/api/invitations/${inviteId}/accept`);
       if (data.success) {
-        setInvitations(prev => prev.map(inv => inv._id === inviteId ? { ...inv, status: 'accepted' } : inv));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
         window.location.href = `/battle/private/${data.room.roomId}/lobby`;
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       toast.error('Accept Failed', msg);
       if (msg.includes('expired')) {
-        setInvitations(prev => prev.map(inv => inv._id === inviteId ? { ...inv, status: 'expired' } : inv));
+        setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
       }
     }
   };
@@ -102,14 +98,13 @@ export const useInvitations = () => {
     try {
       const { data } = await api.post(`/api/invitations/${inviteId}/decline`);
       if (data.success) {
-        setInvitations(prev => prev.map(inv => inv._id === inviteId ? { ...inv, status: 'declined' } : inv));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       toast.error('Decline Failed', msg);
       if (msg.includes('expired')) {
-        setInvitations(prev => prev.map(inv => inv._id === inviteId ? { ...inv, status: 'expired' } : inv));
+        setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
       }
     }
   };
@@ -130,8 +125,7 @@ export const useInvitations = () => {
 
   return {
     invitations,
-    unreadCount,
-    markAsRead,
+    isLoading,
     acceptInvite,
     declineInvite,
     sendInvite
