@@ -2,9 +2,7 @@ import express from 'express';
 import { authMiddleware, validateRequest } from '../middleware/index.js';
 import {
   sendInvitation,
-  getUnreadInvitations,
-  getInvitationHistory,
-  markRead,
+  getActiveInvitations,
   acceptInvitation,
   declineInvitation,
   cancelInvitation
@@ -16,9 +14,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.post('/', validateRequest(sendInvitationSchema), sendInvitation);
-router.get('/unread', getUnreadInvitations);
-router.get('/history', getInvitationHistory);
-router.patch('/read', markRead);
+router.get('/', getActiveInvitations);
 router.post('/:id/accept', validateRequest(invitationActionSchema), acceptInvitation);
 router.post('/:id/decline', validateRequest(invitationActionSchema), declineInvitation);
 router.delete('/:id', validateRequest(invitationActionSchema), cancelInvitation);

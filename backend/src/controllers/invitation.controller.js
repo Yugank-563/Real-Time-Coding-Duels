@@ -1,8 +1,6 @@
 import { 
   createInvitationService,
-  fetchUnreadService,
-  fetchHistoryService,
-  markReadService,
+  fetchActiveService,
   acceptInvitationService,
   declineInvitationService,
   cancelInvitationService
@@ -33,31 +31,10 @@ export const sendInvitation = async (req, res, next) => {
   }
 };
 
-export const getUnreadInvitations = async (req, res, next) => {
+export const getActiveInvitations = async (req, res, next) => {
   try {
-    const invites = await fetchUnreadService(req.userId);
-    res.status(200).json({ success: true, invites });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getInvitationHistory = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    
-    const result = await fetchHistoryService(req.userId, page, limit);
+    const result = await fetchActiveService(req.userId);
     res.status(200).json({ success: true, ...result });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const markRead = async (req, res, next) => {
-  try {
-    await markReadService(req.userId);
-    res.status(200).json({ success: true, message: 'Invitations marked as read' });
   } catch (error) {
     next(error);
   }

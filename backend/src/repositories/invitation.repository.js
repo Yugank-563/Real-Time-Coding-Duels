@@ -17,46 +17,14 @@ export const findExistingPending = (senderId, recipientId, battleMode) =>
     battleMode
   });
 
-export const findUnread = (userId) => 
-  Invitation.find({
-    recipient: userId,
-    readAt: null
-  })
+export const findActiveIncoming = (userId) => 
+  Invitation.find({ recipient: userId })
     .populate('sender', 'name username avatar')
     .sort({ createdAt: -1 });
-
-
-// Search
-export const fetchHistory = async (userId, page, limit) => {
-  const skip = (page - 1) * limit;
-  const query = { $or: [{ recipient: userId }, { sender: userId }] };
-  
-  const invites = await Invitation.find(query)
-    .populate('sender', 'name username avatar')
-    .populate('recipient', 'name username avatar')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const total = await Invitation.countDocuments(query);
-
-  return { invites, total };
-};
-
-
-// Update
-export const markAsRead = (userId) => 
-  Invitation.updateMany(
-    { recipient: userId, readAt: null },
-    { $set: { readAt: new Date() } }
-  );
-
 
 // Backward Compatibility Aliases
 export const createInvitation = create;
 export const findInvitationById = findById;
 export const findInvitationByIdWithSender = findByIdWithSender;
 export const findExistingPendingInvitation = findExistingPending;
-export const fetchUnreadInvitations = findUnread;
-export const fetchInvitationHistory = fetchHistory;
-export const markInvitationsRead = markAsRead;
+export const fetchActiveInvitations = findActiveIncoming;

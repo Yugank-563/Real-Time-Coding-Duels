@@ -30,9 +30,6 @@ const invitationSchema = new mongoose.Schema(
       },
     },
 
-    readAt: {
-      type: Date,
-    },
     // acceptedAt and declinedAt removed since invitations are deleted upon resolution
 
     expiresAt: {
