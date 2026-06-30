@@ -2,23 +2,27 @@ import redis from '../../config/redis.js';
 import { countBattles } from '../../repositories/index.js';
 
 export const getLobbyStatsService = async () => {
-  const rankedQueueSize = await redis.zCard('matchmaking_queue') || 0;
-  const activeRankedBattles = await countBattles({ battleType: '1v1', status: 'active' });
-  const rankedCount = (rankedQueueSize + activeRankedBattles * 2) || 842;
+  const getCount = async (mode, battleType) => {
+    let queueSize = 0;
+    if (battleType === 'topic') {
+      const keys = await redis.keys(`matchmaking:queue:${mode}:topic:*`) || [];
+      for (const key of keys) {
+        queueSize += await redis.zCard(key) || 0;
+      }
+    } else {
+      queueSize = await redis.zCard(`matchmaking:queue:${mode}:${battleType}`) || 0;
+    }
+    const activeBattles = await countBattles({ battleType, status: 'active', mode });
+    return queueSize + activeBattles * 2;
+  };
 
-  const activeSprintBattles = await countBattles({ battleType: 'sprint', status: 'active' });
-  const sprintCount = (activeSprintBattles * 2) || 302;
+  const rankedCount = (await getCount('ranked', '1v1')) + (await getCount('casual', '1v1'));
+  const sprintCount = (await getCount('ranked', 'sprint')) + (await getCount('casual', 'sprint'));
+  const topicCount = (await getCount('ranked', 'topic')) + (await getCount('casual', 'topic'));
 
-  const topicKeys = await redis.keys('matchmaking_topic:*') || [];
-  let topicQueuedCount = 0;
-  for (const key of topicKeys) {
-    topicQueuedCount += await redis.zCard(key) || 0;
-  }
-  const activeTopicBattles = await countBattles({ battleType: 'topic', status: 'active' });
-  const topicCount = (topicQueuedCount + activeTopicBattles * 2) || 436;
-
+  // Custom is effectively deprecated but keeping it for safety
   const activeCustomBattles = await countBattles({ battleType: 'custom', status: 'active' });
-  const customCount = (activeCustomBattles * 2) || 110;
+  const customCount = (activeCustomBattles * 2);
 
   return {
     ranked: rankedCount,

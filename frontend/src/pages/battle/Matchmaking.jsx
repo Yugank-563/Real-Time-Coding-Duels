@@ -13,6 +13,7 @@ const Matchmaking = () => {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const battleType = searchParams.get('type') || '1v1';
+  const mode = searchParams.get('mode') || 'ranked';
   useDocumentTitle(`Matchmaking (${battleType.toUpperCase()})`);
   const toast = useToast();
   const { theme } = useTheme();
@@ -33,9 +34,9 @@ const Matchmaking = () => {
   useEffect(() => {
     if (!user) {
       toast.error('Authentication Required', 'Please log in to enter the matchmaking queue.');
-      navigate(`/login?redirect=/battle/matchmaking?type=${battleType}`);
+      navigate(`/login?redirect=/battle/matchmaking?type=${battleType}&mode=${mode}`);
     }
-  }, [user, navigate, battleType, toast]);
+  }, [user, navigate, battleType, mode, toast]);
 
   // 1. Ticking queue timer
   useEffect(() => {
@@ -70,7 +71,8 @@ const Matchmaking = () => {
   }, [lobbyStatus, battleId, navigate]);
 
   const handleCancel = () => {
-    leaveQueue(battleType);
+    const topicParam = searchParams.get('topic');
+    leaveQueue(battleType, { mode, topic: topicParam });
     navigate('/battle/lobby');
   };
 
@@ -124,7 +126,7 @@ const Matchmaking = () => {
             Searching for Opponent{dots}
           </h2>
           <p className="text-xs text-text-secondary uppercase font-bold tracking-wider">
-            Format: <span className="text-accent-primary">{battleType.toUpperCase()} Ranked Match</span>
+            Format: <span className="text-accent-primary">{battleType.toUpperCase()} {mode === 'casual' ? 'Casual' : 'Ranked'} Match</span>
           </p>
         </div>
 

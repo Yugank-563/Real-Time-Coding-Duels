@@ -6,17 +6,19 @@ import {
   handleTopicQueue,
   findTopicMatch,
   removeFromTopicQueue,
-} from '../../../backend/src/services/matchmakingService.js';
-import User from '../../../backend/src/models/User.js';
-import Problem from '../../../backend/src/models/Problem.js';
-import Battle from '../../../backend/src/models/Battle.js';
-import { getRandomProblem } from '../../../backend/src/services/problemService.js';
+  getRandomProblem
+} from '../../../backend/src/services/index.js';
+import { 
+  findUserById,
+  createBattle,
+  findOneAndUpdateProblem
+} from '../../../backend/src/repositories/index.js';
 import { matchmakingSchema } from '../schemas/socket.schema.js';
 import { validateSocketPayload } from '../utils/validation.js';
 
 const eloToDifficulty = (elo) => {
-  if (elo < 1200) return 'EASY';
-  if (elo < 1600) return 'MEDIUM';
+  if (elo <= 1300) return 'EASY';
+  if (elo <= 1600) return 'MEDIUM';
   return 'HARD';
 };
 
@@ -26,7 +28,7 @@ const activeQueueIntervals = new Map();
 // Map userId → socketId so we can stop the matched user's interval
 const userSocketMap = new Map();
 
-const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleType, user, opponent, io) => {
+const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleType, user, opponent, io, mode = 'ranked') => {
   let dbProblem;
   try {
     let problemData;
@@ -45,7 +47,7 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
 
     const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
     const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
-    dbProblem = await Problem.findOneAndUpdate(
+    dbProblem = await findOneAndUpdateProblem(
       query,
       { 
         ...problemData,
@@ -63,11 +65,11 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
     
     if (battleType === 'topic') {
-      await handleTopicQueue(userId, myElo, topic);
-      if (opponent) await handleTopicQueue(matchedUserId, opponent.rank || 1200, topic);
+      await handleTopicQueue(userId, myElo, topic, mode);
+      if (opponent) await handleTopicQueue(matchedUserId, opponent.rank || 1200, topic, mode);
     } else {
-      await addToQueue(userId, myElo, battleType);
-      if (opponent) await addToQueue(matchedUserId, opponent.rank || 1200, battleType);
+      await addToQueue(userId, myElo, battleType, mode);
+      if (opponent) await addToQueue(matchedUserId, opponent.rank || 1200, battleType, mode);
     }
     return;
   }
@@ -79,6 +81,7 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     ],
     problem: dbProblem._id,
     battleType,
+    mode,
     status: 'active',
     startTime: new Date(),
     timeLimit: battleType === 'sprint' ? 300 : 1200,
@@ -88,13 +91,14 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     battleData.topic = topic;
   }
 
-  const battle = await Battle.create(battleData);
+  const battle = await createBattle(battleData);
   const battleIdStr = battle._id.toString();
-  console.log(`[Matchmaking] ✅ Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | type: ${battleType}`);
+  console.log(`[Matchmaking] ✅ Battle created: ${battleIdStr} | ${userId} vs ${matchedUserId} | type: ${battleType} | mode: ${mode}`);
 
   const myData = {
     battleId: battleIdStr,
     battleType,
+    mode,
     opponent: {
       username: opponent?.name || opponent?.email?.split('@')[0] || 'Opponent',
       elo: opponent?.rank || 1200,
@@ -104,6 +108,7 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
   const opponentData = {
     battleId: battleIdStr,
     battleType,
+    mode,
     opponent: {
       username: user.name || user.email.split('@')[0],
       elo: myElo,
@@ -144,10 +149,10 @@ export const registerMatchmakingHandlers = (io, socket) => {
       const data = validateSocketPayload(matchmakingSchema, raw_data, socket, 'matchmaking:join');
       if (!data) return;
 
-      const { battleType, topic } = data;
+      const { battleType, topic, mode = 'ranked' } = data;
       const userId = socket.userId;
 
-      const user = await User.findById(userId);
+      const user = await findUserById(userId);
       if (!user) {
         socket.emit('error', { message: 'User profile not found.' });
         return;
@@ -155,17 +160,20 @@ export const registerMatchmakingHandlers = (io, socket) => {
 
       const myElo = user.rank || 1200;
 
+      // Track current queue info on the socket for disconnect cleanup
+      socket.currentQueueData = { battleType, topic, mode };
+
       // Add to Redis queue
       if (battleType === 'topic') {
         if (!topic) {
           socket.emit('error', { message: 'Topic is required for topic battles.' });
           return;
         }
-        await handleTopicQueue(userId, myElo, topic);
-        console.log(`[Matchmaking] User ${userId} (Elo: ${myElo}) joined TOPIC queue: ${topic}`);
+        await handleTopicQueue(userId, myElo, topic, mode);
+        console.log(`[Matchmaking] User ${userId} (Elo: ${myElo}) joined TOPIC ${mode} queue: ${topic}`);
       } else {
-        await addToQueue(userId, myElo, battleType);
-        console.log(`[Matchmaking] User ${userId} (Elo: ${myElo}) joined ${battleType} queue`);
+        await addToQueue(userId, myElo, battleType, mode);
+        console.log(`[Matchmaking] User ${userId} (Elo: ${myElo}) joined ${battleType} ${mode} queue`);
       }
 
       // Clear any pre-existing interval for this socket (re-join case)
@@ -191,15 +199,16 @@ export const registerMatchmakingHandlers = (io, socket) => {
 
           if (battleType === 'topic') {
             // ── TOPIC MATCHMAKING ──
-            const matchedUserId = await findTopicMatch(userId, myElo, topic, eloTolerance);
+            const matchedUserId = await findTopicMatch(userId, myElo, topic, mode, eloTolerance);
 
             if (matchedUserId) {
               clearInterval(matchmakingInterval);
               activeQueueIntervals.delete(socket.id);
+              delete socket.currentQueueData;
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
-              const opponent = await User.findById(matchedUserId);
-              await executeMatchCreation(userId, matchedUserId, myElo, topic, 'topic', user, opponent, io);
+              const opponent = await findUserById(matchedUserId);
+              await executeMatchCreation(userId, matchedUserId, myElo, topic, 'topic', user, opponent, io, mode);
 
             } else {
               // No match yet — send wait update
@@ -218,18 +227,19 @@ export const registerMatchmakingHandlers = (io, socket) => {
 
           } else {
             // ── STANDARD MATCHMAKING (1v1, sprint, etc.) ──
-            const matchedUserId = await findMatch(userId, myElo, battleType, eloTolerance);
+            const matchedUserId = await findMatch(userId, myElo, battleType, mode, eloTolerance);
 
             if (matchedUserId) {
               clearInterval(matchmakingInterval);
               activeQueueIntervals.delete(socket.id);
+              delete socket.currentQueueData;
               stopIntervalForUser(matchedUserId); // Stop opponent's interval too
 
-              const opponent = await User.findById(matchedUserId);
-              await executeMatchCreation(userId, matchedUserId, myElo, null, battleType, user, opponent, io);
+              const opponent = await findUserById(matchedUserId);
+              await executeMatchCreation(userId, matchedUserId, myElo, null, battleType, user, opponent, io, mode);
 
             } else {
-              const queueInfo = await getQueuePosition(userId, battleType);
+              const queueInfo = await getQueuePosition(userId, battleType, mode);
               socket.emit('matchmaking:position', {
                 position: queueInfo.position,
                 estimatedWait: Math.max(10, 45 - Math.round(eloTolerance / 5)),
@@ -256,32 +266,49 @@ export const registerMatchmakingHandlers = (io, socket) => {
       const data = validateSocketPayload(matchmakingSchema, raw_data, socket, 'matchmaking:leave');
       if (!data) return;
 
-      const { battleType, topic } = data;
+      const { battleType, topic, mode = 'ranked' } = data;
 
       if (battleType === 'topic') {
-        await removeFromTopicQueue(socket.userId, topic);
+        await removeFromTopicQueue(socket.userId, topic, mode);
       } else {
-        await removeFromQueue(socket.userId, battleType);
+        await removeFromQueue(socket.userId, battleType, mode);
       }
 
       if (activeQueueIntervals.has(socket.id)) {
         clearInterval(activeQueueIntervals.get(socket.id));
         activeQueueIntervals.delete(socket.id);
       }
+      
+      delete socket.currentQueueData;
 
-      console.log(`[Matchmaking] User ${socket.userId} left ${battleType} queue`);
+      console.log(`[Matchmaking] User ${socket.userId} left ${battleType} ${mode} queue`);
       socket.emit('matchmaking:left');
     } catch (err) {
       console.error('[Matchmaking] leave error:', err.message);
     }
   });
 
-  // 3. Clean intervals on disconnect
-  socket.on('disconnect', () => {
+  // 3. Clean intervals and Redis queues on disconnect
+  socket.on('disconnect', async () => {
     if (activeQueueIntervals.has(socket.id)) {
       clearInterval(activeQueueIntervals.get(socket.id));
       activeQueueIntervals.delete(socket.id);
     }
+    
+    // Efficiently remove user from the matchmaking queue they were in
+    if (socket.currentQueueData && socket.userId) {
+      const { battleType, topic, mode } = socket.currentQueueData;
+      try {
+        if (battleType === 'topic') {
+          await removeFromTopicQueue(socket.userId, topic, mode);
+        } else {
+          await removeFromQueue(socket.userId, battleType, mode);
+        }
+      } catch (err) {
+        console.error('[Matchmaking] Disconnect queue cleanup error:', err.message);
+      }
+    }
+    
     userSocketMap.delete(socket.userId);
     console.log(`[Matchmaking] Cleaned up on disconnect for socket ${socket.id}`);
   });
