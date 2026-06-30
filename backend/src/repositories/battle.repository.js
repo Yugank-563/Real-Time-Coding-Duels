@@ -16,16 +16,22 @@ export const findByIdWithPopulated = (id, populations = []) => {
   return query;
 };
 
-export const findByRoomCode = (roomCode) => Battle.findOne({ roomCode });
 
 export const getRatingHistory = (userId) => 
   Battle.find({
     'players.user': userId,
     status: 'ended',
+    mode: { $ne: 'casual' }
   })
     .select('winner players createdAt battleType')
     .sort({ createdAt: 1 })
     .lean();
+
+export const findActiveBattleByUserId = (userId) => 
+  Battle.findOne({
+    'players.user': userId,
+    status: { $in: ['active', 'waiting'] },
+  });
 
 
 // Search
@@ -44,6 +50,7 @@ export const getProfileStats = (userId) =>
       $match: {
         'players.user': userId,
         status: { $in: ['active', 'ended'] },
+        mode: { $ne: 'casual' }
       },
     },
     {
@@ -76,7 +83,6 @@ export const getProfileStats = (userId) =>
 export const createBattle = create;
 export const findBattleById = findById;
 export const findBattleByIdWithPopulated = findByIdWithPopulated;
-export const findBattleByRoomCode = findByRoomCode;
 export const countBattles = count;
 export const updateBattleById = updateById;
 export const getProfileBattleStats = getProfileStats;

@@ -34,6 +34,7 @@ export const getBattleStatsForUsers = (userIds) =>
     {
       $match: {
         status: 'ended',
+        mode: { $ne: 'casual' },
         'players.user': { $in: userIds },
       },
     },
@@ -80,7 +81,7 @@ export const getGlobalRankCounts = async (uniqueRanks) => {
 
 export const getUserBattleStats = async (userId) => {
   const statsArr = await Battle.aggregate([
-    { $match: { status: 'ended', 'players.user': userId } },
+    { $match: { status: 'ended', mode: { $ne: 'casual' }, 'players.user': userId } },
     { $unwind: '$players' },
     { $match: { 'players.user': userId } },
     {

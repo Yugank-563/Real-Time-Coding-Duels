@@ -107,6 +107,12 @@ export const getProfileService = async (username) => {
       streaks: user.streaks || 0,
       badges: user.badges || [],
       joinDate: user.createdAt,
+      casualStats: user.casualStats || {
+        totalBattles: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0
+      }
     },
     battleStats: {
       totalBattles: stats.totalBattles,

@@ -164,6 +164,44 @@ const ProfilePage = () => {
             </div>
           </div>
 
+          {/* ── CARD 4: CASUAL STATISTICS ── */}
+          <div className="auth-card" style={card}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--auth-card-border)', paddingBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--auth-heading)' }}>
+                  Casual Battles
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--auth-muted)', margin: 0 }}>Unrated friendly matches.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                <div style={{ background: 'var(--auth-card-border)', padding: '0.75rem', borderRadius: '0.5rem' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: 'var(--auth-heading)' }}>
+                    {user.casualStats?.totalBattles || 0}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--auth-muted)' }}>Played</span>
+                </div>
+                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#10B981' }}>
+                    {user.casualStats?.wins || 0}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#10B981' }}>Wins</span>
+                </div>
+                <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#EF4444' }}>
+                    {user.casualStats?.losses || 0}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#EF4444' }}>Losses</span>
+                </div>
+                <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#F59E0B' }}>
+                    {user.casualStats?.draws || 0}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#F59E0B' }}>Draws</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
