@@ -2,8 +2,7 @@ import {
   createInvitationService,
   fetchActiveService,
   acceptInvitationService,
-  declineInvitationService,
-  cancelInvitationService
+  declineInvitationService
 } from '../services/index.js';
 import { findUserByUsername } from '../repositories/index.js';
 
@@ -52,15 +51,6 @@ export const acceptInvitation = async (req, res, next) => {
 export const declineInvitation = async (req, res, next) => {
   try {
     const result = await declineInvitationService(req.params.id, req.userId);
-    res.status(200).json({ success: true, invite: result });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const cancelInvitation = async (req, res, next) => {
-  try {
-    const result = await cancelInvitationService(req.params.id, req.userId);
     res.status(200).json({ success: true, invite: result });
   } catch (error) {
     next(error);

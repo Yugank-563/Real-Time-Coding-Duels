@@ -21,8 +21,21 @@ const InvitationCard = ({
           >
             @{inv.sender?.username}
           </Link>
-          <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate`}>
-            Invited you to a <b className={isDark ? 'text-slate-200' : 'text-slate-700'}>{inv.battleMode}</b> battle
+          <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate mt-1 flex flex-col gap-0.5`}>
+            <span>
+              Invited you to a <b className={isDark ? 'text-slate-200' : 'text-slate-700'}>{inv.battleMode === 'sprint' ? 'Timed Sprint' : inv.battleMode === 'topic' ? 'Topic Battle' : 'Random Duel'}</b>
+            </span>
+
+            {inv.battleMode === 'topic' && inv.metadata?.topic && (
+              <span className="text-xs text-accent-primary font-bold tracking-wide">
+                Topic: {inv.metadata.topic}
+              </span>
+            )}
+            {inv.metadata?.difficulty && (
+              <span className="text-xs text-amber-500 font-medium tracking-wide">
+                Difficulty: {inv.metadata.difficulty}
+              </span>
+            )}
           </div>
           <div className="text-[10px] mt-1 opacity-60">
             {new Date(inv.createdAt).toLocaleString()}

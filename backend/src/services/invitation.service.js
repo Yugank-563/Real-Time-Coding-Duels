@@ -3,9 +3,11 @@ import {
   findInvitationByIdWithSender, 
   findExistingPendingInvitation, 
   createInvitation, 
-  fetchActiveInvitations
+  fetchActiveInvitations,
+  createBattle,
+  findOneAndUpdateProblem
 } from '../repositories/index.js';
-import { createPrivateRoomService } from './battles/createPrivateRoom.service.js';
+import { getRandomProblem } from './problemService.js';
 import redis from '../config/redis.js';
 
 // --- Shared Helpers ---
@@ -62,24 +64,44 @@ export const acceptInvitationService = async (inviteId, userId) => {
   const isExpired = await handleExpiry(invite);
   if (isExpired) throw new Error('Invitation expired');
 
-  const roomName = `Battle: ${invite.sender.username} vs You`;
-  const room = await createPrivateRoomService(
-    roomName,
-    '',
-    invite.metadata?.difficulty || 'Medium',
-    invite.metadata?.timeLimit || 1200,
-    userId,
-    '',     // originHeader
-    true    // isCasual
+  // Fetch Problem
+  const difficulty = invite.metadata?.difficulty || 'Medium';
+  const problemData = await getRandomProblem('Array', difficulty);
+
+  let dbProblem = await findOneAndUpdateProblem(
+    { titleSlug: problemData.titleSlug || problemData.title },
+    {
+      ...problemData,
+      difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+      description: problemData.content || problemData.description || '',
+      boilerplates: problemData.boilerplates || { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+    },
+    { upsert: true, new: true }
   );
+
+  // Create 2-player active battle
+  const battle = await createBattle({
+    battleType: invite.battleMode || '1v1',
+    mode: 'casual',
+    status: 'active',
+    startTime: new Date(),
+    timeLimit: invite.metadata?.timeLimit ? parseInt(invite.metadata.timeLimit, 10) : (invite.battleMode === 'sprint' ? 600 : 1200),
+    problem: dbProblem._id,
+    difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+    roomName: `Battle: ${invite.sender.username} vs You`,
+    players: [
+      { user: invite.sender._id, status: 'ready' },
+      { user: userId, status: 'ready' },
+    ],
+  });
 
   // Delete the invitation from DB once the battle is successfully created
   await invite.deleteOne();
 
-  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room });
-  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room });
+  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room: battle });
+  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room: battle });
 
-  return { invite, room };
+  return { invite, room: battle };
 };
 
 export const declineInvitationService = async (inviteId, userId) => {
@@ -98,19 +120,6 @@ export const declineInvitationService = async (inviteId, userId) => {
   return invite;
 };
 
-export const cancelInvitationService = async (inviteId, userId) => {
-  const invite = await findInvitationById(inviteId);
-  if (!invite) throw new Error('Invitation not found');
-  if (invite.sender.toString() !== userId.toString()) throw new Error('Unauthorized');
-
-  // Delete the cancelled invitation
-  await invite.deleteOne();
-
-  // Emitting the cancellation event back to the recipient so their UI clears the card
-  emitSocketEvent(invite.recipient.toString(), 'battle:invite:cancelled', { inviteId });
-
-  return invite;
-};
 
 export const fetchActiveService = async (userId) => {
   const invites = await fetchActiveInvitations(userId);

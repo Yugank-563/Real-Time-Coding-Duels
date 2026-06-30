@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { io } from 'socket.io-client';
-import { api } from '../utils/index';
+import { api, getSocket } from '../utils/index';
 import { useToast } from './useToast';
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ||
-  (window.location.hostname === 'localhost'
-    ? 'http://localhost:5001'
-    : `http://${window.location.hostname}:5001`);
 
 export const useInvitations = () => {
   const [invitations, setInvitations] = useState([]);
@@ -37,43 +31,47 @@ export const useInvitations = () => {
 
     fetchActive();
 
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket'],
-    });
-
+    const socket = getSocket();
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      console.log('Socket connected for invitations');
-    });
-
     socket.on('battle:invite:new', (invite) => {
-      setInvitations(prev => [invite, ...prev]);
-      toast.info('New Battle Invitation! ⚔️', `You received an invitation from ${invite.sender.username}`);
+      // API now returns the populated invite directly
+      const formattedInvite = {
+        _id: invite._id,
+        sender: invite.sender,
+        battleMode: invite.battleMode,
+        metadata: invite.metadata || {},
+        expiresAt: invite.expiresAt,
+      };
+      setInvitations(prev => [formattedInvite, ...prev]);
+      let msg = `You received an invitation from ${invite.sender.username} for a ${invite.battleMode === 'sprint' ? 'Timed Sprint' : invite.battleMode === 'topic' ? 'Topic Battle' : 'Random Duel'}.`;
+      if (invite.metadata?.topic) {
+        msg += ` Topic: ${invite.metadata.topic}.`;
+      }
+      if (invite.metadata?.difficulty) {
+        msg += ` Difficulty: ${invite.metadata.difficulty}.`;
+      }
+      toast.info('New Battle Invitation! ⚔️', msg);
     });
 
     socket.on('battle:invite:accepted', (data) => {
-      const { invitation, room } = data;
-      toast.success('Invitation Accepted! 🎉', `${invitation.recipient?.username || 'Opponent'} accepted your invite.`);
+      const { room } = data;
+      toast.success('Battle Ready! 🎉', `Automatically entering the battle...`);
       
       setTimeout(() => {
-        window.location.href = `/battle/private/${room.roomId}/lobby`;
+        window.location.href = `/battle/${room._id || room.id}`;
       }, 1000);
     });
 
-    socket.on('battle:invite:declined', (invitation) => {
-      toast.error('Invitation Declined', `${invitation.recipient?.username || 'Opponent'} declined your invite.`);
-    });
-    
-    socket.on('battle:invite:cancelled', ({ inviteId }) => {
-      setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
-      toast.info('Invitation Cancelled', `An invitation was cancelled by the sender.`);
+    socket.on('battle:invite:declined', (invite) => {
+      toast.error('Invitation Declined', `${invite.recipient?.username || 'Opponent'} declined your invite.`);
     });
 
     return () => {
       if (socket) {
-        socket.disconnect();
+        socket.off('battle:invite:new');
+        socket.off('battle:invite:accepted');
+        socket.off('battle:invite:declined');
       }
     };
   }, [fetchActive]);
@@ -83,7 +81,7 @@ export const useInvitations = () => {
       const { data } = await api.post(`/api/invitations/${inviteId}/accept`);
       if (data.success) {
         setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
-        window.location.href = `/battle/private/${data.room.roomId}/lobby`;
+        window.location.href = `/battle/${data.room?._id || data.room?.id}`;
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
@@ -109,11 +107,15 @@ export const useInvitations = () => {
     }
   };
 
-  const sendInvite = async (recipientId, battleMode = '1v1', metadata = {}) => {
+  const sendInvite = async (toUsername, battleType = '1v1', options = {}) => {
     try {
-      const { data } = await api.post('/api/invitations', { recipientId, battleMode, metadata });
+      const { data } = await api.post('/api/invitations', { 
+        recipientId: toUsername, 
+        battleMode: battleType, 
+        metadata: { topic: options.topic, difficulty: options.difficulty, timeLimit: options.timeLimit } 
+      });
       if (data.success) {
-        toast.success('Invitation Sent', 'Waiting for opponent to accept...');
+        toast.success('Invitation Sent', `Waiting for ${toUsername} to accept...`);
         return data.invite;
       }
     } catch (err) {

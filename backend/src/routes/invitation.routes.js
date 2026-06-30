@@ -4,8 +4,7 @@ import {
   sendInvitation,
   getActiveInvitations,
   acceptInvitation,
-  declineInvitation,
-  cancelInvitation
+  declineInvitation
 } from '../controllers/index.js';
 import { sendInvitationSchema, invitationActionSchema } from '../schemas/index.js';
 
@@ -17,6 +16,5 @@ router.post('/', validateRequest(sendInvitationSchema), sendInvitation);
 router.get('/', getActiveInvitations);
 router.post('/:id/accept', validateRequest(invitationActionSchema), acceptInvitation);
 router.post('/:id/decline', validateRequest(invitationActionSchema), declineInvitation);
-router.delete('/:id', validateRequest(invitationActionSchema), cancelInvitation);
 
 export default router;

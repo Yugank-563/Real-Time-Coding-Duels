@@ -28,6 +28,9 @@ const invitationSchema = new mongoose.Schema(
       timeLimit: {
         type: Number,
       },
+      topic: {
+        type: String,
+      },
     },
 
     // acceptedAt and declinedAt removed since invitations are deleted upon resolution
