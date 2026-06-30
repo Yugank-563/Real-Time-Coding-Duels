@@ -19,4 +19,3 @@ export { useLobbyStats } from './battle/useLobbyStats';
 export { useBattleTimer } from './battle/useBattleTimer';
 export { useBattleSocket } from './battle/useBattleSocket';
 export { useTopicStats } from './battle/useTopicStats';
-export { useCustomRoom } from './battle/useCustomRoom';

@@ -7,3 +7,4 @@ export { formatCppCode } from './cppFormatter';
 export { getDifficultyConfig } from './difficulty';
 export { formatTimer } from './formatters';
 export { getTierColors, getInitials, winRateColor, MEDAL_STYLE } from './leaderboard';
+export { getSocket, disconnectSocket } from './socket';

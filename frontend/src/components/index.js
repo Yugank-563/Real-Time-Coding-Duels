@@ -15,8 +15,6 @@ export { default as InvitationCard } from './battle/InvitationCard';
 
 // battle lobby folder
 export { default as InviteFriendCard } from './battle/lobby/InviteFriendCard';
-export { default as JoinRoomCard } from './battle/lobby/JoinRoomCard';
-export { default as CreateRoomCard } from './battle/lobby/CreateRoomCard';
 export { default as ArenaCard } from './battle/lobby/ArenaCard';
 
 // ui folder
