@@ -66,9 +66,6 @@ const ProblemsFilter = ({ search, setSearch, difficulty, setDifficulty, tag, set
                 { label: 'Medium', value: 'Medium' },
                 { label: 'Hard', value: 'Hard' }
               ]}
-              buttonClassName="auth-input flex items-center justify-between"
-              menuClassName="auth-dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"
-              optionClassName="auth-dropdown-option w-full text-left px-4 py-2.5 text-xs block truncate"
             />
           </div>
 
@@ -81,9 +78,6 @@ const ProblemsFilter = ({ search, setSearch, difficulty, setDifficulty, tag, set
                 { label: 'All Tags', value: 'ALL' },
                 ...allTags.map(t => ({ label: t, value: t }))
               ]}
-              buttonClassName="auth-input flex items-center justify-between"
-              menuClassName="auth-dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"
-              optionClassName="auth-dropdown-option w-full text-left px-4 py-2.5 text-xs block truncate"
             />
           </div>
         </div>

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Shield, Link2, Copy } from 'lucide-react';
 import { useTheme } from '../../../hooks/useTheme';
@@ -55,7 +54,7 @@ const CreateRoomCard = ({
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="Enter custom room name..."
-              className="w-full bg-elevated border border-border hover:border-accent-primary/60 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 rounded-xl px-4 py-3 text-xs outline-none transition-all placeholder:text-text-muted text-text-primary"
+              className="auth-input w-full text-xs"
             />
           </div>
 
@@ -66,7 +65,7 @@ const CreateRoomCard = ({
               value={roomPassword}
               onChange={(e) => setRoomPassword(e.target.value)}
               placeholder="Set custom entry password..."
-              className="w-full bg-elevated border border-border hover:border-accent-primary/60 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 rounded-xl px-4 py-3 text-xs outline-none transition-all placeholder:text-text-muted text-text-primary"
+              className="auth-input w-full text-xs"
             />
           </div>
 
@@ -77,7 +76,6 @@ const CreateRoomCard = ({
               onChange={(val) => setRoomDifficulty(val)}
               options={difficultyOptions}
               placeholder="Select Difficulty"
-              buttonClassName="w-full bg-elevated border border-border hover:border-accent-primary/60 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 rounded-xl px-4 py-3 text-xs outline-none text-text-secondary font-bold cursor-pointer flex items-center justify-between"
             />
           </div>
 
@@ -88,7 +86,6 @@ const CreateRoomCard = ({
               onChange={(val) => setRoomTimeLimit(parseInt(val, 10))}
               options={timeLimitOptions}
               placeholder="Select Time Limit"
-              buttonClassName="w-full bg-elevated border border-border hover:border-accent-primary/60 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 rounded-xl px-4 py-3 text-xs outline-none text-text-secondary font-bold cursor-pointer flex items-center justify-between"
             />
           </div>
         </div>
@@ -134,10 +131,7 @@ const CreateRoomCard = ({
         <button
           type="submit"
           disabled={isSpawningRoom}
-          className={`w-full mt-4 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 active:scale-[0.98] shadow-md ${isDark
-            ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/25 hover:brightness-105'
-            : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/25 hover:brightness-105'
-            } disabled:opacity-50`}
+          className="w-full mt-4 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 active:scale-[0.98] shadow-md bg-[var(--auth-btn)] text-[var(--auth-btn-text)] shadow-[var(--auth-btn)]/25 hover:brightness-105 disabled:opacity-50"
         >
           {isSpawningRoom ? 'Spawning...' : 'Spawn Private Battle Room'}
         </button>
