@@ -4,6 +4,7 @@ import { formatTimer } from '../../utils/index';
 
 export const BattleHeader = ({
   battleType,
+  mode,
   problemDifficulty,
   timer,
   opponent,
@@ -67,6 +68,9 @@ export const BattleHeader = ({
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 uppercase tracking-widest font-mono">
               {getBattleLabel(battleType)}
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest font-mono border ${mode === 'casual' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25' : 'bg-purple-500/10 text-purple-400 border-purple-500/25'}`}>
+              {mode === 'casual' ? 'Casual' : 'Ranked'}
             </span>
             {battleType === 'topic' && topic && (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/25 font-mono">

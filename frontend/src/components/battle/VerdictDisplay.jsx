@@ -1,11 +1,14 @@
-import {  useState, useEffect  } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, ShieldAlert, Award, Star, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState('verdict'); // 'verdict' | 'progression'
+  
+  const mode = useSelector(state => state.battle.mode);
 
   // Determine outcome from winnerId (server-authoritative)
   // winnerId === null  → Draw (both timed out with equal progress)
@@ -135,11 +138,13 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
             
             {/* ELO Rating Progression Slider */}
             <div className="bg-[#0D1520] border border-[#1E2D40] rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute top-2 right-4 text-[10px] text-[#7A9AB8] font-mono">Season 4</div>
+              <div className="absolute top-2 right-4 text-[10px] text-[#7A9AB8] font-mono">{mode === 'casual' ? 'Casual Mode' : 'Season 4'}</div>
               
               <div className="flex items-center justify-center gap-8 mt-2">
                 <div className="text-center">
-                  <span className="text-[10px] text-[#7A9AB8] block uppercase">Rating ELO</span>
+                  <span className="text-[10px] text-[#7A9AB8] block uppercase">
+                    {mode === 'casual' ? 'Rating Unchanged' : 'Rating ELO'}
+                  </span>
                   <div className="text-3xl font-black text-white font-mono mt-1">{currentElo}</div>
                 </div>
                 
@@ -148,11 +153,15 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
                 </div>
 
                 <div className="text-center">
-                  <span className="text-[10px] text-[#7A9AB8] block uppercase">ELO Shift</span>
+                  <span className="text-[10px] text-[#7A9AB8] block uppercase">
+                    {mode === 'casual' ? 'ELO Shift' : 'ELO Shift'}
+                  </span>
                   <div className={`text-2xl font-black font-mono mt-1.5 flex items-center justify-center gap-0.5 ${
-                    isWinner ? 'text-emerald-400' : isDraw ? 'text-purple-400' : 'text-red-400'
+                    mode === 'casual' ? 'text-purple-400' : isWinner ? 'text-emerald-400' : isDraw ? 'text-purple-400' : 'text-red-400'
                   }`}>
-                    {isWinner ? (
+                    {mode === 'casual' ? (
+                      <>±0</>
+                    ) : isWinner ? (
                       <><ArrowUpRight className="w-4 h-4" /> +{eloDetails?.eloChange}</>
                     ) : isDraw ? (
                       <>±0</>
