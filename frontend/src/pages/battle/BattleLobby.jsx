@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Swords, Zap, Target, Sparkles } from 'lucide-react';
+import { Swords, Zap, Target } from 'lucide-react';
 
-import { useToast } from '../../hooks/useToast';
-import { useTheme } from '../../hooks/useTheme';
 import { selectUser } from '../../features/index';
-import { useBattleSocket, useLobbyStats, useTopicStats, useCustomRoom, useDocumentTitle, useInvitations } from '../../hooks/index';
+import { useToast, useTheme, useBattleSocket, useLobbyStats, useTopicStats, useDocumentTitle, useInvitations } from '../../hooks/index';
 
-// Components
-import { ArenaCard, InviteFriendCard, JoinRoomCard, CreateRoomCard } from '../../components/index';
+// Components 
+import { ArenaCard, InviteFriendCard } from '../../components/index';
 
 const BATTLE_TYPES = [
-  { id: '1v1', name: 'Ranked 1v1', desc: 'Direct Elo-rated duels against peer opponents.', icon: Swords, users: '842 active', speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50' },
-  { id: 'sprint', name: 'Timed Sprint', desc: 'Fixed 5-minute speedruns to solve single easy challenges.', icon: Zap, users: '302 active', speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50' },
-  { id: 'topic', name: 'Topic Battle', desc: 'Choose a topic and battle opponents who pick the same subject.', icon: Target, users: '247 active in DP · 189 in Graphs', speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50' }
+  { id: '1v1', name: 'Random Duel', desc: 'A pure test of adaptability. Both your opponent and a random problem are matched to your skill rating.', hint: '🎯 Random problem matched to your skill rating', icon: Swords, speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50', topBorder: 'border-t-cyan-500' },
+  { id: 'sprint', name: 'Timed Sprint', desc: 'Race against the clock in high-speed, 10-minute blitz challenges.', hint: '⚡ Easy problem — built to test your speed under pressure', icon: Zap, speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50', topBorder: 'border-t-emerald-500' },
+  { id: 'topic', name: 'Topic Battle', desc: 'Master specific data structures by challenging rivals in targeted duels.', hint: '📚 Problems filtered by your chosen topic — go deep, not wide', icon: Target, speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50', topBorder: 'border-t-pink-500' }
 ];
 
 const BattleLobby = () => {
@@ -29,21 +27,21 @@ const BattleLobby = () => {
   const { socket } = useBattleSocket();
 
   // ── States & Hooks ──
+  const [mode, setMode] = useState('ranked');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
   const [topicError, setTopicError] = useState('');
 
   const { lobbyStats } = useLobbyStats();
   const { topicList, activeTopicStats } = useTopicStats();
-  const { createRoom, joinRoom } = useCustomRoom();
 
   const topicOptions = topicList.map((topic) => ({
     value: topic,
-    label: `${topic} ${activeTopicStats[topic] !== undefined && activeTopicStats[topic] > 0 ? `(${activeTopicStats[topic]} active)` : ''}`
+    label: topic
   }));
 
   // ── Handlers ──
-  const handleQuickJoin = (type) => {
+  const handleQuickJoin = (type, forcedMode = null) => {
     if (!myUser) {
       navigate(`/login?redirect=/battle/lobby`);
       return;
@@ -52,8 +50,9 @@ const BattleLobby = () => {
       toast.error('Already in Queue', 'Please leave your current matchmaking queue first.');
       return;
     }
-    toast.success('Entering Queue 🚀', `Searching for a ${type === 'sprint' ? 'Timed Sprint' : 'Ranked 1v1'} match...`);
-    navigate(`/battle/matchmaking?type=${type}`);
+    const selectedMode = forcedMode || mode;
+    toast.success('Entering Queue 🚀', `Searching for a ${selectedMode === 'ranked' ? 'Ranked' : 'Casual'} ${type === 'sprint' ? 'Timed Sprint' : '1v1'} match...`);
+    navigate(`/battle/matchmaking?type=${type}&mode=${selectedMode}`);
   };
 
   const handleJoinTopicQueue = () => {
@@ -71,17 +70,22 @@ const BattleLobby = () => {
     }
     setTopicError('');
     toast.success('Entering Queue 🚀', `Searching for a ${selectedTopic} Topic Battle match...`);
-    navigate(`/battle/matchmaking?type=topic&topic=${encodeURIComponent(selectedTopic)}`);
+    navigate(`/battle/matchmaking?type=topic&topic=${encodeURIComponent(selectedTopic)}&mode=${mode}`);
   };
 
   const { sendInvite } = useInvitations();
 
-  const handleSendInvite = async (username) => {
+  const handleSendInvite = async (username, inviteMode, battleType, topic, timeLimit, difficulty) => {
     if (!username.trim()) {
-      toast.error('Search Empty', 'Please input a username to invite.');
+      toast.error('Username Required', 'Please enter a friend\'s username to send an invitation.');
       return;
     }
     
+    if (battleType === 'topic' && !topic) {
+      toast.error('Topic Missing', 'Please select a topic for the battle.');
+      return;
+    }
+
     // Check if trying to invite self
     if (myUser?.username?.toLowerCase() === username.trim().toLowerCase()) {
       toast.error('Invalid Recipient', 'You cannot invite yourself to a battle.');
@@ -89,8 +93,7 @@ const BattleLobby = () => {
     }
 
     try {
-      // Because we modified the backend to resolve usernames to ObjectIds, we can just pass username directly.
-      await sendInvite(username.trim(), '1v1');
+      await sendInvite(username.trim(), battleType, { mode: inviteMode, topic, timeLimit, difficulty });
       setSearchTerm('');
     } catch (err) {
       // The toast is already handled inside the sendInvite hook on error
@@ -98,7 +101,7 @@ const BattleLobby = () => {
   };
 
   return (
-    <div className="w-full bg-base text-text-primary py-6 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
+    <div className="w-full bg-base text-text-primary pt-6 pb-40 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]" data-auth-theme={theme}>
       {/* ──── DOT GRID BACKGROUND ──── */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -110,33 +113,56 @@ const BattleLobby = () => {
       {/* ──── TOP RADIAL GLOW ──── */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-accent-primary/10 to-transparent blur-[120px] pointer-events-none" />
 
-      <div className="space-y-6 relative z-10 w-full">
-        {/* Header Hero banner */}
-        <div className="text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Select Your Coding <span className="text-gradient-primary">Battle</span>
-            </h1>
-            <p className="text-text-secondary text-sm">Head-to-head live battles, custom rooms, and skill-based matching.</p>
+      <div className="flex flex-col gap-6 relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header with Mode Toggle */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.75rem', background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <Swords size={22} color="var(--auth-accent)" />
+              </div>
+              <h1 style={{ fontSize: '1.875rem', fontWeight: 800, margin: 0, color: 'var(--auth-heading)', letterSpacing: '-0.02em' }}>
+                Select Coding Battle
+              </h1>
+            </div>
+            <p style={{ fontSize: '0.95rem', color: 'var(--auth-muted)', margin: 0, paddingLeft: '2px' }}>
+              Real-time 1v1 coding duels — pick your format, join the queue, and prove your skill.
+            </p>
           </div>
 
-          <button
-            onClick={() => handleQuickJoin('1v1')}
-            className={`px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 active:scale-[0.98] shadow-md flex items-center gap-2 self-center md:self-auto ${isDark
-              ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/25 hover:brightness-105'
-              : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/25 hover:brightness-105'
-              }`}
-          >
-            <Sparkles className="w-4 h-4" /> Quick Ranked Match
-          </button>
+          <div className="w-full flex justify-center md:w-auto md:justify-end">
+            <div className="flex bg-elevated/50 border border-border/80 rounded-xl p-1 shadow-sm">
+              <button
+                onClick={() => setMode('ranked')}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all uppercase tracking-wider ${
+                  mode === 'ranked' 
+                    ? 'bg-accent-primary text-[#0D0F14] shadow-md' 
+                    : 'text-text-primary opacity-60 hover:opacity-100 hover:bg-surface'
+                }`}
+              >
+                <Swords className="w-4 h-4" /> Ranked
+              </button>
+              <button
+                onClick={() => setMode('casual')}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all uppercase tracking-wider ${
+                  mode === 'casual' 
+                    ? 'bg-emerald-500 text-[#0D0F14] shadow-md' 
+                    : 'text-text-primary opacity-60 hover:opacity-100 hover:bg-surface'
+                }`}
+              >
+                <Zap className="w-4 h-4" /> Casual
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* ──── ARENA SELECTION CARDS ──── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch relative z-30">
           {BATTLE_TYPES.map((type) => (
             <ArenaCard
               key={type.id}
               type={type}
+              mode={mode}
               isTopic={type.id === 'topic'}
               selectedTopic={selectedTopic}
               setSelectedTopic={setSelectedTopic}
@@ -152,20 +178,17 @@ const BattleLobby = () => {
           ))}
         </div>
 
-        {/* ──── UTILITY GRID (Invite & Private Rooms) ──── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* INVITE A FRIEND & JOIN PRIVATE LOBBY PANEL */}
-          <div className="lg:col-span-5 flex flex-col gap-6">
+        {/* ──── UTILITY GRID (Invite a Friend) ──── */}
+        <div className="grid grid-cols-1 gap-8 items-stretch relative z-10">
+          {/* INVITE A FRIEND PANEL */}
+          <div className="flex flex-col gap-6">
             <InviteFriendCard
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               handleSendInvite={handleSendInvite}
+              topicOptions={topicOptions}
             />
-            <JoinRoomCard {...joinRoom} />
           </div>
-
-          {/* CREATE PRIVATE ROOM PANEL */}
-          <CreateRoomCard {...createRoom} />
         </div>
       </div>
     </div>

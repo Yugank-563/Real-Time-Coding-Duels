@@ -3,11 +3,11 @@ import {
   findInvitationByIdWithSender, 
   findExistingPendingInvitation, 
   createInvitation, 
-  fetchInvitationHistory, 
-  fetchUnreadInvitations, 
-  markInvitationsRead 
+  fetchActiveInvitations,
+  createBattle,
+  findOneAndUpdateProblem
 } from '../repositories/index.js';
-import { createPrivateRoomService } from './battles/createPrivateRoom.service.js';
+import { getRandomProblem } from './problemService.js';
 import redis from '../config/redis.js';
 
 // --- Shared Helpers ---
@@ -41,7 +41,7 @@ export const createInvitationService = async (senderId, recipientId, battleMode,
     }
   }
 
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
   let invite = await createInvitation({
     sender: senderId,
     recipient: recipientId,
@@ -64,26 +64,44 @@ export const acceptInvitationService = async (inviteId, userId) => {
   const isExpired = await handleExpiry(invite);
   if (isExpired) throw new Error('Invitation expired');
 
+  // Fetch Problem
+  const difficulty = invite.metadata?.difficulty || 'Medium';
+  const problemData = await getRandomProblem('Array', difficulty);
 
-
-  const roomName = `Battle: ${invite.sender.username} vs You`;
-  const room = await createPrivateRoomService(
-    roomName,
-    '',
-    invite.metadata?.difficulty || 'Medium',
-    invite.metadata?.timeLimit || 1200,
-    userId,
-    '',     // originHeader
-    true    // isCasual
+  let dbProblem = await findOneAndUpdateProblem(
+    { titleSlug: problemData.titleSlug || problemData.title },
+    {
+      ...problemData,
+      difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+      description: problemData.content || problemData.description || '',
+      boilerplates: problemData.boilerplates || { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
+    },
+    { upsert: true, new: true }
   );
+
+  // Create 2-player active battle
+  const battle = await createBattle({
+    battleType: invite.battleMode || '1v1',
+    mode: 'casual',
+    status: 'active',
+    startTime: new Date(),
+    timeLimit: invite.metadata?.timeLimit ? parseInt(invite.metadata.timeLimit, 10) : (invite.battleMode === 'sprint' ? 600 : 1200),
+    problem: dbProblem._id,
+    difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+    roomName: `Battle: ${invite.sender.username} vs You`,
+    players: [
+      { user: invite.sender._id, status: 'ready' },
+      { user: userId, status: 'ready' },
+    ],
+  });
 
   // Delete the invitation from DB once the battle is successfully created
   await invite.deleteOne();
 
-  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room });
-  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room });
+  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room: battle });
+  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room: battle });
 
-  return { invite, room };
+  return { invite, room: battle };
 };
 
 export const declineInvitationService = async (inviteId, userId) => {
@@ -94,8 +112,6 @@ export const declineInvitationService = async (inviteId, userId) => {
   const isExpired = await handleExpiry(invite);
   if (isExpired) throw new Error('Invitation expired');
 
-
-
   // Delete the invitation since it completed its purpose
   await invite.deleteOne();
 
@@ -104,50 +120,21 @@ export const declineInvitationService = async (inviteId, userId) => {
   return invite;
 };
 
-export const cancelInvitationService = async (inviteId, userId) => {
-  const invite = await findInvitationById(inviteId);
-  if (!invite) throw new Error('Invitation not found');
-  if (invite.sender.toString() !== userId.toString()) throw new Error('Unauthorized');
 
-
-
-  // Delete the cancelled invitation
-  await invite.deleteOne();
-
-  return invite;
-};
-
-export const fetchUnreadService = async (userId) => {
-  const invites = await fetchUnreadInvitations(userId);
+export const fetchActiveService = async (userId) => {
+  const invites = await fetchActiveInvitations(userId);
+  
   const validInvites = [];
   for (const inv of invites) {
     const isExpired = await handleExpiry(inv);
     if (!isExpired) validInvites.push(inv);
   }
-  return validInvites;
-};
-
-export const fetchHistoryService = async (userId, page = 1, limit = 10) => {
-  const { invites, total } = await fetchInvitationHistory(userId, page, limit);
-
-  const validInvites = [];
-  for (const inv of invites) {
-    const isExpired = await handleExpiry(inv);
-    if (!isExpired) validInvites.push(inv);
-  }
-
-  // Adjust total count if some were expired
-  const adjustedTotal = total - (invites.length - validInvites.length);
-
+  
   return {
     invitations: validInvites,
-    total: adjustedTotal,
-    page,
-    limit,
-    totalPages: Math.ceil(adjustedTotal / limit) || 1
+    total: validInvites.length,
+    page: 1,
+    limit: 50,
+    totalPages: 1
   };
-};
-
-export const markReadService = async (userId) => {
-  await markInvitationsRead(userId);
 };

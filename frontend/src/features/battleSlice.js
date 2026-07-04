@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   battleId: null,
   battleType: '1v1',
+  mode: 'ranked',
   status: 'waiting', // 'waiting' | 'active' | 'ended'
   problem: null, // { id, title, difficulty, description, examples, constraints, boilerplates }
   players: [], // [{ user, score, status, progress, language }]
@@ -64,9 +65,10 @@ const battleSlice = createSlice({
     },
 
     initBattle: (state, action) => {
-      const { battleId, battleType, problem, players, myUserId } = action.payload;
+      const { battleId, battleType, problem, players, myUserId, mode } = action.payload;
       state.battleId = battleId;
       state.battleType = battleType;
+      state.mode = mode || 'ranked';
       state.problem = problem;
       state.players = players;
       state.teamId = action.payload.teamId || null;
@@ -118,9 +120,10 @@ const battleSlice = createSlice({
 
     // Used on page refresh — resume from server startTime instead of resetting timer
     resumeBattle: (state, action) => {
-      const { battleId, battleType, problem, players, myUserId, startTime, timeLimit, topic } = action.payload;
+      const { battleId, battleType, problem, players, myUserId, startTime, timeLimit, topic, mode } = action.payload;
       state.battleId = battleId;
       state.battleType = battleType;
+      state.mode = mode || 'ranked';
       state.problem = problem;
       state.players = players;
       state.teamId = action.payload.teamId || null;

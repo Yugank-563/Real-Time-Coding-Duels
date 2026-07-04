@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { io } from 'socket.io-client';
 import { useToast } from '../useToast';
-import { selectUser } from '../../features/index';
+import { getSocket } from '../../utils/index';
 import {
   updateOpponentStatus,
   endBattle,
@@ -11,12 +10,10 @@ import {
   setOutputResults,
   setOutputProgress,
   setAiAnalysis,
+  selectUser
 } from '../../features/index';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ||
-  (window.location.hostname === 'localhost'
-    ? 'http://localhost:5001'
-    : `http://${window.location.hostname}:5001`);
+
 
 export const useBattleSocket = (battleId = null, queueType = null) => {
   const dispatch = useDispatch();
@@ -42,32 +39,32 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       return;
     }
 
-    // Establish WebSocket gateway connection
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket'],
-    });
-
+    // Establish WebSocket gateway connection via singleton
+    const socket = getSocket();
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      console.log('Successfully connected to WebSocket gateway');
-
-      // Auto-join active battle room if parameters are present
+    // We shouldn't rely on the 'connect' event here if the socket is already connected.
+    // Instead, we immediately execute join logic if connected, OR wait for connect if it's not.
+    const handleJoin = () => {
       if (battleId) {
         socket.emit('battle:join', { battleId });
       }
-
-      // Auto-join matchmaking queue if queueType is present (solves race conditions)
       if (queueType) {
         console.log('Auto-joining matchmaking queue for format:', queueType);
         const searchParams = new URLSearchParams(window.location.search);
         const topic = searchParams.get('topic') || '';
         const teamId = searchParams.get('teamId') || '';
-        socket.emit('matchmaking:join', { battleType: queueType, topic, teamId });
+        const mode = searchParams.get('mode') || 'ranked';
+        socket.emit('matchmaking:join', { battleType: queueType, topic, teamId, mode });
         dispatch(setLobbyStatus('queuing'));
       }
-    });
+    };
+
+    if (socket.connected) {
+      handleJoin();
+    } else {
+      socket.on('connect', handleJoin);
+    }
 
     // ── MATCHMAKING EVENTS ──
     socket.on('matchmaking:found', (data) => {
@@ -215,9 +212,31 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
       if (socket) {
         if (queueType) {
           console.log('Auto-leaving queue on unmount for format:', queueType);
-          socket.emit('matchmaking:leave', { battleType: queueType });
+          const searchParams = new URLSearchParams(window.location.search);
+          const mode = searchParams.get('mode') || 'ranked';
+          const topic = searchParams.get('topic');
+          const payload = { battleType: queueType, mode };
+          if (topic) payload.topic = topic;
+          socket.emit('matchmaking:leave', payload);
         }
-        socket.disconnect();
+        
+        socket.off('connect', handleJoin);
+        socket.off('matchmaking:found');
+        socket.off('matchmaking:topic_timeout');
+        socket.off('matchmaking:position');
+        socket.off('matchmaking:left');
+        socket.off('battle:start');
+        socket.off('battle:opponent_coding');
+        socket.off('battle:update');
+        socket.off('battle:end');
+        socket.off('battle:submission_result');
+        socket.off('submission:progress');
+        socket.off('submission:result');
+        socket.off('ai:analysis_ready');
+        socket.off('battle:problem_error');
+        socket.off('error');
+        socket.off('battle:error');
+        
         console.log('Unmounted socket listeners.');
       }
     };
@@ -226,22 +245,22 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
   // ── TRIGGER EMIT FUNCTIONS ──
   const joinQueue = (battleType, options = {}) => {
     if (socketRef.current) {
-      socketRef.current.emit('matchmaking:join', {
-        battleType,
-        topic: options.topic,
-        teamId: options.teamId
-      });
+      const payload = { battleType, mode: options.mode || 'ranked' };
+      if (options.topic) payload.topic = options.topic;
+      if (options.teamId) payload.teamId = options.teamId;
+      
+      socketRef.current.emit('matchmaking:join', payload);
       dispatch(setLobbyStatus('queuing'));
     }
   };
 
   const leaveQueue = (battleType, options = {}) => {
     if (socketRef.current) {
-      socketRef.current.emit('matchmaking:leave', {
-        battleType,
-        topic: options.topic,
-        teamId: options.teamId
-      });
+      const payload = { battleType, mode: options.mode || 'ranked' };
+      if (options.topic) payload.topic = options.topic;
+      if (options.teamId) payload.teamId = options.teamId;
+      
+      socketRef.current.emit('matchmaking:leave', payload);
     }
   };
 

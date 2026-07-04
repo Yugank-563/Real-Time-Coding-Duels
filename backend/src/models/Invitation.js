@@ -28,11 +28,11 @@ const invitationSchema = new mongoose.Schema(
       timeLimit: {
         type: Number,
       },
+      topic: {
+        type: String,
+      },
     },
 
-    readAt: {
-      type: Date,
-    },
     // acceptedAt and declinedAt removed since invitations are deleted upon resolution
 
     expiresAt: {

@@ -1,5 +1,5 @@
 
-const ExitBattleModal = ({ show, onCancel, onConfirm }) => {
+const ExitBattleModal = ({ show, onCancel, onConfirm, isCasual }) => {
   if (!show) return null;
 
   return (
@@ -17,7 +17,10 @@ const ExitBattleModal = ({ show, onCancel, onConfirm }) => {
 
         <div className="p-6 space-y-3.5">
           <p className="text-xs text-text-secondary leading-relaxed">
-            Are you sure you want to exit the battle? Doing so will count as an immediate <span className="text-red-400 font-bold">Loss</span> and <span className="text-red-400 font-semibold underline">deduct ELO rank rating points</span> from your score.
+            Are you sure you want to exit the battle? Doing so will count as an immediate <span className="text-red-400 font-bold">Loss</span>
+            {!isCasual && (
+              <> and <span className="text-red-400 font-semibold underline">deduct ELO rank rating points</span> from your score</>
+            )}.
           </p>
           <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 flex items-start gap-2.5">
             <span className="text-red-400 text-xs mt-0.5">⚡</span>
@@ -38,7 +41,7 @@ const ExitBattleModal = ({ show, onCancel, onConfirm }) => {
             onClick={onConfirm}
             className="px-4 py-1.5 rounded-xl bg-red-500 text-white hover:bg-red-600 text-xs font-bold shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all duration-200"
           >
-            Exit and Lose Score
+            {isCasual ? 'Exit Battle' : 'Exit and Lose Score'}
           </button>
         </div>
       </div>

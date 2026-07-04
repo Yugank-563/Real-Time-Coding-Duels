@@ -31,12 +31,10 @@ export class BattleService {
 
         let eloDetails = null;
         
-        // Compute standard Elo progression changes
-        if (!battle.isCasual) {
-          const opponentIdx = playerIdx === 0 ? 1 : 0;
-          const opponentId = battle.players[opponentIdx].user.toString();
-          eloDetails = await processBattleResult(userId.toString(), opponentId, 1);
-        }
+        // Compute stats and Elo progression changes
+        const opponentIdx = playerIdx === 0 ? 1 : 0;
+        const opponentId = battle.players[opponentIdx].user.toString();
+        eloDetails = await processBattleResult(userId.toString(), opponentId, 1, battle.mode || 'ranked');
 
         // Broadcast battle outcome via Redis Pub/Sub
         await publishBattleEvent(battle._id, 'battle:end', {

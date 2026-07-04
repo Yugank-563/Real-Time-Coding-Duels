@@ -18,6 +18,38 @@ const verifyParticipant = async (battleId, userId, actionName) => {
   return { battle, playerIdx };
 };
 
+// Helper for automatic lobby cleanup when host leaves before start
+const handleLobbyCleanup = async (battleId, userId, io) => {
+  try {
+    const battle = await Battle.findById(battleId);
+    // Verify battle exists and has NOT started
+    if (!battle || battle.status !== 'waiting') return;
+
+    // Check if the user leaving is the Host
+    if (battle.host.toString() === userId.toString()) {
+      // Mark lobby as closed ('ended' is valid in Mongoose schema enum)
+      battle.status = 'ended';
+      await battle.save();
+
+      const roomName = `battle:${battleId}`;
+      
+      // Notify every remaining participant
+      io.to(roomName).emit('battle:lobby_closed', {
+        message: 'The host has left the lobby. The battle has been cancelled.',
+        battleId
+      });
+
+      // Automatically remove every participant from the Socket room
+      io.in(roomName).socketsLeave(roomName);
+      
+      console.log(`Lobby ${battleId} cancelled because host ${userId} left.`);
+    }
+  } catch (err) {
+    console.error('Lobby cleanup error:', err.message);
+  }
+};
+
+
 
 // Helper to resolve timeouts and ELO calculations
 const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
@@ -53,17 +85,15 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
   battle.winner = winnerId;
   await battle.save();
 
-  // Always compute ELO: win=1.0, loss=0.0, draw=0.5
+  // Compute stats and rating for all matches
   let ratingDetails = null;
   try {
-    if (!battle.isCasual) {
-      const p1Id = p1.user.toString();
-      const p2Id = p2.user.toString();
-      const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
-      ratingDetails = await processBattleResult(p1Id, p2Id, score);
-    }
+    const p1Id = p1.user.toString();
+    const p2Id = p2.user.toString();
+    const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
+    ratingDetails = await processBattleResult(p1Id, p2Id, score, battle.mode || 'ranked');
   } catch (eloErr) {
-    console.error('ELO processing failed after timeout:', eloErr.message);
+    console.error('Stats processing failed after timeout:', eloErr.message);
   }
 
   const roomName = `battle:${battle._id.toString()}`;
@@ -94,12 +124,13 @@ export const registerBattleHandlers = (io, socket) => {
  
       const roomName = `battle:${battleId}`;
       socket.join(roomName);
+      socket.currentBattleId = battleId; // Track current lobby for disconnect cleanup
       console.log(`Socket ${socket.id} joined room ${roomName}`);
  
       // Critical validation: reject joining ended battles
-      if (battle.status === 'ended') {
+      if (battle.status === 'ended' || battle.status === 'cancelled') {
         socket.emit('battle:error', { 
-          message: 'Battle has already concluded.',
+          message: 'Battle has already concluded or was cancelled.',
           redirect: `/battle/${battleId}/summary` 
         });
         return;
@@ -114,6 +145,32 @@ export const registerBattleHandlers = (io, socket) => {
       }
     } catch (err) {
       console.error('battle:join error:', err.message);
+    }
+  });
+
+  // Handle explicit lobby leave
+  socket.on('battle:leave_lobby', async (raw_data) => {
+    try {
+      const data = validateSocketPayload(battleSocketSchema, raw_data, socket, 'battle:leave_lobby');
+      if (!data) return;
+      
+      const { battleId } = data;
+      
+      if (socket.currentBattleId === battleId) {
+        delete socket.currentBattleId;
+      }
+      socket.leave(`battle:${battleId}`);
+
+      await handleLobbyCleanup(battleId, socket.userId, io);
+    } catch (err) {
+      console.error('battle:leave_lobby error:', err.message);
+    }
+  });
+
+  // Handle implicit disconnects (browser close, network drop)
+  socket.on('disconnect', async () => {
+    if (socket.currentBattleId) {
+      await handleLobbyCleanup(socket.currentBattleId, socket.userId, io);
     }
   });
 
@@ -196,14 +253,12 @@ export const registerBattleHandlers = (io, socket) => {
 
       await battle.save();
 
-      // Process Elo: surrendering user loses (0), opponent wins (1)
+      // Process Stats: surrendering user loses (0), opponent wins (1)
       let ratingDetails = null;
       try {
-        if (!battle.isCasual) {
-          ratingDetails = await processBattleResult(socket.userId, opponentId, 0);
-        }
+        ratingDetails = await processBattleResult(socket.userId, opponentId, 0, battle.mode || 'ranked');
       } catch (eloErr) {
-        console.error('ELO processing failed after surrender:', eloErr.message);
+        console.error('Stats processing failed after surrender:', eloErr.message);
       }
 
       const roomName = `battle:${battleId}`;

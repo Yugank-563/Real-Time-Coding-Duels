@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Shield, Link2, Copy, Play } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Shield, Link2, Copy, Play, Sparkles, Swords, Clock, Code2 } from 'lucide-react';
 import { selectUser } from '../../features/index';
 import { useToast, useDocumentTitle } from '../../hooks/index';
 import { useTheme } from '../../hooks/useTheme';
@@ -28,11 +29,22 @@ const PrivateLobby = () => {
   const fetchLobbyDetails = async () => {
     try {
       const res = await api.get(`/api/battles/${roomId}`);
+      
+      // If user came via direct link but is not a participant yet
+      if (res.data.isParticipant === false) {
+        toast.error('Access Denied', 'You are not a participant in this private battle.');
+        navigate('/battle/lobby');
+        return;
+      }
+
       setBattle(res.data);
       
       // If battle has already been started by host, direct redirect
       if (res.data.status === 'active') {
         navigate(`/battle/${roomId}`);
+      } else if (res.data.status === 'ended' || res.data.status === 'cancelled') {
+        toast.error('Lobby Closed 🚪', 'This private battle lobby is no longer active.');
+        navigate('/battle/lobby');
       }
     } catch (err) {
       toast.error('Lobby Expired', 'This private battle lobby is no longer active.');
@@ -59,28 +71,59 @@ const PrivateLobby = () => {
         navigate(`/battle/${roomId}`);
       };
 
+      const handlePlayerReady = (data) => {
+        setBattle(prev => {
+          if (!prev) return prev;
+          const newPlayers = prev.players.map(p => 
+            p.user?._id === data.userId || p.user === data.userId ? { ...p, status: 'ready' } : p
+          );
+          return { ...prev, players: newPlayers };
+        });
+        if (data.userId !== myUser?._id) {
+          toast.info('Opponent Ready! 🔥', 'The guest is ready for battle.');
+        }
+      };
+
+      const handleLobbyClosed = (data) => {
+        toast.error('Lobby Closed 🚪', data.message || 'The host has left the lobby.');
+        navigate('/battle/lobby');
+      };
+
       socket.on('battle:player_joined', handlePlayerJoined);
       socket.on('battle:start', handleBattleStart);
+      socket.on('battle:player_ready', handlePlayerReady);
+      socket.on('battle:lobby_closed', handleLobbyClosed);
 
       return () => {
         socket.off('battle:player_joined', handlePlayerJoined);
         socket.off('battle:start', handleBattleStart);
+        socket.off('battle:player_ready', handlePlayerReady);
+        socket.off('battle:lobby_closed', handleLobbyClosed);
       };
     }
   }, [socket, roomId]);
 
-  const handleCopyCode = () => {
+  // Track isStarting for unmount cleanup (Not needed if we remove unmount emit, but keeping for safety)
+  const isStartingRef = useRef(isStarting);
+  useEffect(() => {
+    isStartingRef.current = isStarting;
+  }, [isStarting]);
+
+  const [isReadying, setIsReadying] = useState(false);
+
+  const handleReadyUp = async () => {
     if (!battle) return;
-    navigator.clipboard.writeText(battle.roomCode);
-    toast.success('Code Copied! 📋', 'Send this code to your opponent.');
+    setIsReadying(true);
+    try {
+      await api.post(`/api/battles/private/${roomId}/ready`);
+    } catch (err) {
+      toast.error('Cannot Ready Up', err.response?.data?.message || 'Error occurred.');
+    } finally {
+      setIsReadying(false);
+    }
   };
 
-  const handleCopyLink = () => {
-    if (!battle) return;
-    const link = `${window.location.origin}/battle/private/${roomId}/lobby`;
-    navigator.clipboard.writeText(link);
-    toast.success('Lobby Link Copied! 📋', 'Opponent can join via this link.');
-  };
+
 
   const handleStartBattle = async () => {
     if (!battle) return;
@@ -112,170 +155,246 @@ const PrivateLobby = () => {
   const isHost = battle.host === (myUser?._id || myUser?.id);
   const p1 = battle.players[0];
   const p2 = battle.players[1];
+  
+  const guest = battle.players.find(p => p.user?._id !== battle.host && p.user !== battle.host);
+  const isGuestReady = guest?.status === 'ready';
+  
+  const myPlayerObj = battle.players.find(p => p.user?._id === (myUser?._id || myUser?.id) || p.user === (myUser?._id || myUser?.id));
+  const isMyUserReady = myPlayerObj?.status === 'ready';
 
-  return (
-    <div className="min-h-[80vh] w-full bg-base text-text-primary flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none animate-[fadeIn_0.4s_ease-out] transition-colors duration-300">
+  try {
+    return (
+      <div className="w-full text-text-primary flex flex-col items-center justify-start py-4 px-4 relative font-sans select-none transition-colors duration-300">
       
-      {/* ──── DOT GRID BACKGROUND ──── */}
+      {/* ──── DYNAMIC BACKGROUND ──── */}
       <div 
         className="absolute inset-0 pointer-events-none opacity-20"
         style={{
           backgroundImage: 'radial-gradient(#ffffff0a 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
+          backgroundSize: '32px 32px'
         }}
       />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-accent-primary/5 to-transparent blur-[120px] pointer-events-none" />
 
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-accent-primary/10 to-transparent blur-[100px] pointer-events-none" />
-
-      <div className="max-w-2xl w-full space-y-8 relative z-10">
+      <div className="max-w-4xl w-full relative z-10 flex flex-col gap-10 mt-6">
         
-        {/* Lobby Header */}
-        <div className="text-center space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary text-[10px] font-bold uppercase tracking-wider font-mono">
-            <Shield className="w-3.5 h-3.5" /> Private custom Arena
-          </span>
-          <h1 className="text-3xl font-black tracking-tight">{battle.roomName || 'Custom Coding Duel'}</h1>
-          <p className="text-xs text-text-secondary">Host your friends in custom programming challenges and rate your skills.</p>
+        {/* ──── 1. HERO TITLE ──── */}
+        <div className="flex flex-col items-center text-center space-y-2">
+          <motion.h1 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-4xl md:text-5xl font-black text-text-primary tracking-tight font-sans drop-shadow-md"
+          >
+            Prepare for Battle
+          </motion.h1>
+          <motion.p 
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-xs md:text-sm text-text-muted max-w-lg mx-auto leading-relaxed"
+          >
+            Sharpen your logic and steady your typing. Only the fastest, most optimized code will survive this encounter.
+          </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+        {/* ──── 2. VS BATTLE ARENA (PLAYER CARDS) ──── */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 relative z-10">
           
-          {/* Left Block: Room details and Codes */}
-          <div className="md:col-span-7 bg-surface border border-border shadow-md rounded-2xl p-6 space-y-6 flex flex-col justify-between">
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-accent-primary">Lobby Configuration</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-elevated p-3.5 rounded-xl border border-border/80">
-                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Difficulty</span>
-                  <p className="text-sm font-extrabold text-text-primary mt-1">{battle.difficulty || 'Medium'}</p>
-                </div>
-                <div className="bg-elevated p-3.5 rounded-xl border border-border/80">
-                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Time Limit</span>
-                  <p className="text-sm font-extrabold text-text-primary mt-1">{(battle.timeLimit || 1200) / 60} Minutes</p>
-                </div>
-              </div>
+          {/* HOST CARD */}
+          <motion.div 
+            initial={{ x: -30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1, type: "spring" }}
+            whileHover={{ scale: 1.02 }}
+            className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group ${
+              isDark 
+                ? 'bg-surface/30 border-border/40 hover:border-accent-primary/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(0,245,196,0.1)]' 
+                : 'bg-surface border-border hover:border-accent-primary/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)]'
+            }`}
+          >
+            {/* Ambient Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/0 via-transparent to-transparent group-hover:from-accent-primary/10 transition-colors duration-500 pointer-events-none" />
 
-              <div className="space-y-3.5 pt-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Lobby Share Link</label>
-                  <div className="flex bg-elevated border border-border rounded-xl px-3 py-2.5 items-center justify-between gap-3">
-                    <span className="text-xs font-mono truncate text-text-secondary select-text">
-                      {window.location.origin}/battle/private/{roomId}/lobby
-                    </span>
-                    <button
-                      onClick={handleCopyLink}
-                      className="text-text-muted hover:text-accent-primary shrink-0 transition-colors"
-                    >
-                      <Link2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Lobby Room Code</label>
-                  <div className="flex bg-elevated border border-border rounded-xl px-3 py-2.5 items-center justify-between gap-3">
-                    <span className="text-sm font-black font-mono tracking-widest text-text-primary select-all">
-                      {battle.roomCode}
-                    </span>
-                    <button
-                      onClick={handleCopyCode}
-                      className="text-text-muted hover:text-accent-primary shrink-0 transition-colors"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+            <div className="absolute top-4 right-5 bg-surface/80 border border-border px-3 py-0.5 rounded-full z-10 backdrop-blur-sm">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Host</span>
+            </div>
+            
+            <div className="relative">
+              <div className="absolute inset-0 bg-accent-primary/20 blur-xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="w-20 h-20 bg-elevated border-[3px] border-border rounded-full flex items-center justify-center relative z-10 shadow-lg">
+                <span className="text-2xl font-black text-text-primary tracking-tighter">
+                  {p1.user.name?.substring(0,2).toUpperCase() || 'P1'}
+                </span>
               </div>
             </div>
 
-            {/* CTA action */}
-            {isHost ? (
-              <button
-                onClick={handleStartBattle}
-                disabled={battle.players.length < 2 || isStarting}
-                className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 active:scale-[0.98] shadow-md flex items-center justify-center gap-1.5 ${
-                  battle.players.length >= 2 && !isStarting
-                    ? (isDark 
-                      ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/25 hover:brightness-105' 
-                      : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/25 hover:brightness-105')
-                    : 'bg-elevated text-text-muted border border-border/40 opacity-60 cursor-not-allowed'
-                }`}
-              >
-                <Play className="w-4 h-4" /> {isStarting ? 'Starting...' : 'Start Battle 🚀'}
-              </button>
-            ) : (
-              <div className="p-3.5 bg-elevated border border-border/60 rounded-xl text-center">
-                <p className="text-[10px] text-text-muted animate-pulse font-bold uppercase tracking-wider">
-                  Waiting for host to start battle...
-                </p>
-              </div>
-            )}
-          </div>
+            <div className="text-center relative z-10 mt-1">
+              <h2 className="text-lg font-black text-text-primary tracking-tight">@{p1.user.name}</h2>
+              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {p1.user.rank || 1200}</p>
+            </div>
+          </motion.div>
 
-          {/* Right Block: Active players */}
-          <div className="md:col-span-5 bg-surface border border-border shadow-md rounded-2xl p-6 flex flex-col justify-between gap-6">
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-accent-primary">Lobby Users</h3>
-              
-              <div className="space-y-3">
-                {/* Host */}
-                <div className="flex items-center justify-between p-3 bg-elevated rounded-xl border border-border/80 relative overflow-hidden">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-accent-primary/20 border border-accent-primary/40 flex items-center justify-center text-xs font-bold text-accent-primary font-mono">
-                      {p1?.user?.name?.slice(0, 2).toUpperCase() || 'ME'}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-extrabold text-text-primary">@{p1?.user?.name || 'Host'}</h4>
-                      <span className="text-[9px] text-text-muted font-bold font-mono">⭐ ELO {p1?.user?.rank || 1200}</span>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded border border-accent-primary/20 bg-accent-primary/10 text-accent-primary uppercase tracking-widest font-mono shrink-0">
-                    Host
+          {/* VS BADGE */}
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1, rotate: [-10, 0] }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            className="w-14 h-14 rounded-full bg-surface border-4 border-base flex items-center justify-center z-20 shadow-xl relative"
+          >
+            <div className="absolute inset-0 rounded-full border border-border/50"></div>
+            <span className="text-lg font-black italic text-text-muted pr-0.5">VS</span>
+          </motion.div>
+
+          {/* GUEST CARD */}
+          <motion.div 
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            whileHover={p2 ? { scale: 1.02 } : {}}
+            className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group ${
+              !p2 
+                ? 'bg-transparent border-dashed border-border/50 opacity-60' 
+                : (isDark 
+                  ? 'bg-surface/30 border-border/40 hover:border-pink-500/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(236,72,153,0.1)]' 
+                  : 'bg-surface border-border hover:border-pink-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)]')
+            }`}
+          >
+            {p2 ? (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 via-transparent to-transparent group-hover:from-pink-500/10 transition-colors duration-500 pointer-events-none" />
+
+                <div className="absolute top-4 right-5 bg-surface/80 border border-border px-3 py-0.5 rounded-full z-10 backdrop-blur-sm shadow-sm">
+                  <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${p2.status === 'ready' ? 'text-accent-primary' : 'text-text-muted'}`}>
+                    {p2.status === 'ready' ? 'Ready' : 'Not Ready'}
                   </span>
                 </div>
-
-                {/* Guest / Opponent */}
-                {p2 ? (
-                  <div className="flex items-center justify-between p-3 bg-elevated rounded-xl border border-border/80 relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-xs font-bold text-pink-400 font-mono">
-                        {p2.user?.name?.slice(0, 2).toUpperCase() || 'OP'}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-extrabold text-text-primary">@{p2.user?.name || 'Guest'}</h4>
-                        <span className="text-[9px] text-text-muted font-bold font-mono">⭐ ELO {p2.user?.rank || 1200}</span>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 uppercase tracking-widest font-mono shrink-0">
-                      Ready
+                
+                <div className="relative">
+                  <div className={`absolute inset-0 blur-xl rounded-full scale-110 transition-opacity duration-500 ${p2.status === 'ready' ? 'bg-accent-primary/20 opacity-100' : 'bg-pink-500/20 opacity-0 group-hover:opacity-100'}`}></div>
+                  <div className={`w-20 h-20 bg-elevated border-[3px] rounded-full flex items-center justify-center relative z-10 shadow-lg transition-colors ${p2.status === 'ready' ? 'border-accent-primary' : 'border-border'}`}>
+                    <span className="text-2xl font-black text-text-primary tracking-tighter">
+                      {p2.user.name?.substring(0,2).toUpperCase() || 'P2'}
                     </span>
                   </div>
-                ) : (
-                  <div className="border border-dashed border-border/80 rounded-xl p-6 text-center text-text-muted space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider animate-pulse">Searching for Opponent...</p>
-                    <p className="text-[9px] leading-relaxed text-text-muted/65">
-                      Send the share link or room code to invite a competitor!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            <button
-              onClick={() => navigate('/battle/lobby')}
-              className="py-3 w-full bg-elevated hover:bg-red-500/10 border border-border hover:border-red-500 text-text-secondary hover:text-red-500 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-colors"
-            >
-              Leave Lobby
-            </button>
-          </div>
+                <div className="text-center relative z-10 mt-1">
+                  <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{p2.user.name}</h2>
+                  <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {p2.user.rank || 1200}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center relative">
+                   <div className="absolute inset-0 border-2 border-transparent border-t-accent-primary/40 rounded-full animate-spin"></div>
+                   <span className="text-2xl text-text-muted opacity-30">?</span>
+                </div>
+                <div className="text-center space-y-1 mt-2">
+                  <h2 className="text-xs font-bold text-text-muted uppercase tracking-[0.2em] animate-pulse">Searching</h2>
+                  <p className="text-[10px] text-text-secondary/60 uppercase tracking-widest">Waiting for challenger</p>
+                </div>
+              </>
+            )}
+          </motion.div>
 
         </div>
 
-      </div>
+        {/* ──── 3. LOBBY INFO & CONTROLS ──── */}
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 mt-6 relative z-10">
+          
+          {/* COMPACT SETTINGS ROW */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+             <div className="flex items-center gap-2 bg-surface/40 border border-border/30 px-4 py-2 rounded-full hover:bg-surface/60 transition-colors">
+                <Swords className="w-4 h-4 text-text-muted"/>
+                <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-muted">Difficulty</span>
+                <span className="text-xs font-black text-text-primary">{battle.difficulty || 'Medium'}</span>
+             </div>
+             <div className="flex items-center gap-2 bg-surface/40 border border-border/30 px-4 py-2 rounded-full hover:bg-surface/60 transition-colors">
+                <Clock className="w-4 h-4 text-text-muted"/>
+                <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-muted">Time Limit</span>
+                <span className="text-xs font-black text-text-primary">{(battle.timeLimit || 1200) / 60} Min</span>
+             </div>
+             {battle.topic && (
+               <div className="flex items-center gap-2 bg-surface/40 border border-border/30 px-4 py-2 rounded-full hover:bg-surface/60 transition-colors">
+                  <Code2 className="w-4 h-4 text-text-muted"/>
+                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-text-muted">Topic</span>
+                  <span className="text-xs font-black text-text-primary">{battle.topic}</span>
+               </div>
+             )}
+          </div>
 
+
+
+          {/* ACTION BUTTONS ROW */}
+          <div className="w-full flex items-center justify-center gap-4 mt-4">
+             {/* PRIMARY ACTION BUTTON */}
+             <div className="flex-1 max-w-[200px]">
+               {isHost ? (
+                  <motion.button
+                    whileHover={battle.players.length >= 2 && !isStarting && isGuestReady ? { scale: 1.02 } : {}}
+                    whileTap={battle.players.length >= 2 && !isStarting && isGuestReady ? { scale: 0.98 } : {}}
+                    onClick={handleStartBattle}
+                    disabled={battle.players.length < 2 || isStarting || !isGuestReady}
+                    className={`w-full h-[48px] rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center shadow-sm ${
+                      battle.players.length >= 2 && !isStarting && isGuestReady
+                        ? (isDark 
+                          ? 'bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30'
+                          : 'bg-gradient-to-r from-[#4F6EF7] to-[#3a54d6] text-white shadow-[0_0_20px_rgba(79,110,247,0.2)] hover:shadow-[0_0_30px_rgba(79,110,247,0.4)] border border-[#4F6EF7]/30')
+                        : 'bg-surface border-2 border-border text-text-secondary cursor-not-allowed opacity-90'
+                    }`}
+                  >
+                    {isStarting ? 'Starting' : (!isGuestReady && battle.players.length >= 2 ? 'Waiting' : 'Start')}
+                  </motion.button>
+               ) : (
+                  !isMyUserReady ? (
+                    <motion.button
+                      whileHover={!isReadying ? { scale: 1.02 } : {}}
+                      whileTap={!isReadying ? { scale: 0.98 } : {}}
+                      onClick={handleReadyUp}
+                      disabled={isReadying}
+                      className={`w-full h-[48px] rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center shadow-sm ${
+                        isDark 
+                          ? 'bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30'
+                          : 'bg-gradient-to-r from-[#4F6EF7] to-[#3a54d6] text-white shadow-[0_0_20px_rgba(79,110,247,0.2)] hover:shadow-[0_0_30px_rgba(79,110,247,0.4)] border border-[#4F6EF7]/30'
+                      }`}
+                    >
+                      {isReadying ? 'Readying' : 'Ready'}
+                    </motion.button>
+                  ) : (
+                    <div className="w-full h-[48px] rounded-[2rem] bg-surface border-2 border-accent-primary/40 flex items-center justify-center shadow-inner">
+                      <span className="text-accent-primary font-black uppercase tracking-[0.2em] text-sm animate-pulse">
+                        Waiting
+                      </span>
+                    </div>
+                  )
+               )}
+             </div>
+
+             {/* LEAVE BUTTON */}
+             <button
+               onClick={() => {
+                 if (isHost && !isStarting) {
+                   socket.emit('battle:leave_lobby', { battleId: battle._id });
+                 }
+                 navigate('/battle/lobby');
+               }}
+               className="flex-1 max-w-[200px] h-[48px] rounded-[2rem] bg-surface hover:bg-red-500/10 border-2 border-border hover:border-red-500 text-text-secondary hover:text-red-500 font-bold uppercase tracking-[0.2em] text-sm transition-all duration-300 flex items-center justify-center shadow-sm"
+             >
+               Leave
+             </button>
+          </div>
+      </div>
     </div>
-  );
+    </div>
+    );
+  } catch (err) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center text-red-500 flex-col gap-4">
+        <h1 className="text-2xl font-bold">React Render Error</h1>
+        <pre className="bg-black/50 p-4 rounded text-sm max-w-2xl overflow-auto">{err.stack || err.message}</pre>
+      </div>
+    );
+  }
 };
 
 export default PrivateLobby;

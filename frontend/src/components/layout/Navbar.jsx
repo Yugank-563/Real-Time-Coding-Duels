@@ -9,7 +9,18 @@ import {
 } from 'lucide-react';
 import { useTheme, useInvitations } from '../../hooks/index';
 import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
-import { InvitationBadge } from '../index';
+
+const InvitationBadge = ({ count, isDark }) => {
+  if (!count || count === 0) return null;
+  
+  return (
+    <span className={`absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold flex items-center justify-center rounded-full animate-pulse-slow shadow-sm ${
+      isDark ? 'bg-[#00F5C4] text-[#0D0F14]' : 'bg-[#4F6EF7] text-white'
+    }`}>
+      {count > 9 ? '9+' : count}
+    </span>
+  );
+};
 
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
@@ -89,11 +100,8 @@ const Navbar = () => {
   }, []);
 
   // Invitations
-  const { unreadCount, markAsRead } = useInvitations();
-
-
-
-  // Close mobile drawer on route change
+  const { invitations } = useInvitations();
+  const unreadCount = invitations?.length || 0;  // Close mobile drawer on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -205,7 +213,7 @@ const Navbar = () => {
             {isAuthenticated ? (
               <>
                 {/* Notification Bell (Links to Invitations Page) */}
-                <Link to="/invitations" className="hidden lg:block relative" onClick={markAsRead}>
+                <Link to="/invitations" className="hidden lg:block relative">
                   <motion.div
                     whileTap={{ scale: 0.95 }}
                     className={`relative p-2 rounded-lg border transition-colors duration-200 ${isDark

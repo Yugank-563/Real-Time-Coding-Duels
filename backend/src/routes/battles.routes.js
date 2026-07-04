@@ -10,15 +10,12 @@ import {
   getTopicStats,
   getLobbyStats,
   getTopics,
-  createPrivateRoom,
-  joinPrivateRoom,
   startPrivateBattle,
+  readyPrivateBattle,
   getHealth,
   getAiReview
 } from '../controllers/index.js';
 import {
-  createPrivateRoomSchema,
-  joinPrivateRoomSchema,
   battleActionSchema,
   joinQueueSchema,
   leaveQueueSchema,
@@ -42,9 +39,8 @@ router.post('/queue/leave', validateRequest(leaveQueueSchema), leaveQueue);
 router.get('/queue/status', validateRequest(getQueueStatusSchema), getQueueStatus);
 
 // Private Custom Room routes
-router.post('/private/create', validateRequest(createPrivateRoomSchema), createPrivateRoom);
-router.post('/private/join', validateRequest(joinPrivateRoomSchema), joinPrivateRoom);
 router.post('/private/:id/start', validateRequest(battleActionSchema), startPrivateBattle);
+router.post('/private/:id/ready', validateRequest(battleActionSchema), readyPrivateBattle);
 
 // Dynamic ID routes
 router.get('/:id', validateRequest(battleActionSchema), getBattleDetails);

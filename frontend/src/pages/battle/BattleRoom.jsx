@@ -71,6 +71,7 @@ export const BattleRoom = () => {
           dispatch(resumeBattle({
             battleId: battleData._id,
             battleType: battleData.battleType,
+            mode: battleData.mode,
             problem: battleData.problem,
             players: battleData.players,
             myUserId,
@@ -87,6 +88,7 @@ export const BattleRoom = () => {
           dispatch(initBattle({
             battleId: battleData._id,
             battleType: battleData.battleType,
+            mode: battleData.mode,
             problem: battleData.problem,
             players: battleData.players,
             myUserId,
@@ -288,6 +290,7 @@ export const BattleRoom = () => {
         headerComponent={
           <BattleHeader
             battleType={battleState.battleType}
+            mode={battleState.mode}
             problemDifficulty={problem?.difficulty}
             timer={timer}
             opponent={opponent}
@@ -319,6 +322,7 @@ export const BattleRoom = () => {
       {/* ── BATTLE EXIT CONFIRMATION MODAL ── */}
       <ExitBattleModal
         show={showExitConfirm}
+        isCasual={battleState.mode === 'casual'}
         onCancel={() => setShowExitConfirm(false)}
         onConfirm={() => {
           setShowExitConfirm(false);

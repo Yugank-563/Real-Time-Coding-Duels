@@ -15,8 +15,8 @@ const battleSchema = new mongoose.Schema(
         },
         status: {
           type: String,
-          enum: ['ready', 'coding', 'testing', 'submitted', 'surrendered'],
-          default: 'ready',
+          enum: ['not_ready', 'ready', 'coding', 'testing', 'submitted', 'surrendered'],
+          default: 'not_ready',
         },
         progress: {
           type: Number, // completed test cases count
@@ -38,6 +38,12 @@ const battleSchema = new mongoose.Schema(
       enum: ['1v1', 'sprint', 'topic', 'custom'],
       required: true,
     },
+    mode: {
+      type: String,
+      enum: ['ranked', 'casual'],
+      required: true,
+      default: 'ranked',
+    },
     roomName: {
       type: String,
       default: '',
@@ -46,16 +52,7 @@ const battleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    password: {
-      type: String,
-      default: null,
-    },
-    roomCode: {
-      type: String,
-      unique: true,
-      sparse: true,
-      index: true,
-    },
+
     timeLimit: {
       type: Number,
       default: 1200, // in seconds

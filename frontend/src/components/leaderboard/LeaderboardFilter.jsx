@@ -38,9 +38,6 @@ const LeaderboardFilter = ({ search, setSearch, country, setCountry, countries =
           value={country || 'ALL'}
           onChange={setCountry}
           options={countryOptions}
-          buttonClassName="auth-input flex items-center justify-between"
-          menuClassName="auth-dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"
-          optionClassName="auth-dropdown-option w-full text-left px-4 py-2.5 text-xs block truncate"
         />
       </div>
     </div>

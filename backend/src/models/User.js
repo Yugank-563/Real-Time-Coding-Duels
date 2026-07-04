@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    casualStats: {
+      totalBattles: { type: Number, default: 0 },
+      wins: { type: Number, default: 0 },
+      losses: { type: Number, default: 0 },
+      draws: { type: Number, default: 0 }
+    },
+
 
 
     // ── Profile Fields ──
