@@ -5,7 +5,10 @@ import MonacoEditorComponent from './MonacoEditorComponent';
 import TestcaseTab from './TestcaseTab';
 import ResultTab from './ResultTab';
 import AIReviewTab from './AIReviewTab';
-export const EditorPanel = ({
+import { Button } from '../../components/index';
+
+
+const EditorPanel = ({
   code,
   onCodeChange,
   language,
@@ -25,6 +28,7 @@ export const EditorPanel = ({
   showRunButton = true,
   showSubmitButton = true,
   problem,
+  mode = 'practice',
 }) => {
   const [activeTab, setActiveTab] = useState('code');
   const editorRef = useRef(null);
@@ -161,7 +165,7 @@ export const EditorPanel = ({
             <span>Result</span>
           </button>
 
-          {((verdict === 'AC' && runProgress?.isSubmit) || output?.aiAnalysis) && (
+          {mode === 'practice' && ((verdict === 'AC' && runProgress?.isSubmit) || output?.aiAnalysis) && (
             <>
               <span className="text-text-muted/30">|</span>
               <button
@@ -246,15 +250,17 @@ export const EditorPanel = ({
           runProgress={runProgress}
         />
 
-        {/* AI Review Tab */}
-        <AIReviewTab
-          isActive={activeTab === 'ai-review'}
-          verdict={verdict}
-          aiAnalysis={output?.aiAnalysis || null}
-          originalCode={output?.originalCode || null}
-          submissionId={output?.submissionId || null}
-          isSubmit={runProgress?.isSubmit}
-        />
+        {/* AI Review Tab (Only in Practice Mode) */}
+        {mode === 'practice' && (
+          <AIReviewTab
+            isActive={activeTab === 'ai-review'}
+            verdict={verdict}
+            aiAnalysis={output?.aiAnalysis || null}
+            originalCode={output?.originalCode || null}
+            submissionId={output?.submissionId || null}
+            isSubmit={runProgress?.isSubmit}
+          />
+        )}
       </div>
 
       {/* ── ROW 3: FOOTER BAR (ALWAYS VISIBLE) ── */}
@@ -271,22 +277,26 @@ export const EditorPanel = ({
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
           {showRunButton && (
-            <button
+            <Button
+              variant="primary"
               onClick={onRun}
-              disabled={isRunning || isSubmitting}
-              className="px-4 py-1.5 rounded-lg bg-[var(--btn-primary-bg)] hover:brightness-110 text-[var(--btn-primary-text)] text-xs font-bold transition-all duration-200 disabled:opacity-40"
+              loading={isRunning}
+              disabled={isSubmitting}
+              className="!px-4 !py-1.5 !text-xs !font-bold"
             >
-              {isRunning ? 'Running...' : 'Run Code'}
-            </button>
+              Run Code
+            </Button>
           )}
           {showSubmitButton && (
-            <button
+            <Button
+              variant="primary"
               onClick={onSubmit}
-              disabled={isRunning || isSubmitting}
-              className="px-5 py-1.5 rounded-lg bg-[var(--btn-primary-bg)] hover:brightness-110 text-[var(--btn-primary-text)] text-xs font-bold transition-all duration-200 disabled:opacity-40"
+              loading={isSubmitting}
+              disabled={isRunning}
+              className="!px-5 !py-1.5 !text-xs !font-bold"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </button>
+              Submit
+            </Button>
           )}
         </div>
       </div>

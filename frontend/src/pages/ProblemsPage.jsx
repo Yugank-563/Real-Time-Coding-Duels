@@ -2,16 +2,14 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProblems } from '../features/index';
-import { useTheme, useDocumentTitle } from '../hooks/index';
-import '../styles/auth.css';
+import { useDocumentTitle } from '../hooks/index';
 import { BookOpen } from 'lucide-react';
 import { ProblemsFilter, ProblemsTable, Pagination } from '../components/index';
 
 import { PROBLEM_TOPICS } from '../utils/index';
 
 const ProblemsPage = () => {
-  const { theme } = useTheme();
-  useDocumentTitle('Problems');
+    useDocumentTitle('Problems');
 
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,20 +70,20 @@ const ProblemsPage = () => {
   }, [dispatch, page, debouncedSearch, difficulty, tag]);
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme} style={{ minHeight: 'calc(100vh - 64px)', padding: '1rem 0', display: 'block', overflowY: 'auto' }}>
+    <div className="w-full flex flex-col">
       <div className="w-full">
 
         {/* Header */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '0.5rem', background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <BookOpen size={20} color="var(--auth-accent)" />
+        <div className="mb-5">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="icon-box">
+              <BookOpen size={20} color="var(--accent-primary)" />
             </div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--auth-heading)', letterSpacing: '-0.02em' }}>
+            <h1 className="text-[1.75rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
               Problem Set
             </h1>
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--auth-muted)', margin: 0 }}>
+          <p className="text-[0.9rem] text-[var(--text-muted)] m-0">
             Practice coding challenges and prepare for your next battle.
           </p>
         </div>

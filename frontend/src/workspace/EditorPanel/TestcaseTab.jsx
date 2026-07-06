@@ -1,3 +1,4 @@
+import { Textarea } from '../../components/index';
 
 const TestcaseTab = ({
   isActive,
@@ -55,11 +56,11 @@ const TestcaseTab = ({
           {cases[activeCase] && vars.map((varName, varIdx) => (
             <div key={varName} className="flex flex-col">
               <label className="text-xs text-text-muted mb-1 font-mono">{varName} =</label>
-              <textarea
+              <Textarea
                 rows={1}
                 value={cases[activeCase][varIdx] || ''}
                 onChange={(e) => onCaseInputChange(activeCase, varIdx, e.target.value)}
-                className="bg-gray-100 dark:bg-[#2a2a2a] border-none rounded-lg px-3 py-2 font-mono text-sm text-text-primary w-full resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                className="font-mono text-sm resize-none"
               />
             </div>
           ))}
