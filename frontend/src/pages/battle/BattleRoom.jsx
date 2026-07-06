@@ -18,7 +18,7 @@ import {
 import { BattleCountdown, VerdictDisplay, BattleHeader, ExitBattleModal } from '../../components/index';
 import { CodingWorkspace } from '../../workspace/index';
 
-export const BattleRoom = () => {
+const BattleRoom = () => {
   const { battleId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -32,13 +32,14 @@ export const BattleRoom = () => {
 
   // Overlays — starts as null so we don't flash countdown before knowing battle state
   const [showCountdown, setShowCountdown] = useState(null);
-  const [isExecuting, setIsExecuting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isExecutingRef = useRef(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Sockets gateway connection
   const socketHelpers = useBattleSocket(battleId);
-  const { sendCodeChange, surrenderBattle, sendTimeout } = socketHelpers;
+  const { surrenderBattle, sendTimeout } = socketHelpers;
 
   // Initialize and fetch battle details
   useEffect(() => {
@@ -49,7 +50,7 @@ export const BattleRoom = () => {
         
         // Critical validation: do not allow re-entry to finished battles
         if (battleData.status === 'ended') {
-          toast.info('Battle Finished', 'This battle has already concluded.');
+          toast.info('This battle has already concluded.');
           navigate(`/battle/${battleId}/summary`, { replace: true });
           return;
         }
@@ -77,10 +78,8 @@ export const BattleRoom = () => {
             myUserId,
             startTime: battleData.startTime,
             timeLimit: battleData.timeLimit,
-            teammate: battleData.teammate,
             opponents: battleData.opponents,
             topic: battleData.topic,
-            teamId: battleData.teamId,
           }));
           setShowCountdown(false);
         } else {
@@ -93,18 +92,16 @@ export const BattleRoom = () => {
             players: battleData.players,
             myUserId,
             startTime: battleData.startTime,
-            teammate: battleData.teammate,
             opponents: battleData.opponents,
             topic: battleData.topic,
-            timeLimit: battleData.timeLimit,
-            teamId: battleData.teamId,
+            timeLimit: battleData.timeLimit
           }));
           setShowCountdown(true);
         }
       } catch (err) {
         console.error('Failed to load battle coordinates:', err.message);
-        toast.error('Access Denied', 'Unable to retrieve battle room configuration.');
-        navigate('/battle/lobby', { replace: true });
+        toast.error('Unable to retrieve battle room configuration.');
+        navigate('/', { replace: true });
       }
     };
 
@@ -132,14 +129,13 @@ export const BattleRoom = () => {
   // Sync editor buffer updates over WebSockets
   const handleCodeChange = (newCode) => {
     editor.setCode(newCode);
-    sendCodeChange(editor.selectedLanguage);
   };
 
   // Run user code (REST run endpoint)
   const handleRun = async () => {
     if (isExecutingRef.current) return;
     isExecutingRef.current = true;
-    setIsExecuting(true);
+    setIsRunning(true);
     dispatch(setOutputState('running'));
 
     try {
@@ -185,17 +181,17 @@ export const BattleRoom = () => {
       dispatch(setOutputResults(mappedResult));
 
       if (runResult.verdict === 'AC') {
-        toast.success('Accepted ✓', 'Your custom case passed!');
+        toast.success('Your custom case passed!');
       } else {
         toast.warning('Run Failed: ' + runResult.verdict);
       }
     } catch (err) {
       console.error('Run failed:', err.message);
-      toast.error('Execution Failed', err.message || err.response?.data?.message || 'Internal sandbox compiler error.');
+      toast.error(err.message || err.response?.data?.message || 'Internal sandbox compiler error.');
       dispatch(setOutputState('idle'));
     } finally {
       isExecutingRef.current = false;
-      setIsExecuting(false);
+      setIsRunning(false);
     }
   };
 
@@ -203,7 +199,7 @@ export const BattleRoom = () => {
   const handleSubmit = async () => {
     if (isExecutingRef.current) return;
     isExecutingRef.current = true;
-    setIsExecuting(true);
+    setIsSubmitting(true);
     dispatch(setOutputState('running'));
 
     try {
@@ -217,21 +213,21 @@ export const BattleRoom = () => {
         }
       );
 
-      toast.info('Submitted 🚀', 'Evaluating code against hidden test cases inside secure Docker sandbox...');
+      toast.info('Evaluating code against hidden test cases inside secure Docker sandbox...');
     } catch (err) {
       console.error('Submission failed:', err.message);
-      toast.error('Submission Failed', err.response?.data?.message || 'Internal sandbox compiler error.');
+      toast.error(err.response?.data?.message || 'Internal sandbox compiler error.');
       dispatch(setOutputState('idle'));
     } finally {
       isExecutingRef.current = false;
-      setIsExecuting(false);
+      setIsSubmitting(false);
     }
   };
 
   // Time-out auto submit
   useEffect(() => {
     if (status === 'active' && timer.remaining === 0 && showCountdown === false) {
-      toast.warning('Time limit exceeded!', 'Auto-submitting your current progress...');
+      toast.warning('Auto-submitting your current progress...');
       handleSubmit();
       if (sendTimeout) {
         sendTimeout();
@@ -245,7 +241,7 @@ export const BattleRoom = () => {
 
   const countdownData = {
     username: myUser?.username,
-    elo: myUser?.rank || 1200,
+    elo: myUser?.rating || 1200,
   };
 
   const handleCountdownComplete = useCallback(() => {
@@ -305,8 +301,8 @@ export const BattleRoom = () => {
         language={editor.selectedLanguage}
         onRun={handleRun}
         onSubmit={handleSubmit}
-        isRunning={isExecuting}
-        isSubmitting={isExecuting}
+        isRunning={isRunning}
+        isSubmitting={isSubmitting}
         cases={testcase.cases}
         vars={testcase.vars}
         activeCase={testcase.activeCase}

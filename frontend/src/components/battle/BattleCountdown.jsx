@@ -1,6 +1,7 @@
 import {  useEffect, useState  } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords } from 'lucide-react';
+import { getInitials } from '../../utils/index';
 
 const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
   const [count, setCount] = useState(3);
@@ -42,7 +43,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
   }, [count, phase, onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0B0F1A] flex flex-col items-center justify-center overflow-hidden font-sans select-none">
+    <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col items-center justify-center overflow-hidden font-sans select-none">
       
       {/* Background grid */}
       <div 
@@ -52,7 +53,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
           backgroundSize: '24px 24px'
         }}
       />
-      <div className="absolute w-[600px] h-[600px] bg-gradient-to-b from-[#00E5FF]/5 to-transparent blur-[120px] pointer-events-none" />
+      <div className="absolute w-[600px] h-[600px] bg-gradient-to-b from-[var(--accent-blue)]/5 to-transparent blur-[120px] pointer-events-none" />
 
       <AnimatePresence mode="wait">
         
@@ -70,15 +71,14 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               initial={{ x: -120, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ type: 'spring', delay: 0.2 }}
-              className="bg-[#141B2D] border-l-4 border-l-[#00E5FF] border border-[#1E2D40] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
+              className="bg-[var(--bg-surface)] border-l-4 border-l-[var(--accent-blue)] border border-[var(--border)] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
             >
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#6C63FF] to-[#00F5C4] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
-                {myUser?.username?.slice(0, 2).toUpperCase() || 'ME'}
+              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-blue)] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
+                {getInitials(myUser?.name, myUser?.username) || 'ME'}
               </div>
               <div>
                 <h3 className="font-extrabold text-white text-base truncate">@{myUser?.username || 'You'}</h3>
-                <p className="text-xs text-[#7A9AB8] mt-1 font-mono">Elo: {myUser?.elo || 1200}</p>
-                <p className="text-[10px] text-[#00E5FF] font-bold uppercase tracking-wider mt-1">Level {myUser?.level || 1}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">Elo: {myUser?.elo || 1200}</p>
               </div>
             </motion.div>
 
@@ -87,7 +87,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: [1, 1.2, 1], rotate: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="w-16 h-16 rounded-full bg-[#0D1520] border border-[#1E2D40] flex items-center justify-center text-[#00E5FF] relative shadow-[0_0_24px_rgba(0,229,255,0.2)]"
+              className="w-16 h-16 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-[var(--accent-blue)] relative shadow-[0_0_24px_rgba(0,229,255,0.2)]"
             >
               <Swords className="w-6 h-6 animate-pulse" />
             </motion.div>
@@ -97,15 +97,14 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               initial={{ x: 120, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ type: 'spring', delay: 0.2 }}
-              className="bg-[#141B2D] border-r-4 border-r-[#7C3AED] border border-[#1E2D40] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
+              className="bg-[var(--bg-surface)] border-r-4 border-r-[var(--accent-primary)] border border-[var(--border)] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
             >
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF00E5] to-[#7C3AED] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
-                {opponent?.username?.slice(0, 2).toUpperCase() || 'OP'}
+              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--accent-red)] to-[var(--accent-primary)] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
+                {getInitials(opponent?.name, opponent?.username) || 'OP'}
               </div>
               <div>
                 <h3 className="font-extrabold text-white text-base truncate">@{opponent?.username || 'Opponent'}</h3>
-                <p className="text-xs text-[#7A9AB8] mt-1 font-mono">Elo: {opponent?.elo || 1200}</p>
-                <p className="text-[10px] text-[#7C3AED] font-bold uppercase tracking-wider mt-1">Level {opponent?.level || 1}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">Elo: {opponent?.elo || 1200}</p>
               </div>
             </motion.div>
           </motion.div>
@@ -121,13 +120,13 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
             transition={{ duration: 0.6 }}
             className="text-center space-y-4 max-w-lg relative z-10 px-6"
           >
-            <span className="text-[10px] uppercase font-black tracking-widest text-[#00E5FF] bg-[#00E5FF]/10 px-3 py-1 rounded-full border border-[#00E5FF]/20">
+            <span className="text-[10px] uppercase font-black tracking-widest text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-3 py-1 rounded-full border border-[var(--accent-blue)]/20">
               Selected Challenge
             </span>
             <h2 className="text-3xl font-extrabold text-white tracking-tight mt-4">
               "{problemTitle || 'Loading Challenge'}"
             </h2>
-            <p className="text-xs text-[#7A9AB8] leading-relaxed">
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Read the description constraints carefully. Compile examples rapidly. Solve first to dominate ELO points.
             </p>
           </motion.div>
@@ -160,7 +159,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
                   initial={{ scale: 0.2, opacity: 0 }}
                   animate={{ scale: [1, 1.3, 1], opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-9xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] font-mono tracking-tight drop-shadow-[0_0_40px_rgba(0,229,255,0.4)]"
+                  className="text-9xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-primary)] font-mono tracking-tight drop-shadow-[0_0_40px_rgba(0,229,255,0.4)]"
                 >
                   GO!
                 </motion.h1>

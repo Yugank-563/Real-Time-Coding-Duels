@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Users, Swords, Zap, Target } from 'lucide-react';
-import CustomDropdown from '../../ui/CustomDropdown';
+import CustomDropdown from '../ui/CustomDropdown';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
-const TIME_LIMITS = { '1v1': 1200, 'sprint': 600, 'topic': 1200 };
+const TIME_LIMITS = { 'random-duel': 1200, 'timed-sprint': 600, 'topic-duel': 1200 };
 
-const ICONS = { '1v1': Swords, 'sprint': Zap, 'topic': Target };
+const ICONS = { 'random-duel': Swords, 'timed-sprint': Zap, 'topic-duel': Target };
 
 const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOptions }) => {
-  const [battleType, setBattleType] = useState('1v1');
+  const [battleType, setBattleType] = useState('');
   const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState('Easy');
+  const [difficulty, setDifficulty] = useState('');
 
   const handleInvite = () => {
     const timeLimit = TIME_LIMITS[battleType] || 1200;
@@ -17,7 +20,7 @@ const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOp
   };
 
   return (
-    <div className="bg-surface border border-border/80 shadow-md rounded-2xl p-6 sm:p-8 relative">
+    <Card className="p-6 sm:p-8 relative">
       {/* Background glow clipped wrapper */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/5 rounded-full blur-3xl -z-10" />
@@ -44,9 +47,9 @@ const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOp
               value={battleType}
               onChange={setBattleType}
               options={[
-                { value: '1v1', label: 'Random Duel' },
-                { value: 'sprint', label: 'Timed Sprint' },
-                { value: 'topic', label: 'Topic Battle' }
+                { value: 'random-duel', label: 'Random Duel' },
+                { value: 'timed-sprint', label: 'Timed Sprint' },
+                { value: 'topic-duel', label: 'Topic Duel' }
               ]}
               placeholder="Select Mode"
             />
@@ -62,44 +65,45 @@ const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOp
                 { value: 'Medium', label: 'Medium' },
                 { value: 'Hard', label: 'Hard' }
               ]}
-              placeholder="Difficulty"
+              placeholder="Select Difficulty"
             />
           </div>
 
           {/* ──── USERNAME SEARCH ──── */}
-          <div className="relative w-full sm:flex-1 shrink-0">
-            <input
+          <div className="w-full sm:flex-1 shrink-0">
+            <Input
+              icon={<Users className="w-4 h-4" />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Enter friend's username..."
-              className="auth-input w-full h-11 pl-11 text-xs"
+              className="h-11 text-xs"
             />
-            <Users className="w-4 h-4 text-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
           </div>
         </div>
 
         {/* ──── TOPIC SELECTION (ONLY IF TOPIC BATTLE) ──── */}
-        {battleType === 'topic' && (
+        {battleType === 'topic-duel' && (
           <div className="animate-[fadeIn_0.2s_ease-out]">
             <CustomDropdown
               value={topic}
               onChange={setTopic}
               options={topicOptions || []}
-              placeholder="Select a topic..."
+              placeholder="Select Problem Topic"
             />
           </div>
         )}
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="full"
         onClick={handleInvite}
-        className="w-full h-11 rounded-xl bg-[var(--auth-btn)] text-[var(--auth-btn-text)] hover:brightness-105 shadow-[0_4px_14px_var(--auth-btn)]/30 text-xs font-bold transition-all duration-300 active:scale-[0.98] uppercase tracking-wider mt-4"
+        className="mt-4"
       >
-        Send Battle Invitation
-      </button>
+        Invite Friend
+      </Button>
       </div>
-    </div>
+    </Card>
   );
 };
 

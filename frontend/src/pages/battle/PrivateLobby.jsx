@@ -2,10 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Shield, Link2, Copy, Play, Sparkles, Swords, Clock, Code2 } from 'lucide-react';
+import { Swords, Clock, Code2 } from 'lucide-react';
 import { selectUser } from '../../features/index';
 import { useToast, useDocumentTitle } from '../../hooks/index';
-import { useTheme } from '../../hooks/useTheme';
 import { useBattleSocket } from '../../hooks/index';
 import { api } from '../../utils/index';
 
@@ -14,8 +13,6 @@ const PrivateLobby = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const myUser = useSelector(selectUser);
   
   useDocumentTitle('Private Lobby');
@@ -32,8 +29,8 @@ const PrivateLobby = () => {
       
       // If user came via direct link but is not a participant yet
       if (res.data.isParticipant === false) {
-        toast.error('Access Denied', 'You are not a participant in this private battle.');
-        navigate('/battle/lobby');
+        toast.error('You are not a participant in this private battle.');
+        navigate('/');
         return;
       }
 
@@ -43,12 +40,12 @@ const PrivateLobby = () => {
       if (res.data.status === 'active') {
         navigate(`/battle/${roomId}`);
       } else if (res.data.status === 'ended' || res.data.status === 'cancelled') {
-        toast.error('Lobby Closed 🚪', 'This private battle lobby is no longer active.');
-        navigate('/battle/lobby');
+        toast.error('This private battle lobby is no longer active.');
+        navigate('/');
       }
     } catch (err) {
-      toast.error('Lobby Expired', 'This private battle lobby is no longer active.');
-      navigate('/battle/lobby');
+      toast.error('This private battle lobby is no longer active.');
+      navigate('/');
     }
   };
 
@@ -63,11 +60,11 @@ const PrivateLobby = () => {
     if (socket) {
       const handlePlayerJoined = () => {
         fetchLobbyDetails();
-        toast.info('User Joined! 👥', 'A new participant entered the lobby.');
+        toast.info('A new participant entered the lobby.');
       };
 
       const handleBattleStart = () => {
-        toast.success('Battle Starting! ⚔️', 'Prepare yourself, the custom duel is beginning!');
+        toast.success('Prepare yourself, the custom duel is beginning!');
         navigate(`/battle/${roomId}`);
       };
 
@@ -80,13 +77,13 @@ const PrivateLobby = () => {
           return { ...prev, players: newPlayers };
         });
         if (data.userId !== myUser?._id) {
-          toast.info('Opponent Ready! 🔥', 'The guest is ready for battle.');
+          toast.info('The guest is ready for battle.');
         }
       };
 
       const handleLobbyClosed = (data) => {
-        toast.error('Lobby Closed 🚪', data.message || 'The host has left the lobby.');
-        navigate('/battle/lobby');
+        toast.error(data.message || 'The host has left the lobby.');
+        navigate('/');
       };
 
       socket.on('battle:player_joined', handlePlayerJoined);
@@ -117,7 +114,7 @@ const PrivateLobby = () => {
     try {
       await api.post(`/api/battles/private/${roomId}/ready`);
     } catch (err) {
-      toast.error('Cannot Ready Up', err.response?.data?.message || 'Error occurred.');
+      toast.error(err.response?.data?.message || 'Error occurred.');
     } finally {
       setIsReadying(false);
     }
@@ -138,7 +135,7 @@ const PrivateLobby = () => {
       
       navigate(`/battle/${roomId}`);
     } catch (err) {
-      toast.error('Cannot Start Battle', err.response?.data?.message || 'Lobby needs exactly 2 users to start.');
+      toast.error(err.response?.data?.message || 'Lobby needs exactly 2 users to start.');
     } finally {
       setIsStarting(false);
     }
@@ -207,9 +204,7 @@ const PrivateLobby = () => {
             transition={{ delay: 0.1, type: "spring" }}
             whileHover={{ scale: 1.02 }}
             className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group ${
-              isDark 
-                ? 'bg-surface/30 border-border/40 hover:border-accent-primary/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(0,245,196,0.1)]' 
-                : 'bg-surface border-border hover:border-accent-primary/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)]'
+              'bg-surface/30 border-border/40 hover:border-accent-primary/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(0,245,196,0.1)]'
             }`}
           >
             {/* Ambient Glow */}
@@ -230,7 +225,7 @@ const PrivateLobby = () => {
 
             <div className="text-center relative z-10 mt-1">
               <h2 className="text-lg font-black text-text-primary tracking-tight">@{p1.user.name}</h2>
-              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {p1.user.rank || 1200}</p>
+              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {p1.user.rating || 1200}</p>
             </div>
           </motion.div>
 
@@ -254,9 +249,7 @@ const PrivateLobby = () => {
             className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group ${
               !p2 
                 ? 'bg-transparent border-dashed border-border/50 opacity-60' 
-                : (isDark 
-                  ? 'bg-surface/30 border-border/40 hover:border-pink-500/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(236,72,153,0.1)]' 
-                  : 'bg-surface border-border hover:border-pink-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.08)]')
+                : ('bg-surface/30 border-border/40 hover:border-pink-500/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(236,72,153,0.1)]')
             }`}
           >
             {p2 ? (
@@ -280,7 +273,7 @@ const PrivateLobby = () => {
 
                 <div className="text-center relative z-10 mt-1">
                   <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{p2.user.name}</h2>
-                  <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {p2.user.rank || 1200}</p>
+                  <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {p2.user.rating || 1200}</p>
                 </div>
               </>
             ) : (
@@ -337,9 +330,7 @@ const PrivateLobby = () => {
                     disabled={battle.players.length < 2 || isStarting || !isGuestReady}
                     className={`w-full h-[48px] rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center shadow-sm ${
                       battle.players.length >= 2 && !isStarting && isGuestReady
-                        ? (isDark 
-                          ? 'bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30'
-                          : 'bg-gradient-to-r from-[#4F6EF7] to-[#3a54d6] text-white shadow-[0_0_20px_rgba(79,110,247,0.2)] hover:shadow-[0_0_30px_rgba(79,110,247,0.4)] border border-[#4F6EF7]/30')
+                        ? ('bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30')
                         : 'bg-surface border-2 border-border text-text-secondary cursor-not-allowed opacity-90'
                     }`}
                   >
@@ -353,9 +344,7 @@ const PrivateLobby = () => {
                       onClick={handleReadyUp}
                       disabled={isReadying}
                       className={`w-full h-[48px] rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center shadow-sm ${
-                        isDark 
-                          ? 'bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30'
-                          : 'bg-gradient-to-r from-[#4F6EF7] to-[#3a54d6] text-white shadow-[0_0_20px_rgba(79,110,247,0.2)] hover:shadow-[0_0_30px_rgba(79,110,247,0.4)] border border-[#4F6EF7]/30'
+                        'bg-gradient-to-r from-[#00F5C4] to-[#00d0a7] text-[#0D0F14] shadow-[0_0_20px_rgba(0,245,196,0.2)] hover:shadow-[0_0_30px_rgba(0,245,196,0.4)] border border-[#00F5C4]/30'
                       }`}
                     >
                       {isReadying ? 'Readying' : 'Ready'}
@@ -376,7 +365,7 @@ const PrivateLobby = () => {
                  if (isHost && !isStarting) {
                    socket.emit('battle:leave_lobby', { battleId: battle._id });
                  }
-                 navigate('/battle/lobby');
+                 navigate('/');
                }}
                className="flex-1 max-w-[200px] h-[48px] rounded-[2rem] bg-surface hover:bg-red-500/10 border-2 border-border hover:border-red-500 text-text-secondary hover:text-red-500 font-bold uppercase tracking-[0.2em] text-sm transition-all duration-300 flex items-center justify-center shadow-sm"
              >
