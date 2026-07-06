@@ -20,7 +20,7 @@ export class BattleService {
       battle.players[playerIdx].language = language;
 
       // Check if player passed all test cases (AC) first to declare them the winner!
-      if (verdict === VERDICTS.AC) {
+      if (verdict === VERDICTS.AC || verdict === 'Accepted') {
         battle.players[playerIdx].status = 'submitted';
         battle.status = 'ended';
         battle.endTime = new Date();
@@ -31,10 +31,20 @@ export class BattleService {
 
         let eloDetails = null;
         
-        // Compute stats and Elo progression changes
-        const opponentIdx = playerIdx === 0 ? 1 : 0;
-        const opponentId = battle.players[opponentIdx].user.toString();
-        eloDetails = await processBattleResult(userId.toString(), opponentId, 1, battle.mode || 'ranked');
+        try {
+          // Compute stats and Elo progression changes
+          const opponentIdx = playerIdx === 0 ? 1 : 0;
+          const opponentId = battle.players[opponentIdx].user.toString();
+          eloDetails = await processBattleResult(userId.toString(), opponentId, 1, battle.mode || 'ranked');
+
+          if (eloDetails) {
+            battle.players[playerIdx].ratingChange = eloDetails.eloChange || 0;
+            battle.players[opponentIdx].ratingChange = eloDetails.opponent?.eloChange || 0;
+          }
+        } catch (eloErr) {
+          logger.error(`[BattleService] processBattleResult error: ${eloErr.message}`);
+        }
+        await battle.save();
 
         // Broadcast battle outcome via Redis Pub/Sub
         await publishBattleEvent(battle._id, 'battle:end', {
