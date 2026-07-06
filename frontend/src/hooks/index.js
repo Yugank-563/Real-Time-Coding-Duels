@@ -1,10 +1,8 @@
 // ui hooks
-export { useTheme } from './useTheme';
 export { useToast } from './useToast';
 export { useDocumentTitle } from './useDocumentTitle';
 
 // general hooks
-export { useProfile } from './useProfile';
 export { useInvitations } from './useInvitations';
 
 // workspace folder

@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PageLoaderAnimation = ({ isDark }) => {
-  const primaryColor = isDark ? '#00F5C4' : '#4F6EF7';
-  const secondaryColor = isDark ? '#334155' : '#E2E8F0';
+const PageLoaderAnimation = () => {
+  const primaryColor = '#00F5C4';
+  const secondaryColor = '#334155';
 
   return (
     <div className="relative flex items-center justify-center w-14 h-14">
@@ -22,7 +22,7 @@ const PageLoaderAnimation = ({ isDark }) => {
   );
 };
 
-const PageLoader = ({ isLoading, isDark, message = "Loading data..." }) => {
+const PageLoader = ({ isLoading, message = "Loading data..." }) => {
   return (
     <AnimatePresence>
       {isLoading && (
@@ -33,13 +33,13 @@ const PageLoader = ({ isLoading, isDark, message = "Loading data..." }) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          <PageLoaderAnimation isDark={isDark} />
+          <PageLoaderAnimation />
           
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className={`mt-6 text-sm font-bold tracking-wide uppercase ${isDark ? 'text-slate-400' : 'text-slate-700'}`}
+            className="mt-6 text-sm font-bold tracking-wide uppercase text-slate-400"
           >
             {message}
           </motion.div>

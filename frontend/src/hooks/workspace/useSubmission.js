@@ -32,7 +32,8 @@ export const useSubmission = (initialOutput = null) => {
     totalTestCases: 0,
     runProgress: { done: 0, total: 0 }
   });
-  const [isExecuting, setIsExecuting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isExecutingRef = useRef(false);
 
   const output = initialOutput || localOutput;
@@ -48,8 +49,10 @@ export const useSubmission = (initialOutput = null) => {
 
   const runCode = useCallback(async (slug, code, language, cases) => {
     if (isExecutingRef.current) return;
+    if (!slug) { toast.error('Cannot run code without a valid problem.'); return; }
+
     isExecutingRef.current = true;
-    setIsExecuting(true);
+    setIsRunning(true);
     
     // Switch state to running
     if (!initialOutput) {
@@ -90,27 +93,29 @@ export const useSubmission = (initialOutput = null) => {
       }
 
       if (data.verdict === 'AC') {
-        toast.success('Accepted ✓', 'Your custom case passed!');
+        toast.success('Your custom case passed!');
       } else {
         toast.warning('Run Failed: ' + data.verdict);
       }
       return resultObj;
     } catch (err) {
       console.error('Run failed:', err);
-      toast.error('Execution Failed', err.message || err.response?.data?.message || 'Compiler offline or sandbox timeout.');
+      toast.error(err.message || err.response?.data?.message || 'Sandbox timeout or internal error.');
       if (!initialOutput) {
         setLocalOutput(prev => ({ ...prev, state: 'idle' }));
       }
     } finally {
       isExecutingRef.current = false;
-      setIsExecuting(false);
+      setIsRunning(false);
     }
-  }, [isExecuting, initialOutput, toast]);
+  }, [isRunning, isSubmitting, initialOutput, toast]);
 
   const submitPractice = useCallback(async (slug, code, language, totalCases = 50) => {
     if (isExecutingRef.current) return;
+    if (!slug) { toast.error('Cannot submit without a valid problem.'); return; }
+
     isExecutingRef.current = true;
-    setIsExecuting(true);
+    setIsSubmitting(true);
 
     if (!initialOutput) {
       setLocalOutput(prev => ({
@@ -148,31 +153,30 @@ export const useSubmission = (initialOutput = null) => {
       }
 
       if (data.verdict === 'AC') {
-        toast.success('ACCEPTED! 🎉', 'All constraints verified successfully.');
-        toast.info('AI Code Review started ✨', 'Generating performance insights...');
+        toast.success('All constraints verified successfully.');
+        toast.info('Generating performance insights...');
       } else {
-        toast.warning('WRONG ANSWER ✗', `Passed: ${data.testCasesPassed} / ${data.totalTestCases}`);
+        toast.warning(`Passed: ${data.testCasesPassed} / ${data.totalTestCases}`);
       }
       return resultObj;
     } catch (err) {
       console.error('Submit failed:', err);
-      toast.error('Submission Failed', err.message || err.response?.data?.message || 'Compiler offline or sandbox timeout.');
+      toast.error(err.message || err.response?.data?.message || 'Compiler offline or sandbox timeout.');
       if (!initialOutput) {
         setLocalOutput(prev => ({ ...prev, state: 'idle' }));
       }
     } finally {
       isExecutingRef.current = false;
-      setIsExecuting(false);
+      setIsSubmitting(false);
     }
-  }, [isExecuting, initialOutput, toast]);
+  }, [isRunning, isSubmitting, initialOutput, toast]);
 
   return {
     output,
     setOutput,
-    isExecuting,
-    setIsExecuting,
+    isRunning,
+    isSubmitting,
     runCode,
     submitPractice,
   };
 };
-export default useSubmission;

@@ -15,7 +15,7 @@ export const useEditorSettings = () => {
       tabSize: 4,
       wordWrap: 'off', // 'on' | 'off'
       lineNumbers: 'on', // 'on' | 'off'
-      theme: 'vs-dark', // 'vs-dark' | 'light'
+      theme: 'vs-dark',
     };
   });
 

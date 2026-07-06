@@ -49,7 +49,7 @@ const OTPBoxInput = ({ value, onChange, error }) => {
           onPaste={handlePaste}
           aria-label={`OTP digit ${i + 1}`}
           id={`otp-digit-${i + 1}`}
-          className={`auth-input${error ? ' auth-input--error' : ''}`}
+          className={`input${error ? ' input--error' : ''}`}
           style={{
             width: '2.8rem', height: '3rem',
             textAlign: 'center', fontSize: '1.3rem',
