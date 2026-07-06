@@ -6,7 +6,7 @@ export const getLeaderboard = async (req, res, next) => {
       page    = 1,
       limit   = 20,
       search  = '',
-      sort    = 'rank',
+      sort    = 'rating',
       order   = 'desc',
       country = '',
     } = req.query;

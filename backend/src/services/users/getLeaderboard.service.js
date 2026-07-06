@@ -32,7 +32,7 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
   }
 
   // Sort config — hardcoded to 'rank' to prevent prototype pollution via user-supplied sort key
-  const sortField = 'rank';
+  const sortField = 'rating';
   const sortOrder = order === 'asc' ? 1 : -1;
 
   // Fetch paginated users & total count
@@ -67,9 +67,9 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
   const countries = await getDistinctCountries();
 
   // Compute ACTUAL global rank for every returned user
-  const uniqueRanks = [...new Set(users.map((u) => u.rank))];
+  const uniqueRanks = [...new Set(users.map((u) => u.rating))];
   const rankCountsMap = await getGlobalRankCounts(uniqueRanks);
-  const globalRankCounts = users.map((u) => rankCountsMap[u.rank]);
+  const globalRankCounts = users.map((u) => rankCountsMap[u.rating]);
 
   // Fetch current user stats if logged in
   let currentUserData = null;
@@ -82,7 +82,7 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
       const cuLosses = cuBattles - cuWins;
       const cuWinRate = cuBattles > 0 ? Math.round((cuWins / cuBattles) * 100) : 0;
       
-      const cuRankCount = await getUserGlobalRank(cu.rank);
+      const cuRankCount = await getUserGlobalRank(cu.rating);
       
       const cuDisplay = cu.username || cu.name || cu.email?.split('@')[0] || 'Anonymous';
       currentUserData = {
@@ -91,7 +91,7 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
         name:          cu.name,
         username:      cu.username,
         country:       cu.country || '',
-        rank:          cu.rank,
+        rating:        cu.rating,
         globalRank:    cuRankCount + 1,
         createdAt:     cu.createdAt,
         battlesPlayed: cuBattles,
@@ -114,7 +114,7 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
       name:          u.name,
       username:      u.username,
       country:       u.country || '',
-      rank:          u.rank,
+      rating:          u.rating,
       globalRank:    globalRankCounts[idx] + 1,
       createdAt:     u.createdAt,
       battlesPlayed: stats.battlesPlayed,

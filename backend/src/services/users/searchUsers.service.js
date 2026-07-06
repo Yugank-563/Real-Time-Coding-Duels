@@ -12,7 +12,6 @@ export const searchUsersService = async (queryTerm, excludeUserId) => {
     _id: u._id,
     username: u.username || u.email.split('@')[0],
     name: u.name || '',
-    elo: u.rank || 1200,
-    level: u.level || 1
+    elo: u.rating || 1200
   }));
 };
