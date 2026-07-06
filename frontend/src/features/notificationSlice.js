@@ -7,12 +7,20 @@ const notificationSlice = createSlice({
   },
   reducers: {
     addToast: (state, { payload }) => {
+      // Prevent duplicate identical toasts from stacking up
+      const isDuplicate = state.toasts.some(
+        (t) => 
+          t.message === (payload.message || '') && 
+          t.type === (payload.type || 'info')
+      );
+
+      if (isDuplicate) return;
+
       state.toasts.push({
         id: Date.now() + Math.random(),
-        type: payload.type || 'info', // 'success' | 'error' | 'warning' | 'info' | 'battle'
-        title: payload.title,
+        type: payload.type || 'info',
         message: payload.message || '',
-        duration: payload.duration || 4000,
+        duration: Math.min(payload.duration || 3000, 3000),
       });
     },
     removeToast: (state, { payload }) => {

@@ -33,7 +33,7 @@ const CustomDropdown = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={buttonClassName || "auth-input flex items-center justify-between cursor-pointer"}
+        className={buttonClassName || "input flex items-center justify-between cursor-pointer"}
       >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 shrink-0 text-text-muted ${isOpen ? 'rotate-180 text-accent-primary' : ''}`} />
@@ -46,7 +46,7 @@ const CustomDropdown = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={menuClassName || "auth-dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"}
+            className={menuClassName || "dropdown-menu absolute left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden overflow-y-auto max-h-60"}
           >
             {options.length === 0 ? (
               <div className="px-4 py-3 text-xs text-text-muted italic">No options available</div>
@@ -63,8 +63,8 @@ const CustomDropdown = ({
                     }}
                     className={
                       optionClassName 
-                        ? `${optionClassName} ${isSelected ? 'auth-dropdown-option--selected' : ''}`
-                        : `auth-dropdown-option w-full text-left px-4 py-2.5 text-xs block truncate ${isSelected ? 'auth-dropdown-option--selected' : ''}`
+                        ? `${optionClassName} ${isSelected ? 'dropdown-option--selected' : ''}`
+                        : `dropdown-option w-full text-left px-4 py-2.5 text-xs block truncate ${isSelected ? 'dropdown-option--selected' : ''}`
                     }
                   >
                     {option.label}

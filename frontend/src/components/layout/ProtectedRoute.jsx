@@ -9,6 +9,10 @@ const ProtectedRoute = () => {
   const token = localStorage.getItem('bc-token');
 
   if (!isAuthenticated && !token) {
+    // If a guest tries to visit the root (Battle Lobby), show them the marketing About page instead of forcing a login wall.
+    if (window.location.pathname === '/') {
+      return <Navigate to="/about" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 

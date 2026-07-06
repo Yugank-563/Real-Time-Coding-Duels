@@ -11,8 +11,7 @@ export const battleActionSchema = z.object({
 export const joinQueueSchema = z.object({
   body: z.object({
     battleType: z.string({ required_error: 'battleType is required' }).min(1),
-    topic: z.string().optional(),
-    teamId: z.string().optional(),
+    topic: z.string().optional()
   }).strict(),
 });
 

@@ -11,6 +11,6 @@ export const codeChangeSocketSchema = battleSocketSchema.extend({
 }).passthrough();
 
 export const matchmakingSchema = z.object({
-  battleType: z.enum(['sprint', '1v1', 'team', 'topic']),
+  battleType: z.enum(['timed-sprint', 'random-duel', 'topic-duel']),
   topic: z.string().max(50).optional(),
 }).passthrough();

@@ -1,16 +1,14 @@
 import { Link } from 'react-router-dom';
+import { Button } from '../index';
 
 const InvitationCard = ({ 
   invitation: inv, 
-  isDark, 
+
   onAccept, 
   onDecline 
 }) => {
 
-  const baseStyles = `flex flex-row items-center justify-between p-4 md:p-5 gap-3 rounded-2xl border transition-all ${
-    isDark ? 'bg-[#161A24] border-[rgba(255,255,255,0.05)] hover:border-[#00F5C4]/30' 
-           : 'bg-white border-slate-200 hover:border-[#4F6EF7]/30'
-  }`;
+  const baseStyles = "flex flex-row items-center justify-between p-4 md:p-5 gap-3 rounded-2xl border transition-all bg-[#161A24] border-[rgba(255,255,255,0.05)] hover:border-[#00F5C4]/30";
 
   return (
     <div className={baseStyles}>
@@ -21,12 +19,12 @@ const InvitationCard = ({
           >
             @{inv.sender?.username}
           </Link>
-          <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate mt-1 flex flex-col gap-0.5`}>
+          <div className="text-sm text-slate-400 truncate mt-1 flex flex-col gap-0.5">
             <span>
-              Invited you to a <b className={isDark ? 'text-slate-200' : 'text-slate-700'}>{inv.battleMode === 'sprint' ? 'Timed Sprint' : inv.battleMode === 'topic' ? 'Topic Battle' : 'Random Duel'}</b>
+              Invited you to a <b className="text-slate-200">{inv.battleMode === 'timed-sprint' ? 'Timed Sprint' : inv.battleMode === 'topic-duel' ? 'Topic Duel' : 'Random Duel'}</b>
             </span>
 
-            {inv.battleMode === 'topic' && inv.metadata?.topic && (
+            {inv.battleMode === 'topic-duel' && inv.metadata?.topic && (
               <span className="text-xs text-accent-primary font-bold tracking-wide">
                 Topic: {inv.metadata.topic}
               </span>
@@ -43,26 +41,20 @@ const InvitationCard = ({
       </div>
 
       <div className="flex flex-col sm:flex-row shrink-0 gap-2">
-        <button 
+        <Button 
+          variant="primary"
           onClick={(e) => { e.preventDefault(); onAccept(inv._id); }}
-          className={`font-bold transition-all shadow-lg px-4 py-2 rounded-lg text-xs flex-1 sm:flex-none ${
-            isDark 
-              ? 'bg-[#00F5C4] text-[#0D0F14] hover:shadow-[0_0_10px_rgba(0,245,196,0.3)]' 
-              : 'bg-[#4F6EF7] text-white hover:shadow-[0_0_10px_rgba(79,110,247,0.3)]'
-          }`}
+          className="flex-1 sm:flex-none !px-4 !py-2 !text-xs !shadow-lg"
         >
           ACCEPT
-        </button>
-        <button 
+        </Button>
+        <Button 
+          variant="outline"
           onClick={(e) => { e.preventDefault(); onDecline(inv._id); }}
-          className={`font-bold border transition-colors px-4 py-2 rounded-lg text-xs flex-1 sm:flex-none ${
-            isDark 
-              ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' 
-              : 'border-red-500/50 text-red-500 hover:bg-red-50'
-          }`}
+          className="flex-1 sm:flex-none !px-4 !py-2 !text-xs !border-red-500/50 !text-red-500 hover:!bg-red-50"
         >
           DECLINE
-        </button>
+        </Button>
       </div>
     </div>
   );

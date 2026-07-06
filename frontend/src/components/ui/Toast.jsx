@@ -34,21 +34,18 @@ const Toast = ({ toast }) => {
       animate={{ x: 0, opacity: 1, scale: 1 }}
       exit={{ x: 120, opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      className={`flex items-start gap-3 w-80 p-4 rounded-xl border bg-surface shadow-card-hover backdrop-blur-sm ${TOAST_COLORS[toast.type]}`}
+      className={`flex items-center gap-3 w-80 p-4 rounded-xl border bg-surface shadow-card-hover backdrop-blur-sm ${TOAST_COLORS[toast.type]}`}
       role="alert"
     >
-      <span className="text-lg shrink-0 mt-0.5">{TOAST_ICONS[toast.type]}</span>
-      <div className="flex-1 min-w-0">
-        {toast.title && (
-          <p className="text-sm font-semibold text-text-primary">{toast.title}</p>
-        )}
-        {toast.message && (
-          <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">{toast.message}</p>
-        )}
+      <span className="text-lg shrink-0">{TOAST_ICONS[toast.type]}</span>
+      <div className="flex-1 min-w-0 leading-snug">
+        <span className="text-sm font-semibold text-text-primary">
+          {toast.message}
+        </span>
       </div>
       <button
         onClick={() => dispatch(removeToast(toast.id))}
-        className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+        className="shrink-0 text-text-muted hover:text-text-primary transition-colors"
         aria-label="Dismiss notification"
       >
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -76,5 +73,3 @@ export const ToastContainer = () => {
     </div>
   );
 };
-
-export default Toast;

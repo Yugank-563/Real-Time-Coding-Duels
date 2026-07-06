@@ -1,30 +1,22 @@
 import axios from 'axios';
 import redis from '../config/redis.js';
 import { findProblemsByQuery, findOneAndUpdateProblem } from '../repositories/index.js';
-import toLeetCode from '../config/topicMap.js';
+import topicMap from '../config/topicMap.js';
 
 const LEETCODE_BASE = process.env.LEETCODE_API_URL || 'https://alfa-leetcode-api.onrender.com';
 const TIMEOUT_MS = parseInt(process.env.PROBLEM_FETCH_TIMEOUT, 10) || 5000;
 
-/**
- * Case-insensitive lookup helpers for topic mapping
- */
-function getLeetCodeTag(topic) {
+// Lookup helper for topic mapping
+function getTopicTag(topic) {
   if (!topic) return 'array';
-  if (toLeetCode[topic]) return toLeetCode[topic];
+  if (topicMap[topic]) return topicMap[topic];
   const lowerTopic = topic.toLowerCase();
-  const key = Object.keys(toLeetCode).find(k => k.toLowerCase() === lowerTopic);
-  return key ? toLeetCode[key] : lowerTopic;
+  const key = Object.keys(topicMap).find(k => k.toLowerCase() === lowerTopic);
+  return key ? topicMap[key] : lowerTopic;
 }
 
 
-/**
- * Parsing helper to build simple sample testcases from LeetCode examples
- */
-/**
- * Counts how many input parameters a LeetCode C++ method signature has.
- * Used to correctly group multi-line stdin inputs per testcase.
- */
+// Counts C++ input parameters to group multi-line stdin
 function countParamsFromBoilerplate(cppCode) {
   if (!cppCode) return 1;
   // Match the method signature inside class Solution
@@ -44,10 +36,7 @@ function countParamsFromBoilerplate(cppCode) {
   return parts.length || 1;
 }
 
-/**
- * Parses the expected output values from the HTML description of a problem.
- * LeetCode always includes "<strong>Output:</strong> <value>" in example blocks.
- */
+// Parses expected output values from HTML description
 function parseExpectedOutputs(contentHtml) {
   if (!contentHtml) return [];
   const outputs = [];
@@ -67,10 +56,7 @@ function parseExpectedOutputs(contentHtml) {
   return outputs;
 }
 
-/**
- * Builds testcases by grouping N consecutive lines per testcase (N = param count).
- * Expected outputs are parsed from the HTML description and assigned 1-to-1 by index.
- */
+// Builds testcases by grouping N lines per testcase
 function buildTestCases(examplesStr, paramCount = 1, expectedOutputs = []) {
   if (!examplesStr) return [];
   const lines = examplesStr.trim().split('\n').map(l => l.trim()).filter(Boolean);
@@ -93,11 +79,9 @@ function buildTestCases(examplesStr, paramCount = 1, expectedOutputs = []) {
 
 
 
-/**
- * LAST RESORT: fetchFromMongoDB
- */
+// Fallback to fetch from MongoDB
 async function fetchFromMongoDB(topic, difficulty) {
-  const lcTag = getLeetCodeTag(topic);
+  const lcTag = getTopicTag(topic);
   const dbDiff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
 
   const problems = await findProblemsByQuery({
@@ -111,9 +95,7 @@ async function fetchFromMongoDB(topic, difficulty) {
   return picked.toObject();
 }
 
-/**
- * EXPORTED ORCHESTRATOR PIPELINE
- */
+// Main orchestrator pipeline
 export async function getRandomProblem(topic, difficulty) {
   const normDifficulty = difficulty?.toLowerCase() || 'medium';
   const cacheKey = `problem:random:${topic}:${normDifficulty}`;

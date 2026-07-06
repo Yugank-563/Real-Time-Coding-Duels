@@ -12,15 +12,15 @@ const ResendTimer = ({ onResend }) => {
   }, [seconds]);
 
   return (
-    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--auth-muted)', margin: 0 }}>
+    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
       {seconds > 0 ? (
-        <>Resend code in <strong style={{ color: 'var(--auth-heading)' }}>{seconds}s</strong></>
+        <>Resend code in <strong style={{ color: 'var(--text-primary)' }}>{seconds}s</strong></>
       ) : (
         <>
           Didn't receive it?{' '}
           <button
             type="button"
-            className="auth-link"
+            className="link"
             style={{ fontSize: '0.75rem' }}
             onClick={() => { onResend(); setSeconds(60); }}
           >

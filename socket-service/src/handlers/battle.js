@@ -1,7 +1,7 @@
 import Battle from '../../../backend/src/models/Battle.js';
 import Submission from '../../../backend/src/models/Submission.js';
 import { processBattleResult } from '../../../backend/src/services/ratingService.js';
-import { battleSocketSchema, codeChangeSocketSchema } from '../schemas/socket.schema.js';
+import { battleSocketSchema } from '../schemas/socket.schema.js';
 import { validateSocketPayload } from '../utils/validation.js';
 
 // Helper to verify participant and fetch battle
@@ -139,10 +139,6 @@ export const registerBattleHandlers = (io, socket) => {
       // Player joined
       socket.to(roomName).emit('battle:player_joined', { userId: socket.userId });
 
-      // If it is a team battle, join team room (Team battles not yet implemented)
-      if (battle.battleType === 'team') {
-        console.log(`[Battle] Team battle mode not yet implemented — skipping team room join.`);
-      }
     } catch (err) {
       console.error('battle:join error:', err.message);
     }
@@ -174,28 +170,6 @@ export const registerBattleHandlers = (io, socket) => {
     }
   });
 
-  // 2. Broadcast active typing status to opponent
-  socket.on('battle:code_change', async (raw_data) => {
-    try {
-      const data = validateSocketPayload(codeChangeSocketSchema, raw_data, socket, 'battle:code_change');
-      if (!data) return;
-
-      const { battleId, language } = data;
-      const verify = await verifyParticipant(battleId, socket.userId, 'battle:code_change');
-      if (!verify) return;
-
-      const roomName = `battle:${battleId}`;
-      
-      // Broadcast opponent state update (e.g. status: "Coding...") to room
-      socket.to(roomName).emit('battle:opponent_coding', {
-        userId: socket.userId,
-        language,
-      });
-    } catch (err) {
-      console.error('battle:code_change error:', err.message);
-    }
-  });
-
   // 3. Trigger manual countdown start
   socket.on('battle:start_countdown', async (raw_data) => {
     try {
@@ -211,7 +185,7 @@ export const registerBattleHandlers = (io, socket) => {
       io.to(roomName).emit('battle:start');
       console.log(`Broadcasted countdown start for battle room ${battleId}`);
 
-      if (battle.battleType === 'sprint') {
+      if (battle.battleType === 'timed-sprint') {
         console.log(`Setting a 300s server-side timeout for Timed Sprint battle: ${battleId}`);
         setTimeout(async () => {
           try {

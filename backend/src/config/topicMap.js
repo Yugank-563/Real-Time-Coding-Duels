@@ -1,4 +1,4 @@
-export const toLeetCode = {
+const topicMap = {
   'Array': 'array',
   'String': 'string',
   'Hash Table': 'hash-table',
@@ -21,6 +21,4 @@ export const toLeetCode = {
   'Memoization': 'memoization'
 };
 
-export const topicMap = toLeetCode; // Backward compatibility fallback
-
-export default toLeetCode;
+export default topicMap;

@@ -1,6 +1,6 @@
 import { CheckCircle2, XCircle, Clock, Database, AlertCircle, HelpCircle } from 'lucide-react';
 
-export const VerdictBadge = ({ verdict }) => {
+const VerdictBadge = ({ verdict }) => {
   const getBadgeData = (verd) => {
     switch (verd) {
       case 'AC': return { icon: <CheckCircle2 className="w-3.5 h-3.5" />, text: 'Accepted', color: 'text-[#2DB55D] border-[#2DB55D]/20 bg-[#2DB55D]/10' };

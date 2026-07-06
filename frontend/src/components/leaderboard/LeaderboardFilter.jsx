@@ -1,11 +1,7 @@
 import { Globe } from 'lucide-react';
-import { CustomDropdown, SearchInput } from '../index';
-import '../../styles/auth.css';
+import CustomDropdown from '../ui/CustomDropdown';
+import SearchInput from '../ui/SearchInput';
 
-/**
- * LeaderboardFilter — mirrors ProblemsFilter exactly.
- * Search (username / display name) + Country dropdown.
- */
 const LeaderboardFilter = ({ search, setSearch, country, setCountry, countries = [] }) => {
   const countryOptions = [
     { label: 'All Countries', value: 'ALL' },
@@ -33,7 +29,7 @@ const LeaderboardFilter = ({ search, setSearch, country, setCountry, countries =
 
       {/* ── Country Dropdown (same style as ProblemsFilter difficulty) ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '180px' }}>
-        <Globe size={16} color="var(--auth-muted)" />
+        <Globe size={16} color="var(--text-muted)" />
         <CustomDropdown
           value={country || 'ALL'}
           onChange={setCountry}

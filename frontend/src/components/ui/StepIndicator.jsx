@@ -1,10 +1,6 @@
 import React from 'react';
 
-/**
- * StepIndicator — 3-step progress bar for the ForgotPassword flow.
- * Steps: Email (0) → Verify (1) → Reset (2)
- * current: index of the active step (0-based)
- */
+// Steps: Email (0) → Verify (1) → Reset (2)
 const STEP_LABELS = ['Email', 'Verify', 'Reset'];
 
 const StepIndicator = ({ current }) => (
@@ -22,9 +18,9 @@ const StepIndicator = ({ current }) => (
               width: '1.85rem', height: '1.85rem', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 700, transition: 'all 0.3s',
-              background: isDone ? '#22C55E' : isActive ? 'var(--auth-btn)' : 'var(--auth-input-bg)',
-              color:      isDone ? '#fff'    : isActive ? 'var(--auth-btn-text)' : 'var(--auth-muted)',
-              border: `2px solid ${isDone ? '#22C55E' : isActive ? 'var(--auth-btn)' : 'var(--auth-input-border)'}`,
+              background: isDone ? '#22C55E' : isActive ? 'var(--btn-primary-bg)' : 'var(--bg-elevated)',
+              color:      isDone ? '#fff'    : isActive ? 'var(--btn-primary-text)' : 'var(--text-muted)',
+              border: `2px solid ${isDone ? '#22C55E' : isActive ? 'var(--btn-primary-bg)' : 'var(--border)'}`,
             }}>
               {isDone ? (
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
@@ -35,7 +31,7 @@ const StepIndicator = ({ current }) => (
             </div>
             <span style={{
               fontSize: '0.58rem',
-              color:      isActive ? 'var(--auth-heading)' : 'var(--auth-muted)',
+              color:      isActive ? 'var(--text-primary)' : 'var(--text-muted)',
               fontWeight: isActive ? 600 : 400,
             }}>
               {label}
@@ -46,7 +42,7 @@ const StepIndicator = ({ current }) => (
             <div style={{
               flex: 1, height: '2px',
               margin: '0 0.3rem', marginBottom: '1rem',
-              background: isDone ? '#22C55E' : 'var(--auth-input-border)',
+              background: isDone ? '#22C55E' : 'var(--border)',
               transition: 'background 0.3s', minWidth: '1.5rem',
             }}/>
           )}

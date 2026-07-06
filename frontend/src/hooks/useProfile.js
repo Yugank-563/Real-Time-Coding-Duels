@@ -32,7 +32,7 @@ export const useProfile = (username) => {
     fetchProfile(username)
       .then(data => setProfile(data))
       .catch(err => {
-        toast.error('Profile Error', err.response?.data?.message || 'Could not load profile.');
+        toast.error(err.response?.data?.message || 'Could not load profile.');
       })
       .finally(() => setLoading(false));
   }, [username]);
@@ -44,15 +44,15 @@ export const useProfile = (username) => {
         dispatch(setUser({ ...currentUser, ...result.user }));
       }
       if (result.user?.username && result.user.username !== username) {
-        toast.success('Success', 'Profile updated.');
+        toast.success('Profile updated.');
         navigate(`/profile/${result.user.username}`);
         return { success: true, newUsername: result.user.username };
       }
       setProfile(prev => ({ ...prev, user: { ...prev.user, ...result.user } }));
-      toast.success('Success', 'Profile updated.');
+      toast.success('Profile updated.');
       return { success: true };
     } catch (err) {
-      toast.error('Update Error', err.response?.data?.message || 'Could not update profile.');
+      toast.error(err.response?.data?.message || 'Could not update profile.');
       return { success: false, error: err };
     }
   }, [currentUser, dispatch, navigate, toast, username]);

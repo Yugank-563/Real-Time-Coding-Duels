@@ -3,7 +3,7 @@ import { findBattleByIdWithPopulated } from '../../repositories/index.js';
 export const getBattleDetailsService = async (battleId, userId) => {
   const battle = await findBattleByIdWithPopulated(battleId, [
     'problem',
-    { path: 'players.user', select: 'name email rank xp level streaks' }
+    { path: 'players.user', select: 'name email rating' }
   ]);
 
   if (!battle) {
@@ -25,8 +25,6 @@ export const getBattleDetailsService = async (battleId, userId) => {
 
   return {
     ...battle.toObject(),
-    isParticipant: isPlayer, // Let frontend know if they need to formally join
-    teammate: null,
-    opponents: []
+    isParticipant: isPlayer // Let frontend know if they need to formally join
   };
 };

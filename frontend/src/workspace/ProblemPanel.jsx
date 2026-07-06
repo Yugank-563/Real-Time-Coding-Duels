@@ -59,17 +59,6 @@ const ProblemPanel = ({ problem }) => {
 
       {/* ── STICKY FOOTER — always pinned at bottom ── */}
       <div className="shrink-0 border-t border-border h-12 px-5 flex items-center justify-end select-none bg-elevated">
-        {/* Right: External link */}
-        {problem.titleSlug && (
-          <a
-            href={`https://leetcode.com/problems/${problem.titleSlug}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[var(--btn-primary-bg)] hover:underline font-semibold flex items-center gap-1.5 cursor-pointer"
-          >
-            View on LeetCode <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        )}
       </div>
     </div>
   );

@@ -1,17 +1,26 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Swords, Trophy, Terminal } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/index';
-import { useTheme } from '../hooks/useTheme';
 import Footer from '../components/layout/Footer';
 import { useSelector } from 'react-redux';
 import { selectIsAuthenticated } from '../features/index';
 
+const RANDOM_BUTTON_MESSAGES = [
+  "Let's Code",
+  "Join the Battle",
+  "Start Your Battle",
+  "Battle-Test Your Brain",
+  "Prove You're Not a Robot",
+  "Stop Reading, Start Coding", 
+  "Sharpen Your Problem Solving",
+];
+
 const AboutPage = () => {
   useDocumentTitle('About');
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const [buttonText] = useState(() => RANDOM_BUTTON_MESSAGES[Math.floor(Math.random() * RANDOM_BUTTON_MESSAGES.length)]);
 
   // Animation variants for smooth premium stagger loads
   const containerVariants = {
@@ -47,7 +56,7 @@ const AboutPage = () => {
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
             Code in Motion.{' '}
             <span className={`bg-clip-text text-transparent bg-gradient-to-r block mt-2 ${
-              isDark ? 'from-[#6C63FF] via-[#00F5C4] to-cyan-300' : 'from-[#4F6EF7] to-[#2563EB]'
+              'from-[#6C63FF] via-[#00F5C4] to-cyan-300'
             }`}>
               Unleash Your Algorithm Speed in Real-Time
             </span>
@@ -61,26 +70,9 @@ const AboutPage = () => {
                 <motion.button
                   whileHover={{ scale: 1.03, y: -1 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${
-                    isDark 
-                      ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/20 hover:brightness-105' 
-                      : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/20 hover:brightness-105'
-                  }`}
+                  className="w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all duration-300 group border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]"
                 >
-                  Join Now for Free
-                </motion.button>
-              </Link>
-              <Link to="/login">
-                <motion.button
-                  whileHover={{ scale: 1.03, y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all duration-300 group ${
-                    isDark 
-                      ? 'border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]' 
-                      : 'border-slate-200 bg-white text-[#4F6EF7] hover:border-[#4F6EF7]/50 hover:bg-[#4F6EF7]/5 hover:shadow-sm'
-                  }`}
-                >
-                  <span>Enter Battleground</span>
+                  <span>{buttonText}</span>
                 </motion.button>
               </Link>
             </div>
@@ -99,7 +91,7 @@ const AboutPage = () => {
             <h2 className="text-3xl font-extrabold tracking-tight">
               A New Dimension of{' '}
               <span className={`bg-clip-text text-transparent bg-gradient-to-r ${
-                isDark ? 'from-[#00F5C4] to-cyan-300' : 'from-[#4F6EF7] to-indigo-500'
+                'from-[#00F5C4] to-cyan-300'
               }`}>
                 Real-Time DSA Battles
               </span>
@@ -112,10 +104,10 @@ const AboutPage = () => {
           {/* Right Block: Premium Interactive Code Sandbox Mockup (Wow factor!) */}
           <div className="lg:col-span-5 relative">
             <div className={`p-6 rounded-2xl border-2 bg-surface/50 backdrop-blur-xl shadow-2xl relative overflow-hidden ${
-              isDark ? 'border-slate-700/80 shadow-[#00F5C4]/5' : 'border-slate-300 shadow-slate-200'
+              'border-slate-700/80 shadow-[#00F5C4]/5'
             }`}>
               <div className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                isDark ? 'border-slate-700/80' : 'border-slate-300'
+                'border-slate-700/80'
               }`}>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-red-500" />
@@ -124,31 +116,31 @@ const AboutPage = () => {
                 </div>
                 <span className="text-xs font-mono text-text-secondary">main.cpp</span>
               </div>
-              <pre className={`font-mono text-xs overflow-x-auto space-y-1.5 ${isDark ? 'text-slate-300' : 'text-[#1F2328]'}`}>
+              <pre className={`font-mono text-xs overflow-x-auto space-y-1.5 ${'text-slate-300'}`}>
                 <div>
-                  <span className={isDark ? 'text-purple-400' : 'text-[#A90D91]'}>#include</span>{' '}
-                  <span className={isDark ? 'text-green-400' : 'text-[#2E7D32]'}>&lt;iostream&gt;</span>
+                  <span className={'text-purple-400'}>#include</span>{' '}
+                  <span className={'text-green-400'}>&lt;iostream&gt;</span>
                 </div>
                 <div>
-                  <span className={isDark ? 'text-purple-400' : 'text-[#A90D91]'}>using namespace</span> std;
+                  <span className={'text-purple-400'}>using namespace</span> std;
                 </div>
                 <br />
                 <div>
-                  <span className={isDark ? 'text-blue-400' : 'text-[#A90D91]'}>int</span>{' '}
-                  <span className={isDark ? 'text-yellow-400' : 'text-[#1A76D2]'}>main</span>() &#123;
+                  <span className={'text-blue-400'}>int</span>{' '}
+                  <span className={'text-yellow-400'}>main</span>() &#123;
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span className={isDark ? 'text-blue-400' : 'text-[#A90D91]'}>auto</span> platform ={' '}
-                  <span className={isDark ? 'text-green-300' : 'text-[#C41A16]'}>"BattleCode"</span>;
+                  &nbsp;&nbsp;<span className={'text-blue-400'}>auto</span> platform ={' '}
+                  <span className={'text-green-300'}>"BattleCode"</span>;
                 </div>
                 <div>
                   &nbsp;&nbsp;cout &lt;&lt;{' '}
-                  <span className={isDark ? 'text-green-300' : 'text-[#C41A16]'}>"Ready for code battle!"</span>{' '}
+                  <span className={'text-green-300'}>"Ready for code battle!"</span>{' '}
                   &lt;&lt; endl;
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span className={isDark ? 'text-purple-400' : 'text-[#A90D91]'}>return</span>{' '}
-                  <span className={isDark ? 'text-cyan-400' : 'text-[#1C00CF]'}>0</span>;
+                  &nbsp;&nbsp;<span className={'text-purple-400'}>return</span>{' '}
+                  <span className={'text-cyan-400'}>0</span>;
                 </div>
                 <div>&#125;</div>
               </pre>
@@ -169,7 +161,7 @@ const AboutPage = () => {
             className="p-8 rounded-2xl bg-surface border border-border/80 relative group hover:border-border transition-all duration-300"
           >
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-all ${
-              isDark ? 'bg-purple-600/10 text-purple-400 group-hover:bg-purple-600/20' : 'bg-[#4F6EF7]/10 text-[#4F6EF7]'
+              'bg-purple-600/10 text-purple-400 group-hover:bg-purple-600/20'
             }`}>
               <Swords className="w-6 h-6" />
             </div>
@@ -185,7 +177,7 @@ const AboutPage = () => {
             className="p-8 rounded-2xl bg-surface border border-border/80 relative group hover:border-border transition-all duration-300"
           >
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-all ${
-              isDark ? 'bg-cyan-600/10 text-[#00F5C4] group-hover:bg-[#00F5C4]/20' : 'bg-indigo-600/10 text-indigo-600'
+              'bg-cyan-600/10 text-[#00F5C4] group-hover:bg-[#00F5C4]/20'
             }`}>
               <Terminal className="w-6 h-6" />
             </div>
@@ -201,7 +193,7 @@ const AboutPage = () => {
             className="p-8 rounded-2xl bg-surface border border-border/80 relative group hover:border-border transition-all duration-300"
           >
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-all ${
-              isDark ? 'bg-amber-600/10 text-amber-400 group-hover:bg-amber-600/20' : 'bg-amber-600/10 text-amber-600'
+              'bg-amber-600/10 text-amber-400 group-hover:bg-amber-600/20'
             }`}>
               <Trophy className="w-6 h-6" />
             </div>

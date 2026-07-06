@@ -56,20 +56,8 @@ const ResultTab = ({
           <div className="h-full flex flex-col items-center justify-center gap-3 py-12 px-6">
             <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             <p className="text-sm text-cyan-400 font-semibold tracking-wide">
-              {runProgress?.isSubmit
-                ? 'Evaluating hidden test cases...'
-                : (runProgress && runProgress.total > 0
-                  ? `Running test cases… ${runProgress.done} / ${runProgress.total}`
-                  : 'Running test cases…')}
+              {runProgress?.isSubmit ? 'Evaluating hidden test cases...' : 'Running code...'}
             </p>
-            {runProgress && runProgress.total > 0 && (
-              <div className="w-full max-w-xs h-2 bg-gray-800 rounded-full overflow-hidden border border-border/10">
-                <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300 rounded-full"
-                  style={{ width: `${(runProgress.done / runProgress.total) * 100}%` }}
-                />
-              </div>
-            )}
           </div>
         )}
 

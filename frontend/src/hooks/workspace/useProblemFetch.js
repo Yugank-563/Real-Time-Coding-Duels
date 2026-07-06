@@ -165,4 +165,3 @@ export const useProblemFetch = (slug) => {
     initialTestcases,
   };
 };
-export default useProblemFetch;

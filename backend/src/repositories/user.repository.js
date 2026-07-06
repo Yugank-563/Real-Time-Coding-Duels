@@ -4,24 +4,25 @@ import { escapeRegex } from '../utils/regexUtils.js';
 const PUBLIC_USER_SELECT = '-passwordHash -refreshToken';
 
 // Create
-export const create = (data) => User.create(data);
+const create = (data) => User.create(data);
 
 
 // Find
-export const findById = (id) => User.findById(id);
+const findById = (id) => User.findById(id);
 
-export const findByEmail = (email) => User.findOne({ email });
+const findByEmail = (email) => User.findOne({ email });
 
-export const findByUsername = (username) => User.findOne({ username });
+const findByUsername = (username) => User.findOne({ username });
 
-export const findByRefreshToken = (token) => User.findOne({ refreshToken: token });
+const findByRefreshToken = (token) => User.findOne({ refreshToken: token });
 
-export const findByUsernameSafe = (username) => 
+const findByUsernameSafe = (username) => 
   User.findOne({ username }).select(PUBLIC_USER_SELECT).lean();
 
+const count = (query) => User.countDocuments(query);
 
 // Search
-export const searchByNameOrEmail = (q, excludeId) => {
+const searchByNameOrEmail = (q, excludeId) => {
   const safeQ = escapeRegex(q?.trim() || '');
   
   if (!safeQ) {
@@ -36,13 +37,13 @@ export const searchByNameOrEmail = (q, excludeId) => {
     ],
     _id: { $ne: excludeId }
   })
-  .select('username name email rank')
+  .select('username name email rating')
   .limit(5)
   .lean();
 };
 
 // Update
-export const updateById = (id, update) => 
+const updateById = (id, update) => 
   User.findByIdAndUpdate(id, update, { new: true });
 
 export const updateRefreshToken = (id, token) => 

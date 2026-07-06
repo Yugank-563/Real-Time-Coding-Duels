@@ -2,21 +2,19 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Sun, Moon, Bell, LogOut, Menu, X,
-  Swords, Trophy, BookOpen, Home,
-  User, Award
-} from 'lucide-react';
-import { useTheme, useInvitations } from '../../hooks/index';
+import { Bell, LogOut, Menu, X, Trophy, BookOpen, Home, User, FileText } from 'lucide-react';
+
+import Button from '../ui/Button';
+import Logo from '../ui/Logo';
+
+import { useInvitations } from '../../hooks/index';
 import { selectUser, selectIsAuthenticated, logout } from '../../features/index';
 
-const InvitationBadge = ({ count, isDark }) => {
+
+const InvitationBadge = ({ count }) => {
   if (!count || count === 0) return null;
-  
   return (
-    <span className={`absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold flex items-center justify-center rounded-full animate-pulse-slow shadow-sm ${
-      isDark ? 'bg-[#00F5C4] text-[#0D0F14]' : 'bg-[#4F6EF7] text-white'
-    }`}>
+    <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold flex items-center justify-center rounded-full animate-pulse-slow shadow-sm bg-[#4F6EF7] text-white">
       {count > 9 ? '9+' : count}
     </span>
   );
@@ -24,56 +22,13 @@ const InvitationBadge = ({ count, isDark }) => {
 
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
-  { label: 'Home', path: '/dashboard', icon: Home },
-  { label: 'Battles', path: '/battle/lobby', icon: Swords },
-
+  { label: 'Home', path: '/', icon: Home },
+  { label: 'About', path: '/about', icon: FileText },
   { label: 'Problems', path: '/problems', icon: BookOpen },
   { label: 'Leaderboards', path: '/leaderboard', icon: Trophy },
 ];
 
-// ── CUSTOM HEXAGON LOGO ICON (Using Auth Colors: #6C63FF Purple & #00F5C4 Electric Cyan/Mint) ──
-const LogoIcon = ({ isDark }) => (
-  <motion.div
-    className="relative flex items-center justify-center w-10 h-10"
-    whileHover={{ scale: 1.05, rotate: [0, -4, 4, 0] }}
-    transition={{ duration: 0.4 }}
-  >
-    {/* SVG Hexagon Frame */}
-    <svg
-      viewBox="0 0 100 100"
-      className="absolute inset-0 w-full h-full"
-      style={{
-        filter: isDark
-          ? 'drop-shadow(0 0 8px rgba(0, 245, 196, 0.45)) drop-shadow(0 0 2px rgba(108, 99, 255, 0.25))'
-          : 'drop-shadow(0 2px 5px rgba(79, 110, 247, 0.15))'
-      }}
-    >
-      <polygon
-        points="50,5 93,30 93,80 50,95 7,80 7,30"
-        fill="url(#logo-grad)"
-        stroke={isDark ? '#00F5C4' : '#4F6EF7'}
-        strokeWidth="5"
-        className="transition-all duration-300"
-      />
-      <defs>
-        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={isDark ? 'rgba(108, 99, 255, 0.25)' : 'rgba(79, 110, 247, 0.08)'} />
-          <stop offset="100%" stopColor={isDark ? 'rgba(0, 245, 196, 0.25)' : 'rgba(79, 110, 247, 0.08)'} />
-        </linearGradient>
-      </defs>
-    </svg>
-
-    {/* Crossed Swords Inside */}
-    <Swords
-      className="relative z-10 w-5 h-5 transition-transform duration-300 hover:rotate-12"
-      color={isDark ? '#00F5C4' : '#4F6EF7'}
-      strokeWidth={2.2}
-    />
-  </motion.div>
-);
-
 const Navbar = () => {
-  const { theme, toggleTheme, isDark } = useTheme();
   const user = useSelector(selectUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const dispatch = useDispatch();
@@ -101,7 +56,8 @@ const Navbar = () => {
 
   // Invitations
   const { invitations } = useInvitations();
-  const unreadCount = invitations?.length || 0;  // Close mobile drawer on route change
+  const unreadCount = invitations?.length || 0;
+  // Close mobile drawer on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -122,10 +78,8 @@ const Navbar = () => {
 
           {/* ── LEFT: LOGO SECTION (Colors aligned with Auth) ── */}
           <Link to="/" className="flex items-center gap-3 group">
-            <LogoIcon isDark={isDark} />
-            <span className={`text-xl font-extrabold tracking-wider bg-clip-text text-transparent transition-all duration-300 ${isDark
-                ? 'bg-gradient-to-r from-white via-[#FAFAFD] to-[#00F5C4] hover:drop-shadow-[0_0_8px_rgba(0,245,196,0.4)]'
-                : 'bg-gradient-to-r from-[#262626] to-[#4F6EF7]'
+                  <Logo />
+            <span className={`text-xl font-extrabold tracking-wider bg-clip-text text-transparent transition-all duration-300 ${'bg-gradient-to-r from-white via-[#FAFAFD] to-[#00F5C4] hover:drop-shadow-[0_0_8px_rgba(0,245,196,0.4)]'
               }`}>
               BATTLECODE
             </span>
@@ -143,14 +97,15 @@ const Navbar = () => {
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={(e) => {
                     // Leaderboard is a public route, allow guests
-                    if (!isAuthenticated && link.path !== '/leaderboard') {
+                    const isPublicPath = ['/leaderboard', '/about', '/'].includes(link.path);
+                    if (!isAuthenticated && !isPublicPath) {
                       e.preventDefault();
                       navigate('/login');
                     }
                   }}
                   className={`relative px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors duration-200 flex items-center gap-1.5 ${isActive
-                      ? isDark ? 'text-[#00F5C4]' : 'text-[#4F6EF7]'
-                      : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                      ? 'text-[#00F5C4]'
+                      : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   {/* Animated Background Hover pill (Vercel-style) */}
@@ -159,7 +114,7 @@ const Navbar = () => {
                       layoutId="hover-pill"
                       className="absolute inset-0 rounded-lg -z-10"
                       style={{
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.035)'
+                        backgroundColor: 'rgba(255,255,255,0.04)'
                       }}
                       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                     />
@@ -173,8 +128,8 @@ const Navbar = () => {
                     <div
                       className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
                       style={{
-                        backgroundColor: isDark ? '#00F5C4' : '#4F6EF7',
-                        boxShadow: isDark ? '0 0 8px #00F5C4' : 'none'
+                        backgroundColor: '#00F5C4',
+                        boxShadow: '0 0 8px #00F5C4'
                       }}
                     />
                   )}
@@ -186,43 +141,18 @@ const Navbar = () => {
           {/* ── RIGHT SIDE FEATURES ── */}
           <div className="flex items-center gap-4">
 
-            {/* Theme Toggle */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg border transition-colors duration-200 ${isDark
-                  ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-amber-400'
-                  : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100 text-slate-700'
-                }`}
-              title="Toggle Theme"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={isDark ? 'dark' : 'light'}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </motion.div>
-              </AnimatePresence>
-            </motion.button>
-
             {/* Authenticated Controls */}
             {isAuthenticated ? (
               <>
                 {/* Notification Bell (Links to Invitations Page) */}
-                <Link to="/invitations" className="hidden lg:block relative">
+                <Link to="/invitations" className="relative">
                   <motion.div
                     whileTap={{ scale: 0.95 }}
-                    className={`relative p-2 rounded-lg border transition-colors duration-200 ${isDark
-                        ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-slate-300'
-                        : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100 text-slate-700'
+                    className={`relative p-2 rounded-lg border transition-colors duration-200 ${'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-slate-300'
                       }`}
                   >
                     <Bell className="w-4 h-4" />
-                    <InvitationBadge count={unreadCount} isDark={isDark} />
+                    <InvitationBadge count={unreadCount} />
                   </motion.div>
                 </Link>
 
@@ -232,15 +162,13 @@ const Navbar = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className={`flex items-center justify-center p-1 rounded-full border transition-all ${isDark
-                        ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/40 hover:bg-slate-900/80'
-                        : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100'
+                    className={`flex items-center justify-center p-1 rounded-full border transition-all ${'border-[rgba(255,255,255,0.08)] bg-slate-900/40 hover:bg-slate-900/80'
                       }`}
                   >
-                    {/* Glowing Avatar */}
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
-                         style={{ backgroundColor: isDark ? '#00F5C4' : '#4F6EF7', color: isDark ? '#0D0F14' : '#FFFFFF' }}>
-                      {user?.username?.slice(0, 2).toUpperCase() || 'YK'}
+                    {/* User Icon Avatar */}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+                         style={{ backgroundColor: '#1E2535', color: '#00F5C4', border: '1.5px solid rgba(0,245,196,0.3)' }}>
+                      <User className="w-4 h-4" />
                     </div>
                   </motion.button>
 
@@ -251,71 +179,54 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className={`absolute right-0 mt-2 w-56 rounded-xl border p-2 shadow-xl z-50 ${isDark
-                            ? 'bg-[#161A24] border-[rgba(255,255,255,0.08)] text-slate-200 shadow-black'
-                            : 'bg-white border-[rgba(15,23,42,0.08)] text-slate-800 shadow-slate-200'
+                        className={`absolute right-0 mt-2 w-56 z-50 rounded-2xl border backdrop-blur-2xl p-2 shadow-2xl ${'border-[#00F5C4]/20 bg-[#091423]/80 shadow-[#00F5C4]/15'
                           }`}
                       >
-                        {/* Dropdown Header */}
-                        <div className="p-3 border-b mb-1.5" style={{ borderColor: 'var(--border-subtle)' }}>
-                          <span className="block text-xs font-bold text-text-primary">{user?.username || 'Competitive Gamer'}</span>
-                          <span className="block text-[10px] text-slate-400 mt-0.5">{user?.email || 'email@example.com'}</span>
-                          <div className="flex items-center gap-1.5 mt-2 bg-glass px-2.5 py-1 rounded-lg border border-border w-fit">
-                            <Award className="w-3.5 h-3.5 text-amber-400" />
-                            <span className="text-[10px] font-extrabold text-amber-400">{user?.rating || 1247} Elo</span>
+                        <div className="w-full h-full">
+                          <div className="p-3 border-b mb-1.5 border-[var(--border-subtle)] flex flex-col gap-1">
+                            <span className="text-sm font-bold tracking-wider text-text-primary capitalize font-sora">
+                              {user?.name || user?.username || 'User'}
+                            </span>
                           </div>
+
+                          <Button
+                            variant="ghost"
+                            onClick={() => { setProfileDropdownOpen(false); navigate(`/profile/${user?.username || 'me'}`); }}
+                            className={`w-full !justify-start px-3 py-2.5 text-xs font-medium !normal-case transition-colors ${'hover:bg-[#00F5C4]/10 text-slate-200 hover:text-[#00F5C4]'
+                              }`}
+                          >
+                            <User className="w-4 h-4 mr-1 opacity-70" />
+                            <span>My Profile</span>
+                          </Button>
+
+                          <div className="h-px my-1.5" style={{ backgroundColor: 'var(--border-subtle)' }} />
+
+                          <Button
+                            variant="ghost"
+                            onClick={handleLogout}
+                            className={`w-full !justify-start px-3 py-2.5 text-xs font-semibold !normal-case transition-colors ${'text-red-400 hover:bg-red-500/10 hover:text-red-400'
+                              }`}
+                          >
+                            <LogOut className="w-4 h-4 mr-1 opacity-70" />
+                            <span>Sign Out</span>
+                          </Button>
                         </div>
-
-                        {/* Options */}
-                        <button
-                          onClick={() => { setProfileDropdownOpen(false); navigate(`/profile/${user?.username || 'me'}`); }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${isDark ? 'hover:bg-slate-900 text-slate-300' : 'hover:bg-slate-50 text-slate-700'
-                            }`}
-                        >
-                          <User className="w-3.5 h-3.5" />
-                          <span>My Profile</span>
-                        </button>
-
-                        <div className="h-px my-1.5" style={{ backgroundColor: 'var(--border-subtle)' }} />
-
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>Sign Out</span>
-                        </button>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </>
             ) : (
-              // Unauthenticated Buttons
               <div className="hidden sm:flex items-center gap-2">
                 <Link to="/login">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-300 ${isDark
-                        ? 'border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]'
-                        : 'border-slate-200 bg-white text-[#4F6EF7] hover:border-[#4F6EF7]/50 hover:bg-[#4F6EF7]/5 hover:shadow-sm'
-                      }`}
-                  >
+                  <Button variant="outline">
                     Log In
-                  </motion.button>
+                  </Button>
                 </Link>
                 <Link to="/signup">
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -0.5 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${isDark
-                        ? 'bg-[#00F5C4] text-[#0D0F14] hover:shadow-[#00F5C4]/25 shadow-[#00F5C4]/15 hover:brightness-105'
-                        : 'bg-[#4F6EF7] text-white hover:shadow-[#4F6EF7]/25 shadow-[#4F6EF7]/15 hover:brightness-105'
-                      }`}
-                  >
-                    Register
-                  </motion.button>
+                  <Button variant="primary">
+                    Sign Up
+                  </Button>
                 </Link>
               </div>
             )}
@@ -324,9 +235,7 @@ const Navbar = () => {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setMobileMenuOpen(true)}
-              className={`lg:hidden p-2 rounded-lg border transition-colors duration-200 ${isDark
-                  ? 'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-slate-300'
-                  : 'border-[rgba(15,23,42,0.08)] bg-slate-50 hover:bg-slate-100 text-slate-700'
+              className={`lg:hidden p-2 rounded-lg border transition-colors duration-200 ${'border-[rgba(255,255,255,0.08)] bg-slate-900/50 hover:bg-slate-800 text-slate-300'
                 }`}
             >
               <Menu className="w-5 h-5" />
@@ -359,13 +268,13 @@ const Navbar = () => {
               {/* Header inside drawer */}
               <div className="flex items-center justify-between pb-4 border-b border-border mb-6">
                 <div className="flex items-center gap-2">
-                  <LogoIcon isDark={isDark} />
+                  <Logo />
                   <span className="font-extrabold tracking-wider text-text-primary text-sm">BATTLECODE</span>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`p-2 rounded-lg border ${isDark ? 'border-[rgba(255,255,255,0.08)] hover:bg-slate-900' : 'border-[rgba(15,23,42,0.08)] hover:bg-slate-100'
+                  className={`p-2 rounded-lg border ${'border-[rgba(255,255,255,0.08)] hover:bg-slate-900'
                     }`}
                 >
                   <X className="w-4 h-4" />
@@ -381,19 +290,16 @@ const Navbar = () => {
                       key={link.label}
                       to={link.path}
                       onClick={(e) => {
-                        if (!isAuthenticated && link.path !== '/leaderboard') {
+                        const isPublicPath = ['/leaderboard', '/about', '/'].includes(link.path);
+                        if (!isAuthenticated && !isPublicPath) {
                           e.preventDefault();
                           navigate('/login');
                         }
                         setMobileMenuOpen(false);
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${isActive
-                          ? isDark
-                            ? 'bg-[#00F5C4]/10 border border-[#00F5C4]/30 text-[#00F5C4]'
-                            : 'bg-[#4F6EF7]/10 border border-[#4F6EF7]/30 text-[#4F6EF7]'
-                          : isDark
-                            ? 'hover:bg-slate-900/60 border border-transparent text-slate-300'
-                            : 'hover:bg-slate-50 border border-transparent text-slate-700'
+                          ? 'bg-[#00F5C4]/10 border border-[#00F5C4]/30 text-[#00F5C4]'
+                          : 'hover:bg-slate-900/60 border border-transparent text-slate-300'
                         }`}
                     >
                       <link.icon className="w-4.5 h-4.5" />
@@ -401,19 +307,15 @@ const Navbar = () => {
                     </NavLink>
                   );
                 })}
-                
+
                 {/* Mobile-only Profile Link */}
                 {isAuthenticated && (
                   <NavLink
                     to={`/profile/${user?.username}`}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${location.pathname === `/profile/${user?.username}`
-                        ? isDark
-                          ? 'bg-[#00F5C4]/10 border border-[#00F5C4]/30 text-[#00F5C4]'
-                          : 'bg-[#4F6EF7]/10 border border-[#4F6EF7]/30 text-[#4F6EF7]'
-                        : isDark
-                          ? 'hover:bg-slate-900/60 border border-transparent text-slate-300'
-                          : 'hover:bg-slate-50 border border-transparent text-slate-700'
+                        ? 'bg-[#00F5C4]/10 border border-[#00F5C4]/30 text-[#00F5C4]'
+                        : 'hover:bg-slate-900/60 border border-transparent text-slate-300'
                       }`}
                   >
                     <User className="w-5 h-5" />
@@ -424,41 +326,34 @@ const Navbar = () => {
 
               {/* Unauthenticated Bottom Actions inside Drawer */}
               {!isAuthenticated && (
-                <div className="border-t pt-6 flex flex-col gap-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div className="border-t pt-6 flex flex-col gap-3 border-[var(--border-subtle)]">
                   <Link to="/login" className="w-full">
-                    <button className={`w-full py-3 rounded-xl text-sm font-bold uppercase border transition-all duration-300 ${isDark
-                        ? 'border-slate-800 bg-[#0D0F14]/60 text-[#00F5C4] hover:border-[#00F5C4]/50 hover:bg-[#00F5C4]/5 hover:shadow-[0_0_20px_rgba(0,245,196,0.12)]'
-                        : 'border-slate-200 bg-white text-[#4F6EF7] hover:border-[#4F6EF7]/50 hover:bg-[#4F6EF7]/5 hover:shadow-sm'
-                      }`}>
+                    <Button variant="outline" size="full">
                       Sign In
-                    </button>
+                    </Button>
                   </Link>
                   <Link to="/signup" className="w-full">
-                    <button className={`w-full py-3 rounded-xl text-sm font-extrabold uppercase shadow-lg transition-all ${isDark
-                        ? 'bg-[#00F5C4] text-[#0D0F14] shadow-[#00F5C4]/15 hover:brightness-105'
-                        : 'bg-[#4F6EF7] text-white shadow-[#4F6EF7]/15 hover:brightness-105'
-                      }`}>
+                    <Button variant="primary" size="full">
                       Register
-                    </button>
+                    </Button>
                   </Link>
                 </div>
               )}
 
               {/* Authenticated user footer inside Drawer */}
               {isAuthenticated && (
-                <div className="border-t pt-6 flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div className="border-t pt-6 flex items-center justify-between border-[var(--border-subtle)]">
                   <Link 
                     to={`/profile/${user?.username}`} 
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${isDark ? 'bg-gradient-to-tr from-[#6C63FF] to-[#00F5C4]' : 'bg-gradient-to-tr from-[#4F6EF7] to-[#2563EB]'
-                      }`}>
-                      {user?.username?.slice(0, 2).toUpperCase() || 'YK'}
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                         style={{ backgroundColor: '#1E2535', color: '#00F5C4', border: '1.5px solid rgba(0,245,196,0.3)' }}>
+                      <User className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="block text-xs font-bold text-text-primary">{user?.username || 'Gamer'}</span>
-                      <span className="block text-[10px] text-slate-400 mt-0.5">{user?.rating || 1247} Elo</span>
+                      <span className="block text-sm font-bold text-text-primary capitalize font-sora">{user?.name || user?.username || 'User'}</span>
                     </div>
                   </Link>
                   <motion.button

@@ -44,27 +44,27 @@ export const useInvitations = () => {
         expiresAt: invite.expiresAt,
       };
       setInvitations(prev => [formattedInvite, ...prev]);
-      let msg = `You received an invitation from ${invite.sender.username} for a ${invite.battleMode === 'sprint' ? 'Timed Sprint' : invite.battleMode === 'topic' ? 'Topic Battle' : 'Random Duel'}.`;
+      let msg = `You received an invitation from ${invite.sender.username} for a ${invite.battleMode === 'timed-sprint' ? 'Timed Sprint' : invite.battleMode === 'topic-duel' ? 'Topic Duel' : 'Random Duel'}.`;
       if (invite.metadata?.topic) {
         msg += ` Topic: ${invite.metadata.topic}.`;
       }
       if (invite.metadata?.difficulty) {
         msg += ` Difficulty: ${invite.metadata.difficulty}.`;
       }
-      toast.info('New Battle Invitation! ⚔️', msg);
+      toast.info(msg);
     });
 
     socket.on('battle:invite:accepted', (data) => {
       const { room } = data;
-      toast.success('Battle Ready! 🎉', `Automatically entering the battle...`);
+      toast.success(`Entering the Private Lobby...`);
       
       setTimeout(() => {
-        window.location.href = `/battle/${room._id || room.id}`;
+        window.location.href = `/battle/private/${room._id || room.id}`;
       }, 1000);
     });
 
     socket.on('battle:invite:declined', (invite) => {
-      toast.error('Invitation Declined', `${invite.recipient?.username || 'Opponent'} declined your invite.`);
+      toast.error(`${invite.recipient?.username || 'Opponent'} declined your invite.`);
     });
 
     return () => {
@@ -81,11 +81,11 @@ export const useInvitations = () => {
       const { data } = await api.post(`/api/invitations/${inviteId}/accept`);
       if (data.success) {
         setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
-        window.location.href = `/battle/${data.room?._id || data.room?.id}`;
+        window.location.href = `/battle/private/${data.room?._id || data.room?.id}`;
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
-      toast.error('Accept Failed', msg);
+      toast.error(msg);
       if (msg.includes('expired')) {
         setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
       }
@@ -100,14 +100,14 @@ export const useInvitations = () => {
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
-      toast.error('Decline Failed', msg);
+      toast.error(msg);
       if (msg.includes('expired')) {
         setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
       }
     }
   };
 
-  const sendInvite = async (toUsername, battleType = '1v1', options = {}) => {
+  const sendInvite = async (toUsername, battleType = 'random-duel', options = {}) => {
     try {
       const { data } = await api.post('/api/invitations', { 
         recipientId: toUsername, 
@@ -115,12 +115,12 @@ export const useInvitations = () => {
         metadata: { topic: options.topic, difficulty: options.difficulty, timeLimit: options.timeLimit } 
       });
       if (data.success) {
-        toast.success('Invitation Sent', `Waiting for ${toUsername} to accept...`);
+        toast.success(`Waiting for ${toUsername} to accept...`);
         return data.invite;
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
-      toast.error('Failed to send invite', msg);
+      toast.error(msg);
       throw err;
     }
   };

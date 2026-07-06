@@ -59,7 +59,7 @@ const AnimationState = ({
           <div className="text-5xl opacity-80 mb-2">{icon}</div>
         ) : (
           <div 
-            className={`transition-opacity duration-500 ease-in-out ${variant === '404' || variant === 'error' ? 'dark:opacity-80 dark:grayscale-[0.3]' : 'opacity-90 dark:opacity-85'}`}
+            className={`transition-opacity duration-500 ease-in-out ${variant === '404' || variant === 'error' ? 'opacity-80 grayscale-[0.3]' : 'opacity-85'}`}
             style={{ 
               ...dimensions,
               filter: variant === 'error' ? 'sepia(1) hue-rotate(-50deg) saturate(3) brightness(0.9)' : 'none'

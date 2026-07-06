@@ -17,6 +17,10 @@ const submissionSchema = new mongoose.Schema(
       ref: 'Battle',
       default: null,
     },
+    isSubmit: {
+      type: Boolean,
+      default: true,
+    },
     code: {
       type: String,
       required: true,

@@ -36,7 +36,7 @@ const MonacoEditorComponent = React.memo(({
       height="100%"
       language="cpp"
       value={code}
-      theme={theme === 'vs-dark' ? 'vs-dark' : 'light'}
+      theme="vs-dark"
       onMount={handleEditorDidMount}
       options={{
         automaticLayout: true,

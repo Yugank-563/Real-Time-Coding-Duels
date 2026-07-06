@@ -1,5 +1,4 @@
 import { Search, X } from 'lucide-react';
-import '../../styles/auth.css';
 
 const SearchInput = ({ value, onChange, placeholder = "Search...", style = {} }) => {
   return (
@@ -8,7 +7,7 @@ const SearchInput = ({ value, onChange, placeholder = "Search...", style = {} })
         style={{
           position: 'absolute', left: '1rem', top: '50%',
           transform: 'translateY(-50%)',
-          color: 'var(--auth-muted)', pointerEvents: 'none',
+          color: 'var(--text-muted)', pointerEvents: 'none',
         }}
       >
         <Search size={16} />
@@ -18,7 +17,7 @@ const SearchInput = ({ value, onChange, placeholder = "Search...", style = {} })
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="auth-input w-full"
+        className="input w-full"
         style={{ paddingLeft: '2.5rem', paddingRight: value ? '2.5rem' : '1rem' }}
       />
       {value && (
@@ -27,7 +26,7 @@ const SearchInput = ({ value, onChange, placeholder = "Search...", style = {} })
           style={{
             position: 'absolute', right: '0.75rem', top: '50%',
             transform: 'translateY(-50%)',
-            color: 'var(--auth-muted)', background: 'none',
+            color: 'var(--text-muted)', background: 'none',
             border: 'none', cursor: 'pointer', display: 'flex',
             padding: 0,
           }}

@@ -2,25 +2,24 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Swords, Zap, Target } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { selectUser } from '../../features/index';
-import { useToast, useTheme, useBattleSocket, useLobbyStats, useTopicStats, useDocumentTitle, useInvitations } from '../../hooks/index';
+import { useToast, useBattleSocket, useLobbyStats, useTopicStats, useDocumentTitle, useInvitations } from '../../hooks/index';
 
 // Components 
 import { ArenaCard, InviteFriendCard } from '../../components/index';
 
 const BATTLE_TYPES = [
-  { id: '1v1', name: 'Random Duel', desc: 'A pure test of adaptability. Both your opponent and a random problem are matched to your skill rating.', hint: '🎯 Random problem matched to your skill rating', icon: Swords, speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50', topBorder: 'border-t-cyan-500' },
-  { id: 'sprint', name: 'Timed Sprint', desc: 'Race against the clock in high-speed, 10-minute blitz challenges.', hint: '⚡ Easy problem — built to test your speed under pressure', icon: Zap, speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50', topBorder: 'border-t-emerald-500' },
-  { id: 'topic', name: 'Topic Battle', desc: 'Master specific data structures by challenging rivals in targeted duels.', hint: '📚 Problems filtered by your chosen topic — go deep, not wide', icon: Target, speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50', topBorder: 'border-t-pink-500' }
+  { id: 'random-duel', name: 'Random Duel', desc: 'A pure test of adaptability. Both your opponent and a random problem are matched to your skill rating.', hint: '🎯 Random problem matched to your skill rating', icon: Swords, speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50', topBorder: 'border-t-cyan-500' },
+  { id: 'timed-sprint', name: 'Timed Sprint', desc: 'Race against the clock in high-speed, 10-minute blitz challenges.', hint: '⚡ Easy problem — built to test your speed under pressure', icon: Zap, speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50', topBorder: 'border-t-emerald-500' },
+  { id: 'topic-duel', name: 'Topic Duel', desc: 'Master specific data structures by challenging rivals in targeted duels.', hint: '📚 Problems filtered by your chosen topic — go deep, not wide', icon: Target, speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50', topBorder: 'border-t-pink-500' }
 ];
 
 const BattleLobby = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  useDocumentTitle('Battle Lobby');
+  useDocumentTitle('Battle');
 
   const myUser = useSelector(selectUser);
   const { lobbyStatus } = useSelector(state => state.battle);
@@ -43,52 +42,62 @@ const BattleLobby = () => {
   // ── Handlers ──
   const handleQuickJoin = (type, forcedMode = null) => {
     if (!myUser) {
-      navigate(`/login?redirect=/battle/lobby`);
+      navigate(`/login?redirect=/`);
       return;
     }
     if (lobbyStatus === 'queuing') {
-      toast.error('Already in Queue', 'Please leave your current matchmaking queue first.');
+      toast.error('Please leave your current matchmaking first.');
       return;
     }
     const selectedMode = forcedMode || mode;
-    toast.success('Entering Queue 🚀', `Searching for a ${selectedMode === 'ranked' ? 'Ranked' : 'Casual'} ${type === 'sprint' ? 'Timed Sprint' : '1v1'} match...`);
+    toast.success(`Searching for a ${selectedMode === 'ranked' ? 'Ranked' : 'Casual'} ${type === 'timed-sprint' ? 'Timed Sprint' : '1v1'} match...`);
     navigate(`/battle/matchmaking?type=${type}&mode=${selectedMode}`);
   };
 
   const handleJoinTopicQueue = () => {
     if (!myUser) {
-      navigate(`/login?redirect=/battle/lobby`);
+      navigate(`/login?redirect=/`);
       return;
     }
     if (!selectedTopic) {
-      setTopicError('Please select a topic to continue');
+      setTopicError('You must choose a challenge topic to enter the queue.');
       return;
     }
     if (lobbyStatus === 'queuing') {
-      toast.error('Already in Queue', 'Please leave your current matchmaking queue first.');
+      toast.error('Please leave your current matchmaking queue first.');
       return;
     }
     setTopicError('');
-    toast.success('Entering Queue 🚀', `Searching for a ${selectedTopic} Topic Battle match...`);
-    navigate(`/battle/matchmaking?type=topic&topic=${encodeURIComponent(selectedTopic)}&mode=${mode}`);
+    toast.success(`Searching for a Topic Duel match...`);
+    navigate(`/battle/matchmaking?type=topic-duel&topic=${encodeURIComponent(selectedTopic)}&mode=${mode}`);
   };
 
   const { sendInvite } = useInvitations();
 
   const handleSendInvite = async (username, inviteMode, battleType, topic, timeLimit, difficulty) => {
     if (!username.trim()) {
-      toast.error('Username Required', 'Please enter a friend\'s username to send an invitation.');
+      toast.error('Username is required.');
+      return;
+    }
+
+    if (!battleType) {
+      toast.error('Battle mode is required.');
+      return;
+    }
+
+    if (!difficulty) {
+      toast.error('Difficulty is required.');
       return;
     }
     
-    if (battleType === 'topic' && !topic) {
-      toast.error('Topic Missing', 'Please select a topic for the battle.');
+    if (battleType === 'topic-duel' && !topic) {
+      toast.error('Topic is required.');
       return;
     }
 
     // Check if trying to invite self
     if (myUser?.username?.toLowerCase() === username.trim().toLowerCase()) {
-      toast.error('Invalid Recipient', 'You cannot invite yourself to a battle.');
+      toast.error('You cannot invite yourself to a battle.');
       return;
     }
 
@@ -101,7 +110,7 @@ const BattleLobby = () => {
   };
 
   return (
-    <div className="w-full bg-base text-text-primary pt-6 pb-40 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]" data-auth-theme={theme}>
+    <div className="w-full bg-base text-text-primary pb-40 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
       {/* ──── DOT GRID BACKGROUND ──── */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -113,43 +122,60 @@ const BattleLobby = () => {
       {/* ──── TOP RADIAL GLOW ──── */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-accent-primary/10 to-transparent blur-[120px] pointer-events-none" />
 
-      <div className="flex flex-col gap-6 relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-6 relative z-10 w-full">
         {/* Header with Mode Toggle */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '0.75rem', background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <Swords size={22} color="var(--auth-accent)" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[.8rem] flex items-center justify-center shadow-sm">
+                <Swords size={22} color="var(--accent-primary)" />
               </div>
-              <h1 style={{ fontSize: '1.875rem', fontWeight: 800, margin: 0, color: 'var(--auth-heading)', letterSpacing: '-0.02em' }}>
+              <h1 className="text-[1.875rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
                 Select Coding Battle
               </h1>
             </div>
-            <p style={{ fontSize: '0.95rem', color: 'var(--auth-muted)', margin: 0, paddingLeft: '2px' }}>
-              Real-time 1v1 coding duels — pick your format, join the queue, and prove your skill.
+            <p className="text-[0.95rem] text-[var(--text-muted)] m-0 pl-[2px] transition-colors duration-300">
+              {mode === 'ranked' 
+                ? 'Competitive ranked real-time 1v1 coding duels — pick your format, join the queue, and prove your skills.'
+                : 'Casual unrated coding duels — practice without pressure and hone your skills.'}
             </p>
           </div>
 
           <div className="w-full flex justify-center md:w-auto md:justify-end">
-            <div className="flex bg-elevated/50 border border-border/80 rounded-xl p-1 shadow-sm">
+            <div className="flex bg-[var(--bg-elevated)] rounded-full p-1 shadow-sm relative">
               <button
                 onClick={() => setMode('ranked')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all uppercase tracking-wider ${
+                className={`relative z-10 flex items-center gap-2 px-5 py-[0.45rem] rounded-full text-[0.8rem] font-bold transition-colors uppercase tracking-wider ${
                   mode === 'ranked' 
-                    ? 'bg-accent-primary text-[#0D0F14] shadow-md' 
-                    : 'text-text-primary opacity-60 hover:opacity-100 hover:bg-surface'
+                    ? 'text-[#0D0F14]' 
+                    : 'text-[var(--text-primary)] opacity-80 hover:opacity-100 hover:bg-white/5'
                 }`}
               >
+                {mode === 'ranked' && (
+                  <motion.div
+                    layoutId="lobbyTogglePill"
+                    className="absolute inset-0 bg-[var(--btn-primary-bg)] rounded-full -z-10 shadow-md"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                  />
+                )}
                 <Swords className="w-4 h-4" /> Ranked
               </button>
+              
               <button
                 onClick={() => setMode('casual')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all uppercase tracking-wider ${
+                className={`relative z-10 flex items-center gap-2 px-5 py-[0.45rem] rounded-full text-[0.8rem] font-bold transition-colors uppercase tracking-wider ${
                   mode === 'casual' 
-                    ? 'bg-emerald-500 text-[#0D0F14] shadow-md' 
-                    : 'text-text-primary opacity-60 hover:opacity-100 hover:bg-surface'
+                    ? 'text-[#0D0F14]' 
+                    : 'text-[var(--text-primary)] opacity-80 hover:opacity-100 hover:bg-white/5'
                 }`}
               >
+                {mode === 'casual' && (
+                  <motion.div
+                    layoutId="lobbyTogglePill"
+                    className="absolute inset-0 bg-[var(--btn-primary-bg)] rounded-full -z-10 shadow-md"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                  />
+                )}
                 <Zap className="w-4 h-4" /> Casual
               </button>
             </div>
@@ -163,7 +189,7 @@ const BattleLobby = () => {
               key={type.id}
               type={type}
               mode={mode}
-              isTopic={type.id === 'topic'}
+              isTopic={type.id === 'topic-duel'}
               selectedTopic={selectedTopic}
               setSelectedTopic={setSelectedTopic}
               topicError={topicError}

@@ -1,36 +1,40 @@
 import {  useState  } from 'react';
 
-/**
- * AuthInput — shared form input for all auth pages.
- * Supports: label, password show/hide, error border (no inline text — errors go to toast).
- * headerRight: optional JSX rendered inline beside the label (e.g. "Forgot password?" link).
- */
-const AuthInput = ({
+//Input — shared form input for all pages.
+//Supports: label, password show/hide, error border (no inline text — errors go to toast).
+//headerRight: optional JSX rendered inline beside the label (e.g. "Forgot password?" link).
+
+const Input = ({
   label, type = 'text', id, name, value, onChange,
   placeholder, required, error, autoComplete, headerRight,
+  icon, className = ''
 }) => {
   const [show, setShow]   = useState(false);
   const isPassword        = type === 'password';
   const inputType         = isPassword ? (show ? 'text' : 'password') : type;
 
   return (
-    <div className="auth-input-wrapper">
+    <div className="input-wrapper">
       {(label || headerRight) && (
-        <div className="auth-label-row">
+        <div className="form-label-row">
           {label && (
-            <label htmlFor={id || name} className="auth-label">{label}</label>
+            <label htmlFor={id || name} className="form-label">{label}</label>
           )}
           {headerRight}
         </div>
       )}
 
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+            {icon}
+          </div>
+        )}
         <input
           id={id || name} type={inputType} name={name}
           value={value} onChange={onChange} placeholder={placeholder}
           required={required} autoComplete={autoComplete}
-          className={`auth-input${error ? ' auth-input--error' : ''}`}
-          style={isPassword ? { paddingRight: '2.8rem' } : {}}
+          className={`input ${error ? 'input--error' : ''} ${isPassword ? '!pr-11' : ''} ${icon ? '!pl-10' : ''} ${className}`}
         />
 
         {isPassword && (
@@ -38,12 +42,7 @@ const AuthInput = ({
             type="button" tabIndex={-1}
             onClick={() => setShow(s => !s)}
             aria-label={show ? 'Hide password' : 'Show password'}
-            style={{
-              position: 'absolute', right: '0.75rem', top: '50%',
-              transform: 'translateY(-50%)', background: 'none', border: 'none',
-              color: 'var(--auth-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', padding: 0, lineHeight: 1,
-            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[var(--text-muted)] cursor-pointer flex items-center p-0 leading-none hover:text-[var(--text-primary)] transition-colors"
           >
             {show ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -66,4 +65,4 @@ const AuthInput = ({
   );
 };
 
-export default AuthInput;
+export default Input;

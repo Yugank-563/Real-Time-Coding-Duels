@@ -1,10 +1,45 @@
-@import './styles/themes.css';
-@import './styles/auth.css';
+:root {
+  /* 1. THEME VARIABLES */
+  
+  /* Core Backgrounds */
+  --bg-base:        #0D0F14;
+  --bg-surface:     #161A24;
+  --bg-elevated:    #1E2535;
+  --bg-overlay:     #2a2f3d;
+
+  /* Borders */
+  --border:         #2E3548;
+  --border-subtle:  rgba(255, 255, 255, 0.04);
+
+  /* Typography */
+  --text-primary:   #FAFAFD;
+  --text-secondary: #94A3B8;
+  --text-muted:     #64748B;
+
+  /* Accents & Brand */
+  --accent-primary: #6C63FF;
+  --accent-blue:    #00F5C4;
+  --btn-primary-bg: #00F5C4;
+  --btn-primary-text: #0D0F14;
+  --accent-emerald: #00F59B;
+  --accent-amber:   #FFB800;
+
+  /* Status Colors */
+  --error:          #EF4444;
+  --accent-red:     #FF453A;
+  --shadow-glow-red: rgba(255, 69, 58, 0.25);
+
+  /* Shadows & Glows */
+  --shadow-glow-primary: rgba(108, 99, 255, 0.25);
+  --shadow-glow-blue:    rgba(0, 245, 196, 0.25);
+}
+
+/* 2. TAILWIND DIRECTIVES */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ──── BASE RESET ──── */
+/* 3. CSS RESET & BASE ELEMENTS */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -24,7 +59,7 @@ body {
   min-height: 100vh;
 }
 
-/* ──── SCROLLBAR STYLES ──── */
+/* 4. SCROLLBARS & SELECTION */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -40,7 +75,7 @@ body {
   background: var(--text-muted);
 }
 
-/* ──── PROBLEM PANEL SCROLLBAR ──── */
+/* Problem Panel Scrollbar */
 .problem-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.12) transparent;
@@ -59,7 +94,7 @@ body {
   background: rgba(0, 245, 196, 0.45);
 }
 
-/* ──── CODE BLOCK HORIZONTAL SCROLLBAR ──── */
+/* Code Block Horizontal Scrollbar */
 .code-scroll-x {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.12) transparent;
@@ -78,20 +113,20 @@ body {
   background: rgba(0, 245, 196, 0.45);
 }
 
-/* ──── SELECTION ──── */
+/* Global Selection */
 ::selection {
   background: rgba(139, 92, 246, 0.3);
   color: var(--text-primary);
 }
 
-/* ──── FOCUS RING ──── */
+/* Global Focus Ring */
 :focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ──── UTILITY LAYERS ──── */
+/* 5. UTILITY CLASSES */
 @layer utilities {
   .text-gradient-primary {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
@@ -100,49 +135,16 @@ body {
     background-clip: text;
   }
 
-  .bg-glass {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--bg-overlay) 25%,
-      var(--bg-elevated) 50%,
-      var(--bg-overlay) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite;
-  }
-
   .shadow-glow-primary {
     box-shadow: 0 0 20px var(--shadow-glow-primary);
-  }
-
-  .shadow-glow-blue {
-    box-shadow: 0 0 20px var(--shadow-glow-blue);
   }
 
   .animate-marquee {
     animation: marquee 45s linear infinite;
   }
-
-  .animate-marquee-reverse {
-    animation: marquee-reverse 45s linear infinite;
-  }
 }
 
-/* ──── PROSE-BATTLECODE: Rich problem description renderer ──── */
+/* 6. TYPOGRAPHY & PROSE (Markdown Formatting) */
 .prose-battlecode {
   color: var(--text-secondary);
   font-size: 16px;
@@ -154,12 +156,6 @@ body {
 .prose-battlecode strong {
   color: var(--text-primary);
   font-weight: 600;
-}
-.prose-battlecode strong.example {
-  display: block;
-  margin-top: 28px;
-  margin-bottom: 8px;
-  font-size: 15px;
 }
 .prose-battlecode em {
   color: var(--text-secondary);
@@ -193,6 +189,12 @@ body {
   color: var(--text-primary);
   font-size: inherit;
 }
+.prose-battlecode pre strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  display: inline;
+  margin-right: 4px;
+}
 .prose-battlecode ul,
 .prose-battlecode ol {
   padding-left: 20px;
@@ -218,29 +220,176 @@ body {
   margin-top: 16px;
 }
 
-/* Light mode overrides */
-[data-theme="light"] .prose-battlecode code {
-  background: var(--bg-overlay);
-  color: var(--accent-blue);
-  border-color: var(--border);
-}
-[data-theme="light"] .prose-battlecode pre {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .prose-battlecode pre code {
-  color: var(--text-primary);
+/* 7. SHARED UI COMPONENTS */
+/* Form Inputs */
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
+.form-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  transition: color 0.3s;
+}
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Required field asterisk */
+.input-wrapper:has(input[required]) .form-label::after {
+  content: ' *';
+  color: var(--btn-primary-bg);
+  font-weight: 700;
+  font-size: 0.7rem;
+  margin-left: 1px;
+}
+
+.input {
+  width: 100%;
+  padding: 0.72rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+.input:hover:not(:focus):not(.input--error) {
+  border-color: rgba(0, 245, 196, 0.35);
+}
+.input:focus:not(.input--error) {
+  border-color: var(--btn-primary-bg);
+  box-shadow: 0 0 0 3px rgba(0, 245, 196, 0.18);
+  outline: none !important;
+}
+.input--error {
+  border-color: var(--btn-primary-bg) !important;
+  box-shadow: 0 0 0 2px rgba(0, 245, 196, 0.12) !important;
+}
+.input:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-overlay);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+.dropdown-option {
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+}
+.dropdown-option:hover {
+  background: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
+}
+.dropdown-option--selected {
+  background: var(--bg-elevated) !important;
+  color: var(--btn-primary-bg) !important;
+  border-left: 2px solid var(--btn-primary-bg);
+  font-weight: 800;
+}
+
+/* Tables */
+.data-table-layout {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  text-align: left;
+}
+.data-table-layout tbody tr {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.data-table-layout tbody tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Generic Layout Elements */
+.page-bg {
+  flex: 1;
+  background-color: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.35s ease;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-overlay);
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 24rem;
+  padding: 2.25rem 2rem 1.75rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 20px 60px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+  animation: cardSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Global Links */
+.link {
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+
+.link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* 8. ANIMATION KEYFRAMES */
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 9. GLOBAL LAYOUT OVERRIDES (Responsive) */
 @media (max-width: 1024px) {
   .mobile-editor-height {
     min-height: var(--mobile-editor-height, 350px);
   }
 }
 
-.prose-battlecode pre strong {
-  color: var(--text-primary);
-  font-weight: 600;
-  display: inline;
-  margin-right: 4px;
+@media (max-width: 480px) {
+  .card {
+    padding: 1.75rem 1.25rem 1.5rem;
+    border-radius: 1rem;
+  }
 }

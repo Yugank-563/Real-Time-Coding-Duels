@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../utils/index';
+import { api, getInitials } from '../../utils/index';
 import { Cpu, Database, CheckCircle2, Target, Trophy, BookOpen } from 'lucide-react';
 import { useDocumentTitle } from '../../hooks/index';
 import { useToast } from '../../hooks/useToast';
@@ -33,7 +33,7 @@ const UserProfile = ({ player, isWinner, isMe }) => (
         ? isMe ? 'from-emerald-500 to-teal-400' : 'from-accent-red to-accent-primary'
         : 'from-[#1E2D40] to-[#2A3F54]'
     }`}>
-      {player?.user?.name?.slice(0, 2).toUpperCase() || (isMe ? 'ME' : 'OP')}
+      {getInitials(player?.user?.name, player?.user?.username) || (isMe ? 'ME' : 'OP')}
     </div>
     <div className="text-center">
       <h3 className="font-bold text-text-primary text-base tracking-tight flex items-center justify-center gap-2">
@@ -41,7 +41,7 @@ const UserProfile = ({ player, isWinner, isMe }) => (
         {isWinner && <Trophy className={`w-3.5 h-3.5 ${isMe ? 'text-emerald-500' : 'text-accent-primary'}`} />}
       </h3>
       <span className="text-[11px] text-text-secondary font-mono mt-0.5 block">
-        Elo {player?.user?.rank}
+        Elo {player?.user?.rating}
       </span>
     </div>
   </div>
@@ -70,8 +70,8 @@ const BattleSummary = () => {
         setSubmissions(res.data.submissions);
       } catch (err) {
         console.error('Failed to load battle summary analytics:', err.message);
-        toast.error('Summary Unavailable', 'Unable to retrieve duel outcomes.');
-        navigate('/battle/lobby');
+        toast.error('Unable to retrieve duel outcomes.');
+        navigate('/');
       } finally {
         setLoading(false);
       }

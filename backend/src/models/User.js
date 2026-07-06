@@ -39,22 +39,13 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    rank: {
+    rating: {
       type: Number,
       default: 1200,
       index: true,
     },
 
-    casualStats: {
-      totalBattles: { type: Number, default: 0 },
-      wins: { type: Number, default: 0 },
-      losses: { type: Number, default: 0 },
-      draws: { type: Number, default: 0 }
-    },
-
-
-
-    // ── Profile Fields ──
+    // Profile Fields
     bio: {
       type: String,
       default: '',

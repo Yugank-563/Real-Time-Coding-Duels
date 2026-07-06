@@ -10,7 +10,7 @@ import {
 import { getRandomProblem } from './problemService.js';
 import redis from '../config/redis.js';
 
-// --- Shared Helpers ---
+// Shared Helpers
 const emitSocketEvent = (userId, event, data) => {
   redis.publish('invitation:events', JSON.stringify({ userId, event, data })).catch(err => {
     console.error(`Failed to publish socket event ${event} to user ${userId}`, err);
@@ -25,7 +25,7 @@ const handleExpiry = async (invite) => {
   return false; // Valid
 };
 
-// --- Services ---
+// Services
 
 export const createInvitationService = async (senderId, recipientId, battleMode, metadata = {}) => {
   if (senderId.toString() === recipientId.toString()) {
@@ -78,20 +78,21 @@ export const acceptInvitationService = async (inviteId, userId) => {
     },
     { upsert: true, new: true }
   );
-
+  
   // Create 2-player active battle
   const battle = await createBattle({
-    battleType: invite.battleMode || '1v1',
+    battleType: invite.battleMode || 'random-duel',
     mode: 'casual',
-    status: 'active',
+    status: 'waiting',
     startTime: new Date(),
-    timeLimit: invite.metadata?.timeLimit ? parseInt(invite.metadata.timeLimit, 10) : (invite.battleMode === 'sprint' ? 600 : 1200),
+    timeLimit: invite.metadata?.timeLimit ? parseInt(invite.metadata.timeLimit, 10) : (invite.battleMode === 'timed-sprint' ? 600 : 1200),
     problem: dbProblem._id,
     difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
     roomName: `Battle: ${invite.sender.username} vs You`,
+    host: invite.sender._id,
     players: [
-      { user: invite.sender._id, status: 'ready' },
-      { user: userId, status: 'ready' },
+      { user: invite.sender._id, status: 'not_ready' },
+      { user: userId, status: 'not_ready' },
     ],
   });
 

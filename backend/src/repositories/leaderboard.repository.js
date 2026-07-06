@@ -1,11 +1,11 @@
 import { User, Battle } from '../models/index.js';
 
 // Constants
-const LEADERBOARD_USER_SELECT = 'username name email rank xp level streaks badges country createdAt';
+const LEADERBOARD_USER_SELECT = 'username name email rating country createdAt';
 
 
 // Find
-export const getUserById = (userId) => 
+const getUserById = (userId) => 
   User.findById(userId)
     .select(LEADERBOARD_USER_SELECT)
     .lean();
@@ -15,7 +15,7 @@ export const getDistinctCountries = () =>
 
 
 // Search
-export const getUsers = (filter, sortField, sortOrder, skip, limitNum) => 
+const getUsers = (filter, sortField, sortOrder, skip, limitNum) => 
   User.find(filter)
     .select(LEADERBOARD_USER_SELECT)
     .sort({ [sortField]: sortOrder })
@@ -25,7 +25,7 @@ export const getUsers = (filter, sortField, sortOrder, skip, limitNum) =>
 
 export const countUsers = (filter) => User.countDocuments(filter);
 
-export const getUserGlobalRank = (rank) => User.countDocuments({ rank: { $gt: rank } });
+export const getUserGlobalRank = (rating) => User.countDocuments({ rating: { $gt: rating } });
 
 
 // Aggregate
@@ -63,7 +63,7 @@ export const getGlobalRankCounts = async (uniqueRanks) => {
   const facetStage = {};
   uniqueRanks.forEach(r => {
     facetStage[`rank_${r}`] = [
-      { $match: { rank: { $gt: r } } },
+      { $match: { rating: { $gt: r } } },
       { $count: 'count' }
     ];
   });

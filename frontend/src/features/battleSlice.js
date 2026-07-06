@@ -2,15 +2,13 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   battleId: null,
-  battleType: '1v1',
+  battleType: 'random-duel',
   mode: 'ranked',
   status: 'waiting', // 'waiting' | 'active' | 'ended'
   problem: null, // { id, title, difficulty, description, examples, constraints, boilerplates }
   players: [], // [{ user, score, status, progress, language }]
   opponent: null, // { id, username, elo, status, progress, language }
-  teammate: null,
   opponents: [],
-  teamId: null,
   topic: '',
   timer: {
     total: 1200,
@@ -37,7 +35,6 @@ const initialState = {
   },
   lobbyStatus: 'idle', // 'idle' | 'queuing' | 'matched'
   invitedUser: null,
-  suggestedTopic: null,
   eloDetails: null,
   winnerId: null,
   aiAnalysis: null,
@@ -57,9 +54,6 @@ const battleSlice = createSlice({
         state.lobbyStatus = action.payload;
       }
     },
-    setSuggestedTopic: (state, action) => {
-      state.suggestedTopic = action.payload;
-    },
     setInvitedUser: (state, action) => {
       state.invitedUser = action.payload;
     },
@@ -71,7 +65,6 @@ const battleSlice = createSlice({
       state.mode = mode || 'ranked';
       state.problem = problem;
       state.players = players;
-      state.teamId = action.payload.teamId || null;
       state.status = 'active';
       const _tl = action.payload.timeLimit || problem?.timeLimit || 1200;
       state.timer.total = _tl;
@@ -84,32 +77,22 @@ const battleSlice = createSlice({
       state.output = initialState.output;
       state.eloDetails = null;
 
-      // Extract opponent, teammate and opponents
       const opponentPlayer = players.find(p => p.user._id !== myUserId);
       if (opponentPlayer) {
         state.opponent = {
           id: opponentPlayer.user._id,
           username: opponentPlayer.user.name || opponentPlayer.user.email.split('@')[0],
-          elo: opponentPlayer.user.rank || 1200,
+          elo: opponentPlayer.user.rating || 1200,
           status: opponentPlayer.status,
           progress: opponentPlayer.progress,
           language: opponentPlayer.language,
         };
       }
 
-      state.teammate = action.payload.teammate ? {
-        id: action.payload.teammate.user._id,
-        username: action.payload.teammate.user.name || action.payload.teammate.user.email.split('@')[0],
-        elo: action.payload.teammate.user.rank || 1200,
-        status: action.payload.teammate.status,
-        progress: action.payload.teammate.progress,
-        language: action.payload.teammate.language,
-      } : null;
-
       state.opponents = action.payload.opponents ? action.payload.opponents.map(opp => ({
         id: opp.user._id,
         username: opp.user.name || opp.user.email.split('@')[0],
-        elo: opp.user.rank || 1200,
+        elo: opp.user.rating || 1200,
         status: opp.status,
         progress: opp.progress,
         language: opp.language,
@@ -126,7 +109,6 @@ const battleSlice = createSlice({
       state.mode = mode || 'ranked';
       state.problem = problem;
       state.players = players;
-      state.teamId = action.payload.teamId || null;
       state.status = 'active';
       state.lobbyStatus = 'matched';
       state.output = initialState.output;
@@ -152,53 +134,23 @@ const battleSlice = createSlice({
         state.opponent = {
           id: opponentPlayer.user._id,
           username: opponentPlayer.user.name || opponentPlayer.user.email.split('@')[0],
-          elo: opponentPlayer.user.rank || 1200,
+          elo: opponentPlayer.user.rating || 1200,
           status: opponentPlayer.status,
           progress: opponentPlayer.progress,
           language: opponentPlayer.language,
         };
       }
 
-      state.teammate = action.payload.teammate ? {
-        id: action.payload.teammate.user._id,
-        username: action.payload.teammate.user.name || action.payload.teammate.user.email.split('@')[0],
-        elo: action.payload.teammate.user.rank || 1200,
-        status: action.payload.teammate.status,
-        progress: action.payload.teammate.progress,
-        language: action.payload.teammate.language,
-      } : null;
-
       state.opponents = action.payload.opponents ? action.payload.opponents.map(opp => ({
         id: opp.user._id,
         username: opp.user.name || opp.user.email.split('@')[0],
-        elo: opp.user.rank || 1200,
+        elo: opp.user.rating || 1200,
         status: opp.status,
         progress: opp.progress,
         language: opp.language,
       })) : [];
     },
-    updateOpponentStatus: (state, action) => {
-      const { userId, status, progress, language } = action.payload;
-      
-      if (state.opponent && (!userId || state.opponent.id === userId)) {
-        if (status) state.opponent.status = status;
-        if (progress !== undefined) state.opponent.progress = progress;
-        if (language) state.opponent.language = language;
-      }
-      if (state.teammate && state.teammate.id === userId) {
-        if (status) state.teammate.status = status;
-        if (progress !== undefined) state.teammate.progress = progress;
-        if (language) state.teammate.language = language;
-      }
-      if (state.opponents && state.opponents.length > 0) {
-        const oppIndex = state.opponents.findIndex(o => o.id === userId);
-        if (oppIndex !== -1) {
-          if (status) state.opponents[oppIndex].status = status;
-          if (progress !== undefined) state.opponents[oppIndex].progress = progress;
-          if (language) state.opponents[oppIndex].language = language;
-        }
-      }
-    },
+
     // Server-authoritative tick: called every second with the value computed
     // from battle.startTime so both users always see identical time.
     setTimerRemaining: (state, action) => {
@@ -262,10 +214,8 @@ const battleSlice = createSlice({
 export const {
   setLobbyStatus,
   setSuggestedTopic,
-  setInvitedUser,
   initBattle,
   resumeBattle,
-  updateOpponentStatus,
   tickTimer,
   setTimerRemaining,
   setOutputState,

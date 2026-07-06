@@ -63,7 +63,7 @@ const CodingWorkspace = ({
         }}
       />
 
-      <div className="flex-1 w-full px-4 flex flex-col gap-3 min-h-0 relative z-10">
+      <div className="flex-1 w-full px-4 pt-1 flex flex-col gap-1 min-h-0 relative z-10">
         {/* Render Header component */}
         {headerComponent && <div className="shrink-0">{headerComponent}</div>}
 
@@ -96,6 +96,7 @@ const CodingWorkspace = ({
               showRunButton={showRunButton}
               showSubmitButton={showSubmitButton}
               problem={problem}
+              mode={mode}
             />
           </ResizableLayout>
         </div>

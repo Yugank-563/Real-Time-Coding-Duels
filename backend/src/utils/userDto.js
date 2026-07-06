@@ -5,7 +5,7 @@ export const formatUserDTO = (user) => {
     username: user.username || user.email.split('@')[0],
     name: user.name || '',
     role: user.role,
-    rating: user.rank || 1200,
+    rating: user.rating || 1200,
     bio: user.bio || '',
     country: user.country || '',
     joinDate: user.createdAt,

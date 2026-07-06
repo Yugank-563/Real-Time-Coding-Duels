@@ -1,38 +1,29 @@
-import '../../styles/auth.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 const Pagination = ({ pagination, setPage, label = 'items' }) => {
   if (!pagination || pagination.pages <= 1) return null;
 
   const { page, pages, total } = pagination;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-      <div style={{ fontSize: '0.85rem', color: 'var(--auth-muted)' }}>
-        Page <span style={{ color: 'var(--auth-heading)', fontWeight: 600 }}>{page}</span> of {pages} ({total} {label})
+    <div className="flex items-center justify-between mt-6">
+      <div className="text-[0.85rem] text-[var(--text-muted)]">
+        Page <span className="text-[var(--text-primary)] font-semibold">{page}</span> of {pages} ({total} {label})
       </div>
       
-      <div style={{ display: 'flex', gap: '0.4rem' }}>
+      <div className="flex gap-1.5">
         <button 
           onClick={() => setPage(Math.max(1, page - 1))}
           disabled={page === 1}
-          style={{
-            background: 'var(--auth-card)',
-            border: '1px solid var(--auth-card-border)',
-            color: page === 1 ? 'var(--auth-muted)' : 'var(--auth-heading)',
-            opacity: page === 1 ? 0.5 : 1,
-            cursor: page === 1 ? 'not-allowed' : 'pointer',
-            padding: '0.4rem 0.6rem',
-            borderRadius: '0.4rem',
-            display: 'flex',
-            alignItems: 'center',
-            transition: 'background 0.2s'
-          }}
+          className={`bg-[var(--bg-surface)] border border-[var(--bg-overlay)] px-2.5 py-1.5 rounded-md flex items-center transition-colors ${
+            page === 1 ? 'text-[var(--text-muted)] opacity-50 cursor-not-allowed' : 'text-[var(--text-primary)] hover:bg-[var(--bg-overlay)] cursor-pointer'
+          }`}
         >
           <ChevronLeft size={16} />
         </button>
 
         {/* Page Numbers */}
-        <div style={{ display: 'flex', gap: '0.2rem' }}>
+        <div className="flex gap-1">
           {[...Array(pages)].map((_, i) => {
             const p = i + 1;
             // Simple logic: show first, last, and +/- 2 from current
@@ -42,27 +33,17 @@ const Pagination = ({ pagination, setPage, label = 'items' }) => {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  style={{
-                    background: isActive ? 'var(--auth-btn)' : 'var(--auth-card)',
-                    color: isActive ? 'var(--auth-btn-text)' : 'var(--auth-heading)',
-                    border: `1px solid ${isActive ? 'var(--auth-btn)' : 'var(--auth-card-border)'}`,
-                    borderRadius: '0.4rem',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.85rem',
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`w-8 h-8 rounded-md flex items-center justify-center text-[0.85rem] transition-all border ${
+                    isActive
+                      ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border-[var(--btn-primary-bg)] font-bold'
+                      : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--bg-overlay)] font-medium hover:bg-[var(--bg-overlay)]'
+                  }`}
                 >
                   {p}
                 </button>
               );
             } else if (p === page - 3 || p === page + 3) {
-              return <span key={p} style={{ color: 'var(--auth-muted)', padding: '0 0.2rem', alignSelf: 'flex-end' }}>...</span>;
+              return <span key={p} className="text-[var(--text-muted)] px-1 self-end">...</span>;
             }
             return null;
           })}
@@ -71,18 +52,9 @@ const Pagination = ({ pagination, setPage, label = 'items' }) => {
         <button 
           onClick={() => setPage(Math.min(pages, page + 1))}
           disabled={page === pages}
-          style={{
-            background: 'var(--auth-card)',
-            border: '1px solid var(--auth-card-border)',
-            color: page === pages ? 'var(--auth-muted)' : 'var(--auth-heading)',
-            opacity: page === pages ? 0.5 : 1,
-            cursor: page === pages ? 'not-allowed' : 'pointer',
-            padding: '0.4rem 0.6rem',
-            borderRadius: '0.4rem',
-            display: 'flex',
-            alignItems: 'center',
-            transition: 'background 0.2s'
-          }}
+          className={`bg-[var(--bg-surface)] border border-[var(--bg-overlay)] px-2.5 py-1.5 rounded-md flex items-center transition-colors ${
+            page === pages ? 'text-[var(--text-muted)] opacity-50 cursor-not-allowed' : 'text-[var(--text-primary)] hover:bg-[var(--bg-overlay)] cursor-pointer'
+          }`}
         >
           <ChevronRight size={16} />
         </button>

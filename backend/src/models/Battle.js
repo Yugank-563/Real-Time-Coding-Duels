@@ -26,6 +26,10 @@ const battleSchema = new mongoose.Schema(
           type: String,
           default: '',
         },
+        ratingChange: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
     problem: {
@@ -35,7 +39,7 @@ const battleSchema = new mongoose.Schema(
     },
     battleType: {
       type: String,
-      enum: ['1v1', 'sprint', 'topic', 'custom'],
+      enum: ['random-duel', 'timed-sprint', 'topic-duel'],
       required: true,
     },
     mode: {

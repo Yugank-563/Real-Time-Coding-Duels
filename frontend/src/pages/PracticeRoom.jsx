@@ -2,7 +2,9 @@ import { useParams } from 'react-router-dom';
 import { useProblemFetch, useEditorState, useSubmission, useTestcaseManager, useDocumentTitle } from '../hooks/index';
 import { Loader2 } from 'lucide-react';
 import { CodingWorkspace } from '../workspace/index';
-export const PracticeRoom = () => {
+
+
+const PracticeRoom = () => {
   const { slug } = useParams();
   useDocumentTitle(slug || 'Practice Room');
 
@@ -27,9 +29,9 @@ export const PracticeRoom = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F1A] text-[#E0E6F0] flex flex-col items-center justify-center font-sans gap-3">
-        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-        <span className="text-xs text-[#7A9AB8] font-medium tracking-wide">Loading problem details...</span>
+      <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
+        <Loader2 className="w-8 h-8 text-[var(--accent-primary)] animate-spin" />
+        <span className="text-xs text-[var(--text-muted)] font-medium tracking-wide">Loading problem details...</span>
       </div>
     );
   }
@@ -43,8 +45,8 @@ export const PracticeRoom = () => {
       language={editor.selectedLanguage}
       onRun={handleRun}
       onSubmit={handleSubmit}
-      isRunning={submission.isExecuting}
-      isSubmitting={submission.isExecuting}
+      isRunning={submission.isRunning}
+      isSubmitting={submission.isSubmitting}
       cases={testcase.cases}
       vars={testcase.vars}
       activeCase={testcase.activeCase}

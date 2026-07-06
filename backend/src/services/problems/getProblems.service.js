@@ -1,7 +1,7 @@
 import redis from '../../config/redis.js';
 import { getPaginatedProblems, countProblems } from '../../repositories/index.js';
 import { escapeRegex } from '../../utils/regexUtils.js';
-import { toLeetCode } from '../../config/topicMap.js';
+import topicMap from '../../config/topicMap.js';
 
 export const getProblemsService = async ({ pageNum, limitNum, search, difficulty, tag }) => {
   const query = {};
@@ -17,7 +17,7 @@ export const getProblemsService = async ({ pageNum, limitNum, search, difficulty
     query.difficulty = { $regex: new RegExp(`^${safeDifficulty}$`, 'i') };
   }
   if (tag && tag !== 'ALL') {
-    const slugTag = toLeetCode[tag] || tag.toLowerCase().replace(/\s+/g, '-');
+    const slugTag = topicMap[tag] || tag.toLowerCase().replace(/\s+/g, '-');
     query.tags = { $regex: new RegExp(`^(${escapeRegex(tag)}|${escapeRegex(slugTag)})$`, 'i') };
   }
 

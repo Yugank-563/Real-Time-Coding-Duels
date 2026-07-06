@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { useToast, useDocumentTitle } from '../../hooks/index';
 import { api } from '../../utils/index';
-import '../../styles/auth.css';
 import {
-  AuthInput, AuthButton, AuthLogo,
+  Logo, Input, Button,
   OTPBoxInput, StepIndicator, ResendTimer
 } from '../../components/index';
 
@@ -16,9 +15,7 @@ import {
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const toast    = useToast();
-  const { theme } = useTheme();
-  useDocumentTitle('Forgot Password');
-  const isLight   = theme === 'light';
+    useDocumentTitle('Forgot Password');
 
   const [stepIdx,   setStepIdx]   = useState(0);
   const [email,     setEmail]     = useState('');
@@ -33,90 +30,71 @@ const ForgotPasswordPage = () => {
   // Step 1: Send OTP
   const handleSendOTP = async (e) => {
     if (e) e.preventDefault();
-    if (!email) { setEmailErr('Email is required.'); toast.error('Validation Error', 'Email is required.'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { setEmailErr('Enter a valid email.'); toast.error('Validation Error', 'Enter a valid email.'); return; }
+    if (!email) { setEmailErr('Email is required.'); toast.error('Email is required.'); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { setEmailErr('Enter a valid email.'); toast.error('Enter a valid email.'); return; }
     setEmailErr(''); setLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
-      toast.success('OTP Dispatched', `Check your inbox at ${email}`);
+      toast.success('Check your email for the verification code');
       setStepIdx(1);
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to send OTP.';
-      setEmailErr(msg); toast.error('Error', msg);
+      setEmailErr(msg); toast.error(msg);
     } finally { setLoading(false); }
   };
 
   // Step 2: Verify OTP
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    if (otp.length !== 6) { setOtpErr('Enter a valid 6-digit code.'); toast.error('Validation Error', 'Enter a valid 6-digit code.'); return; }
+    if (otp.length !== 6) { setOtpErr('Enter a valid 6-digit code.'); toast.error('Enter a valid 6-digit code.'); return; }
     setOtpErr(''); setLoading(true);
     try {
       await api.post('/auth/verify-reset-otp', { email, otp });
-      toast.success('Code Verified', 'Set your new password.');
+      toast.success('Set your new password.');
       setStepIdx(2);
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid or expired code.';
-      setOtpErr(msg); toast.error('Verification Failed', msg);
+      setOtpErr(msg); toast.error(msg);
     } finally { setLoading(false); }
   };
 
   // Step 3: Reset password
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!newPw || newPw.length < 6) { setPwErr('Min. 6 characters.'); toast.error('Validation Error', 'Min. 6 characters.'); return; }
-    if (newPw !== confirmPw)         { setPwErr('Passwords do not match.'); toast.error('Validation Error', 'Passwords do not match.'); return; }
+    if (!newPw || newPw.length < 6) { setPwErr('Min. 6 characters.'); toast.error('Min. 6 characters.'); return; }
+    if (newPw !== confirmPw)         { setPwErr('Passwords do not match.'); toast.error('Passwords do not match.'); return; }
     setPwErr(''); setLoading(true);
     try {
       await api.post('/auth/reset-password', { email, otp, newPassword: newPw });
-      toast.success('Password Reset!', 'You can now sign in with your new password.');
-      setStepIdx(3);
+      toast.success('Password updated successfully');
+      navigate('/login');
     } catch (err) {
       const msg = err.response?.data?.message || 'Reset failed.';
-      setPwErr(msg); toast.error('Reset Failed', msg);
+      setPwErr(msg); toast.error(msg);
     } finally { setLoading(false); }
   };
 
   const stepContent = [
     { title: 'Forgot Password?', sub: 'Enter your email to receive a reset code.' },
-    { title: 'Check your email', sub: `We sent a 6-digit code to ${email || 'your email'}.` },
+    { title: 'Check your email', sub: 'We sent a 6-digit code to your email.' },
     { title: 'Set New Password', sub: 'Choose a strong password for your account.' },
   ];
   const { title, sub } = stepContent[Math.min(stepIdx, 2)];
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme}>
-      <div className="auth-card">
-        <AuthLogo isLight={isLight} />
+    <div className="page-bg">
+      <div className="card">
+        <Logo className="mx-auto mb-4" disableAnimation={true} />
 
-        {/* Success screen */}
-        {stepIdx === 3 ? (
-          <div style={{ textAlign: 'center', padding: '0.5rem 0 0.25rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🎉</div>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 700,
-              color: 'var(--auth-heading)', margin: '0 0 0.4rem' }}>
-              Password Updated!
-            </h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--auth-muted)',
-              marginBottom: '1.5rem', lineHeight: 1.5 }}>
-              Your password has been successfully reset. Sign in to continue.
-            </p>
-            <AuthButton onClick={() => navigate('/login')}>
-              Go to Sign In →
-            </AuthButton>
-          </div>
-        ) : (
-          <>
+
             <StepIndicator current={stepIdx} />
 
             {/* Heading */}
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-              <h1 style={{ fontSize: '1.2rem', fontWeight: 700,
-                color: 'var(--auth-heading)', margin: 0, letterSpacing: '-0.01em' }}>
+            <div className="text-center mb-5">
+              <h1 className="text-[1.2rem] font-bold text-[var(--text-primary)] m-0 tracking-tight">
                 {title}
               </h1>
-              <p style={{ fontSize: '0.78rem', color: 'var(--auth-muted)',
-                marginTop: '0.35rem', lineHeight: 1.5 }}>
+              <p className="text-[0.78rem] text-[var(--text-muted)] mt-1.5 leading-relaxed">
                 {sub}
               </p>
             </div>
@@ -124,8 +102,8 @@ const ForgotPasswordPage = () => {
             {/* Step 0: Email */}
             {stepIdx === 0 && (
               <form onSubmit={handleSendOTP} noValidate
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <AuthInput
+                className="flex flex-col gap-[0.85rem]">
+                <Input
                   label="Email address"
                   type="email" id="fp-email" name="email"
                   value={email}
@@ -133,24 +111,24 @@ const ForgotPasswordPage = () => {
                   placeholder="you@example.com"
                   required autoComplete="email" error={emailErr}
                 />
-                <AuthButton type="submit" loading={loading}>
+                <Button variant="primary" size="full" type="submit" loading={loading}>
                   Send Reset Code
-                </AuthButton>
+                </Button>
               </form>
             )}
 
             {/* Step 1: OTP */}
             {stepIdx === 1 && (
               <form onSubmit={handleVerifyOTP} noValidate
-                style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                className="flex flex-col gap-4">
                 <OTPBoxInput
                   value={otp}
                   onChange={v => { setOtp(v); setOtpErr(''); }}
                   error={otpErr}
                 />
-                <AuthButton type="submit" loading={loading}>
+                <Button variant="primary" size="full" type="submit" loading={loading}>
                   Verify Code
-                </AuthButton>
+                </Button>
                 <ResendTimer onResend={handleSendOTP} />
               </form>
             )}
@@ -158,8 +136,8 @@ const ForgotPasswordPage = () => {
             {/* Step 2: New Password */}
             {stepIdx === 2 && (
               <form onSubmit={handleResetPassword} noValidate
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <AuthInput
+                className="flex flex-col gap-[0.85rem]">
+                <Input
                     label="New password"
                     type="password" id="fp-new-password" name="newPassword"
                     value={newPw}
@@ -167,7 +145,7 @@ const ForgotPasswordPage = () => {
                     placeholder="Min. 6 characters"
                     required autoComplete="new-password" error={pwErr}
                   />
-                <AuthInput
+                <Input
                   label="Confirm password"
                   type="password" id="fp-confirm-password" name="confirmPassword"
                   value={confirmPw}
@@ -175,21 +153,11 @@ const ForgotPasswordPage = () => {
                   placeholder="Confirm new password"
                   required autoComplete="new-password"
                 />
-                <AuthButton type="submit" loading={loading}>
+                <Button variant="primary" size="full" type="submit" loading={loading}>
                   Reset Password
-                </AuthButton>
+                </Button>
               </form>
             )}
-
-            <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-              <button type="button" className="auth-link"
-                style={{ fontSize: '0.78rem', color: 'var(--auth-muted)' }}
-                onClick={() => navigate('/login')}>
-                ← Back to Sign In
-              </button>
-            </p>
-          </>
-        )}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { findBattleByIdWithPopulated, findSubmissions } from '../../repositories
 export const getBattleSummaryService = async (battleId) => {
   const battle = await findBattleByIdWithPopulated(battleId, [
     'problem',
-    { path: 'players.user', select: 'name email rank xp level' }
+    { path: 'players.user', select: 'name email rating' }
   ]);
 
   if (!battle) {

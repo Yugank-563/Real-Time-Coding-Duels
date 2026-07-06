@@ -1,6 +1,4 @@
-import { findUserByUsernameExcludingPassword } from '../../repositories/index.js';
-import { getProfileBattleStats, getRatingHistoryBattles } from '../../repositories/index.js';
-import { getProfileSubmissionStats, getProfileDifficultyBreakdown } from '../../repositories/index.js';
+import { findUserByUsernameExcludingPassword, getProfileBattleStats, getProfileActivityHeatmap, countUsers, getRecentRankedBattles } from '../../repositories/index.js';
 
 export const getProfileService = async (username) => {
   // 1. Fetch main user details
@@ -16,82 +14,83 @@ export const getProfileService = async (username) => {
   const battleStats = await getProfileBattleStats(userId);
 
   const stats = battleStats[0] || { totalBattles: 0, wins: 0, battles: [] };
-  const losses = stats.totalBattles - stats.wins;
   const winRate = stats.totalBattles > 0
     ? Math.round((stats.wins / stats.totalBattles) * 1000) / 10
     : 0;
 
-  // 3. Submission stats aggregation
-  const submissionStats = await getProfileSubmissionStats(userId);
+  // 5. Activity Heatmap
+  const activityData = await getProfileActivityHeatmap(userId);
+  
+  // 6. Recent Ranked Battles
+  const rawRecentBattles = await getRecentRankedBattles(userId, 10);
+  const recentBattlesFormatted = rawRecentBattles.map(battle => {
+    // Find opponent from players array
+    const opponentData = battle.players.find(p => p.user._id.toString() !== userId.toString())?.user || {};
+    
+    // Determine battle type label
+    let typeLabel = 'Classic Battle';
+    if (battle.battleType === 'timed-sprint') typeLabel = 'Timed Sprint';
+    else if (battle.battleType === 'random-duel') typeLabel = 'Random Duel';
+    else if (battle.battleType === 'topic-duel') typeLabel = 'Topic Duel';
 
-  const subStats = submissionStats[0] || {
-    totalSubmissions: 0,
-    accepted: 0,
-    uniqueProblems: [],
-  };
+    // Determine result
+    const isWinner = battle.winner?.toString() === userId.toString();
 
-  const acceptanceRate = subStats.totalSubmissions > 0
-    ? Math.round((subStats.accepted / subStats.totalSubmissions) * 1000) / 10
-    : 0;
+    const myData = battle.players.find(p => p.user._id.toString() === userId.toString()) || {};
 
-  // 4. Problem difficulty breakdown
-  const difficultyBreakdown = await getProfileDifficultyBreakdown(userId);
-
-  const difficulties = { Easy: 0, Medium: 0, Hard: 0 };
-  difficultyBreakdown.forEach((d) => {
-    if (d._id && difficulties.hasOwnProperty(d._id)) {
-      difficulties[d._id] = d.count;
-    }
+    return {
+      id: battle._id.toString(),
+      date: battle.createdAt,
+      type: typeLabel,
+      result: isWinner ? 'Victory' : 'Defeat',
+      opponent: opponentData.username || 'unknown',
+      opponentName: opponentData.name || '',
+      ratingChange: myData.ratingChange !== undefined ? myData.ratingChange : 0,
+    };
+  });
+  
+  const activityMapData = {};
+  activityData.forEach(item => {
+    activityMapData[item._id] = item.count;
   });
 
-  // 6. Rating history from battles (chronological ELO progression)
-  const ratingBattles = await getRatingHistoryBattles(userId);
+  const activityMap = [];
+  let totalSubmissions = 0;
+  let activeDays = 0;
+  let currentStreak = 0;
+  let maxStreak = 0;
 
-  const ratingHistory = [];
-  ratingHistory.push({
-    date: user.createdAt || new Date(),
-    rating: 1200,
-    name: 'Joined Platform',
-    rank: '-',
-    solved: '-',
-  }); // Join baseline
-
-  let elo = 1200;
-  ratingBattles.forEach((b) => {
-    const isWin = b.winner && b.winner.toString() === userId.toString();
-    elo += isWin ? 15 : -10;
-
-    const playerRec = b.players.find((p) => p.user.toString() === userId.toString());
-    const totalPlayers = b.players.length;
-    const rankVal = isWin ? 1 : 2;
-
-    const solvedVal =
-      isWin || (playerRec && playerRec.status === 'submitted') ? '1 / 1' : '0 / 1';
-
-    const battleTypeName = b.battleType
-      ? b.battleType.charAt(0).toUpperCase() + b.battleType.slice(1) + ' Battle'
-      : 'Battle';
-
-    ratingHistory.push({
-      date: b.createdAt,
-      rating: elo,
-      name: battleTypeName,
-      rank: `${rankVal} / ${totalPlayers}`,
-      solved: solvedVal,
-    });
-  });
-
-  if (ratingBattles.length > 0) {
-    const actualRating = user.rank || 1200;
-    const drift = actualRating - elo;
-    const driftPerBattle = drift / ratingBattles.length;
-
-    for (let i = 1; i < ratingHistory.length; i++) {
-      ratingHistory[i].rating = Math.round(
-        ratingHistory[i].rating + driftPerBattle * i
-      );
+  const now = new Date();
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    const count = activityMapData[dateStr] || 0;
+    
+    activityMap.push({ date: dateStr, count });
+    
+    totalSubmissions += count;
+    if (count > 0) {
+      activeDays++;
+      currentStreak++;
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+    } else {
+      currentStreak = 0;
     }
   }
+
+  const activityStats = {
+    totalSubmissions,
+    activeDays,
+    maxStreak
+  };
+
+  const actualRating = user.rating || 1200;
+
+  const globalRank = await countUsers({ rating: { $gt: actualRating } }) + 1;
 
   return {
     user: {
@@ -101,30 +100,16 @@ export const getProfileService = async (username) => {
       email: user.email,
       bio: user.bio || '',
       country: user.country || '',
-      rating: user.rank || 1200,
-      xp: user.xp || 0,
-      level: user.level || 1,
-      streaks: user.streaks || 0,
-      badges: user.badges || [],
-      joinDate: user.createdAt,
-      casualStats: user.casualStats || {
-        totalBattles: 0,
-        wins: 0,
-        losses: 0,
-        draws: 0
-      }
+      rating: actualRating,
+      globalRank: globalRank,
+      joinDate: user.createdAt
     },
     battleStats: {
       totalBattles: stats.totalBattles,
       winRate,
     },
-    submissionStats: {
-      totalSubmissions: subStats.totalSubmissions,
-      accepted: subStats.accepted,
-      acceptanceRate,
-      problemsSolved: subStats.uniqueProblems.length,
-    },
-    difficulties,
-    ratingHistory,
+    activityStats,
+    activityMap,
+    recentBattles: recentBattlesFormatted
   };
 };

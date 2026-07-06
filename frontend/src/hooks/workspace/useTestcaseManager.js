@@ -68,4 +68,3 @@ export const useTestcaseManager = (initialVars = ['input'], initialCases = [['']
     handleCaseInputChange,
   };
 };
-export default useTestcaseManager;

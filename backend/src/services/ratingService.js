@@ -1,12 +1,7 @@
 import { findUserById, updateUserById } from '../repositories/index.js';
 
-/**
- * Calculates new Elo ratings for two players after a battle.
- * Formula:
- * Expected = 1 / (1 + 10^((opponentElo - myElo) / 400))
- * NewElo = OldElo + K * (actualScore - expectedScore)
- */
-export const calculateElo = (myElo, opponentElo, actualScore, K = 32) => {
+// Calculates new Elo rating
+const calculateElo = (myElo, opponentElo, actualScore, K = 32) => {
   const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - myElo) / 400));
   const newElo = Math.round(myElo + K * (actualScore - expectedScore));
   return {
@@ -15,13 +10,7 @@ export const calculateElo = (myElo, opponentElo, actualScore, K = 32) => {
   };
 };
 
-/**
- * Process ratings and stats after a battle.
- * @param {string} userId - Player A ID
- * @param {string} opponentId - Player B ID
- * @param {number} actualScore - 1 for Win, 0 for Loss, 0.5 for Draw
- * @param {string} mode - 'ranked' or 'casual'
- */
+// Process ratings/stats after battle
 export const processBattleResult = async (userId, opponentId, actualScore, mode = 'ranked') => {
   const user = await findUserById(userId);
   const opponent = await findUserById(opponentId);
@@ -31,53 +20,37 @@ export const processBattleResult = async (userId, opponentId, actualScore, mode 
   }
 
   if (mode === 'casual') {
-    // ── Casual Match ──
-    const userUpdate = {
-      $inc: { 'casualStats.totalBattles': 1 }
-    };
-    if (actualScore === 1) userUpdate.$inc['casualStats.wins'] = 1;
-    else if (actualScore === 0) userUpdate.$inc['casualStats.losses'] = 1;
-    else userUpdate.$inc['casualStats.draws'] = 1;
-
-    const oppUpdate = {
-      $inc: { 'casualStats.totalBattles': 1 }
-    };
-    if (actualScore === 1) oppUpdate.$inc['casualStats.losses'] = 1; // opponent lost
-    else if (actualScore === 0) oppUpdate.$inc['casualStats.wins'] = 1;
-    else oppUpdate.$inc['casualStats.draws'] = 1;
-
-    await updateUserById(userId, userUpdate);
-    await updateUserById(opponentId, oppUpdate);
+    // Casual Match
 
     return {
       userId,
       username: user.username || user.email.split('@')[0],
-      oldElo: user.rank || 1200,
-      newElo: user.rank || 1200,
+      oldElo: user.rating || 1200,
+      newElo: user.rating || 1200,
       eloChange: 0,
       opponent: {
         userId: opponentId,
         username: opponent.username || opponent.email.split('@')[0],
-        oldElo: opponent.rank || 1200,
-        newElo: opponent.rank || 1200,
+        oldElo: opponent.rating || 1200,
+        newElo: opponent.rating || 1200,
         eloChange: 0,
       }
     };
   }
 
-  // ── Ranked Match ──
-  const myElo = user.rank || 1200;
-  const oppElo = opponent.rank || 1200;
+  // Ranked Match
+  const myElo = user.rating || 1200;
+  const oppElo = opponent.rating || 1200;
 
   // 1. Calculate Elo Change
   const { newElo: myNewElo, change: myEloChange } = calculateElo(myElo, oppElo, actualScore);
   const { newElo: oppNewElo, change: oppEloChange } = calculateElo(oppElo, myElo, 1 - actualScore);
 
   // 2. Update Player A (User)
-  await updateUserById(userId, { rank: myNewElo });
+  await updateUserById(userId, { rating: myNewElo });
 
   // 3. Update Player B (Opponent)
-  await updateUserById(opponentId, { rank: oppNewElo });
+  await updateUserById(opponentId, { rating: oppNewElo });
 
   return {
     userId,

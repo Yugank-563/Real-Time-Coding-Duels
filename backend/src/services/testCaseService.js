@@ -25,9 +25,7 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { b2Client, B2_BUCKET_NAME } from '../config/b2Client.js';
 import redis from '../config/redis.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Pads a number to 3 digits, e.g. 1 → "001", 42 → "042", 100 → "100"
 //  
@@ -78,9 +76,7 @@ async function fetchObjectFromB2(key, retrying = false) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Public API & Source Fetchers
-// ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchFromLocal(problem, folderPath, actualCount) {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -170,7 +166,7 @@ export async function getTestCases(problem, limit) {
     );
   }
 
-  // ── Step 1: Check Redis cache ────────────────────────────────────────────
+  // Step 1: Check Redis cache
   const actualCount = Math.min(limit, totalCount);
   const cacheKey = `testcases:${problem.titleSlug}:${actualCount}`;
 
@@ -184,7 +180,7 @@ export async function getTestCases(problem, limit) {
     console.warn('[TestCaseService] Redis cache read failed, proceeding to fetch:', cacheErr.message);
   }
 
-  // ── Step 2: Route to correct source ──────────────────────────────────────
+  // Step 2: Route to correct source
   let source = process.env.TESTCASE_SOURCE;
   if (!source || !['local', 'b2'].includes(source)) {
     console.warn(`[TestCaseService] Invalid or missing TESTCASE_SOURCE ("${source}"), defaulting to "local"`);
@@ -198,7 +194,7 @@ export async function getTestCases(problem, limit) {
     testCases = await fetchFromLocal(problem, folderPath, actualCount);
   }
 
-  // ── Step 3: Cache in Redis for 6 hours (21600 seconds) ───────────────────
+  // Step 3: Cache in Redis for 6 hours
   try {
     await redis.setEx(cacheKey, 21600, JSON.stringify(testCases));
     console.log(`[TestCaseService] Cached ${actualCount} test cases for "${problem.titleSlug}" (TTL: 6h)`);
