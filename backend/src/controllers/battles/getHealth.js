@@ -25,5 +25,3 @@ export const getHealth = async (req, res, next) => {
     sources: results
   });
 };
-
-export default getHealth;

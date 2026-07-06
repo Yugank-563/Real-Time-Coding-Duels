@@ -7,7 +7,7 @@ export const leaveQueue = async (req, res, next) => {
       return res.status(400).json({ message: 'battleType parameter is required.' });
     }
 
-    if (battleType === 'topic') {
+    if (battleType === 'topic-duel') {
       if (!topic) {
         return res.status(400).json({ message: 'topic parameter is required.' });
       }

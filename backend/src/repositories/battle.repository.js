@@ -2,13 +2,13 @@ import { Battle } from '../models/index.js';
 
 
 // Create
-export const create = (data) => Battle.create(data);
+const create = (data) => Battle.create(data);
 
 
 // Find
-export const findById = (id) => Battle.findById(id);
+const findById = (id) => Battle.findById(id);
 
-export const findByIdWithPopulated = (id, populations = []) => {
+const findByIdWithPopulated = (id, populations = []) => {
   let query = Battle.findById(id);
   populations.forEach(p => {
     query = query.populate(p);
@@ -16,18 +16,11 @@ export const findByIdWithPopulated = (id, populations = []) => {
   return query;
 };
 
+const findBattleByRoomCode = (roomCode) => 
+  Battle.findOne({ roomCode });
 
-export const getRatingHistory = (userId) => 
-  Battle.find({
-    'players.user': userId,
-    status: 'ended',
-    mode: { $ne: 'casual' }
-  })
-    .select('winner players createdAt battleType')
-    .sort({ createdAt: 1 })
-    .lean();
 
-export const findActiveBattleByUserId = (userId) => 
+const findActiveBattleByUserId = (userId) => 
   Battle.findOne({
     'players.user': userId,
     status: { $in: ['active', 'waiting'] },
@@ -35,16 +28,16 @@ export const findActiveBattleByUserId = (userId) =>
 
 
 // Search
-export const count = (query) => Battle.countDocuments(query);
+const count = (query) => Battle.countDocuments(query);
 
 
 // Update
-export const updateById = (id, updateData) => 
+const updateById = (id, updateData) => 
   Battle.findByIdAndUpdate(id, updateData, { new: true });
 
 
 // Aggregate
-export const getProfileStats = (userId) => 
+const getProfileStats = (userId) => 
   Battle.aggregate([
     {
       $match: {
@@ -78,6 +71,18 @@ export const getProfileStats = (userId) =>
     },
   ]);
 
+export const getRecentRankedBattles = (userId, limitNum = 10) => 
+  Battle.find({
+    'players.user': userId,
+    mode: 'ranked',
+    status: 'ended'
+  })
+  .sort({ createdAt: -1 })
+  .limit(limitNum)
+  .populate('players.user', 'username name email')
+  .populate('problem', 'difficulty titleSlug')
+  .lean();
+
 
 // Backward Compatibility Aliases
 export const createBattle = create;
@@ -86,4 +91,3 @@ export const findBattleByIdWithPopulated = findByIdWithPopulated;
 export const countBattles = count;
 export const updateBattleById = updateById;
 export const getProfileBattleStats = getProfileStats;
-export const getRatingHistoryBattles = getRatingHistory;

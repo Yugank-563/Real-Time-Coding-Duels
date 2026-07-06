@@ -4,7 +4,7 @@ import { countBattles } from '../../repositories/index.js';
 export const getLobbyStatsService = async () => {
   const getCount = async (mode, battleType) => {
     let queueSize = 0;
-    if (battleType === 'topic') {
+    if (battleType === 'topic-duel') {
       const keys = await redis.keys(`matchmaking:queue:${mode}:topic:*`) || [];
       for (const key of keys) {
         queueSize += await redis.zCard(key) || 0;
@@ -16,18 +16,15 @@ export const getLobbyStatsService = async () => {
     return queueSize + activeBattles * 2;
   };
 
-  const rankedCount = (await getCount('ranked', '1v1')) + (await getCount('casual', '1v1'));
-  const sprintCount = (await getCount('ranked', 'sprint')) + (await getCount('casual', 'sprint'));
-  const topicCount = (await getCount('ranked', 'topic')) + (await getCount('casual', 'topic'));
+  const rankedCount = (await getCount('ranked', 'random-duel')) + (await getCount('casual', 'random-duel'));
+  const sprintCount = (await getCount('ranked', 'timed-sprint')) + (await getCount('casual', 'timed-sprint'));
+  const topicCount = (await getCount('ranked', 'topic-duel')) + (await getCount('casual', 'topic-duel'));
 
-  // Custom is effectively deprecated but keeping it for safety
-  const activeCustomBattles = await countBattles({ battleType: 'custom', status: 'active' });
-  const customCount = (activeCustomBattles * 2);
+
 
   return {
     ranked: rankedCount,
-    sprint: sprintCount,
-    topic: topicCount,
-    custom: customCount
+    'timed-sprint': sprintCount,
+    topic: topicCount
   };
 };

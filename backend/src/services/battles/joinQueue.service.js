@@ -9,9 +9,9 @@ export const joinQueueService = async (userId, battleType, topic, mode = 'ranked
     throw err;
   }
 
-  const elo = user.rank || 1200;
+  const elo = user.rating || 1200;
 
-  if (battleType === 'topic') {
+  if (battleType === 'topic-duel') {
     if (!topic) {
       const err = new Error('topic parameter is required for topic battles.');
       err.status = 400;

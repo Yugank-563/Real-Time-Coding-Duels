@@ -16,7 +16,7 @@ export const getTopicsService = async () => {
     const casualCount = await redis.zCard(casualKey) || 0;
     
     // Check for active battles matching this exact topic
-    const activeBattles = await countBattles({ battleType: 'topic', status: 'active', topic: topic });
+    const activeBattles = await countBattles({ battleType: 'topic-duel', status: 'active', topic: topic });
     
     stats[topic] = rankedCount + casualCount + (activeBattles * 2);
   }
