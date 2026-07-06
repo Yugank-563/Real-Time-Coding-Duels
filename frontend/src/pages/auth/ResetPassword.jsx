@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { useToast, useDocumentTitle } from '../../hooks/index';
 import { api } from '../../utils/index';
-import '../../styles/auth.css';
 import {
-  AuthInput, AuthButton, AuthLogo,
+  Input, Button, Logo,
 } from '../../components/index';
 
 
@@ -13,9 +12,7 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { theme } = useTheme();
   useDocumentTitle('Reset Password');
-  const isLight = theme === 'light';
 
   const email = location.state?.email || '';
   const resetToken = location.state?.resetToken || '';
@@ -24,7 +21,6 @@ const ResetPasswordPage = () => {
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState({ password: '', confirm: '' });
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (!email) navigate('/forgot-password', { replace: true });
@@ -40,7 +36,7 @@ const ResetPasswordPage = () => {
     setErrors(next);
     if (!ok) {
       const first = Object.values(next).find(v => v);
-      toast.error('Validation Error', first);
+      toast.error(first);
     }
     return ok;
   };
@@ -51,59 +47,33 @@ const ResetPasswordPage = () => {
     setLoading(true);
     try {
       await api.post('/auth/reset-password', { email, resetToken, newPassword: password });
-      toast.success('Password Reset!', 'You can now sign in with your new password.');
-      setDone(true);
+      toast.success('Password updated successfully');
+      navigate('/login');
     } catch (err) {
       const msg = err.response?.data?.message || 'Reset failed. Try again.';
       setErrors(p => ({ ...p, password: msg }));
-      toast.error('Reset Failed', msg);
+      toast.error(msg);
     } finally { setLoading(false); }
   };
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme}>
-      <div className="auth-card">
-        <AuthLogo isLight={isLight} />
+    <div className="page-bg">
+      <div className="card">
+        <Logo className="mx-auto mb-4" disableAnimation={true} />
 
-        {done ? (
-          <div style={{ textAlign: 'center', padding: '0.5rem 0 0.25rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🎉</div>
-            <h2 style={{
-              fontSize: '1.15rem', fontWeight: 700,
-              color: 'var(--auth-heading)', margin: '0 0 0.4rem'
-            }}>
-              Password Updated!
-            </h2>
-            <p style={{
-              fontSize: '0.82rem', color: 'var(--auth-muted)',
-              marginBottom: '1.5rem', lineHeight: 1.5
-            }}>
-              Your password has been successfully reset. You can now sign in.
-            </p>
-            <AuthButton onClick={() => navigate('/login')}>
-              Go to Sign In →
-            </AuthButton>
-          </div>
-        ) : (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-              <h1 style={{
-                fontSize: '1.2rem', fontWeight: 700,
-                color: 'var(--auth-heading)', margin: 0, letterSpacing: '-0.01em'
-              }}>
+
+            <div className="text-center mb-5">
+              <h1 className="text-[1.2rem] font-bold text-[var(--text-primary)] m-0 tracking-tight">
                 Set New Password
               </h1>
-              <p style={{
-                fontSize: '0.78rem', color: 'var(--auth-muted)',
-                marginTop: '0.35rem', lineHeight: 1.5
-              }}>
+              <p className="text-[0.78rem] text-[var(--text-muted)] mt-1.5 leading-relaxed">
                 Choose a strong password for your account.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} noValidate
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <AuthInput
+              className="flex flex-col gap-[0.85rem]">
+              <Input
                 label="New password"
                 type="password" id="rp-password" name="password"
                 value={password}
@@ -112,7 +82,7 @@ const ResetPasswordPage = () => {
                 required autoComplete="new-password" error={errors.password}
               />
 
-              <AuthInput
+              <Input
                 label="Confirm password"
                 type="password" id="rp-confirm" name="confirm"
                 value={confirm}
@@ -121,20 +91,16 @@ const ResetPasswordPage = () => {
                 required autoComplete="new-password" error={errors.confirm}
               />
 
-              <AuthButton type="submit" loading={loading}>
+              <Button variant="primary" size="full" type="submit" loading={loading}>
                 Reset Password
-              </AuthButton>
+              </Button>
             </form>
 
-            <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-              <button type="button" className="auth-link"
-                style={{ fontSize: '0.78rem', color: 'var(--auth-muted)' }}
-                onClick={() => navigate('/login')}>
-                ← Back to Sign In
-              </button>
-            </p>
-          </>
-        )}
+            <div className="text-center mt-4">
+              <Button variant="link" onClick={() => navigate('/login')}>
+                Back to Login
+              </Button>
+            </div>
       </div>
     </div>
   );

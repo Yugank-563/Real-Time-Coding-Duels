@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast, useTheme, useDocumentTitle } from '../../hooks/index';
+import { useToast, useDocumentTitle } from '../../hooks/index';
 import { api } from '../../utils/index';
-import '../../styles/auth.css';
-import { AuthInput, AuthButton, AuthLogo } from '../../components/index';
+import { Input, Button, Logo } from '../../components/index';
 
 // SIGNUP PAGE
 const SignupPage = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { theme } = useTheme();
-  useDocumentTitle('Signup');
-  const isLight = theme === 'light';
+    useDocumentTitle('Signup');
 
   const [formData, setData] = useState({ email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '' });
@@ -35,7 +32,7 @@ const SignupPage = () => {
     setErrors(next);
     if (!ok) {
       const first = Object.values(next).find(v => v);
-      toast.error('Validation Error', first);
+      toast.error(first);
     }
     return ok;
   };
@@ -49,39 +46,35 @@ const SignupPage = () => {
         email: formData.email,
         password: formData.password,
       });
-      toast.success('OTP Dispatched!', `Verification email sent to ${formData.email}`);
+      toast.success('Verification code sent to your email');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed.';
       setErrors(p => ({ ...p, email: msg }));
-      toast.error('Registration Failed', msg);
+      toast.error(msg);
     } finally { setLoading(false); }
   };
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme}>
-      <div className="auth-card">
-        <AuthLogo isLight={isLight} />
+    <div className="page-bg">
+      <div className="card">
+        <Logo className="mx-auto mb-4" disableAnimation={true} />
 
         {/* Heading */}
-        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-          <h1 style={{
-            fontSize: '1.25rem', fontWeight: 700,
-            color: 'var(--auth-heading)', margin: 0,
-            letterSpacing: '-0.01em', lineHeight: 1.2
-          }}>
+        <div className="text-center mb-5">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] m-0 tracking-tight leading-snug">
             Create your account
           </h1>
-          <p style={{ fontSize: '0.83rem', color: 'var(--auth-muted)', marginTop: '0.4rem' }}>
+          <p className="text-[0.83rem] text-[var(--text-muted)] mt-1.5">
             Join the arena. Code. Compete. Conquer.
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate
-          style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          className="flex flex-col gap-3">
 
-          <AuthInput
+          <Input
             label="Email address"
             type="email" id="signup-email" name="email"
             value={formData.email} onChange={handleChange}
@@ -89,7 +82,7 @@ const SignupPage = () => {
             required autoComplete="email" error={errors.email}
           />
 
-          <AuthInput
+          <Input
             label="Password"
             type="password" id="signup-password" name="password"
             value={formData.password} onChange={handleChange}
@@ -98,7 +91,7 @@ const SignupPage = () => {
           />
 
 
-          <AuthInput
+          <Input
             label="Confirm password"
             type="password" id="signup-confirm-password" name="confirmPassword"
             value={formData.confirmPassword} onChange={handleChange}
@@ -106,21 +99,17 @@ const SignupPage = () => {
             required autoComplete="new-password" error={errors.confirmPassword}
           />
 
-          <div style={{ marginTop: '0.4rem' }}>
-            <AuthButton type="submit" loading={loading}>Register</AuthButton>
+          <div className="mt-1.5">
+            <Button variant="primary" size="full" type="submit" loading={loading}>Register</Button>
           </div>
         </form>
 
         {/* Action row */}
-        <div className="auth-action-row" style={{ marginTop: '0.8rem' }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--auth-muted)' }}>
-            Already registered?
-          </span>
-          <button type="button" id="goto-login-link"
-            className="auth-link" style={{ fontSize: '0.82rem' }}
-            onClick={() => navigate('/login')}>
+        <div className="action-row mt-3">
+          <span className="text-[0.78rem] text-[var(--text-muted)]">Already have an account?</span>
+          <Button variant="link" id="goto-login-link" onClick={() => navigate('/login')}>
             Sign In
-          </button>
+          </Button>
         </div>
       </div>
     </div>
