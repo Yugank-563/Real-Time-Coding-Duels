@@ -3,10 +3,17 @@ export const getTierColors = (elo = 1200) => {
   if (elo >= 2000) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.25)'  };
   if (elo >= 1700) return { color: '#60a5fa', bg: 'rgba(96,165,250,0.10)',  border: 'rgba(96,165,250,0.25)'  };
   if (elo >= 1400) return { color: '#34d399', bg: 'rgba(52,211,153,0.10)',  border: 'rgba(52,211,153,0.25)'  };
-  return { color: 'var(--auth-heading)', bg: 'transparent', border: 'transparent' };
+  return { color: 'var(--text-primary)', bg: 'transparent', border: 'transparent' };
 };
 
-export const getInitials = (name = '') => (name || '??').slice(0, 2).toUpperCase();
+export const getInitials = (primaryName = '', secondaryName = '') => {
+  const displayName = primaryName || secondaryName || 'U';
+  const parts = displayName.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0][0].toUpperCase();
+};
 
 export const winRateColor = (pct) => {
   if (pct >= 40) return '#22c55e';

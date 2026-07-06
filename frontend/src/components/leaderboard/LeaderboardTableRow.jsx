@@ -1,29 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 import { getTierColors, getInitials, winRateColor, MEDAL_STYLE } from '../../utils/index';
-import '../../styles/auth.css';
 
 const RankCell = ({ rank }) => {
   const medal = MEDAL_STYLE[rank];
   if (medal) {
     return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: '32px', height: '32px', borderRadius: '50%',
-        background: medal.bg, border: `1.5px solid ${medal.border}`,
-        color: medal.color, fontWeight: 800,
-        fontSize: '0.75rem', fontFamily: "'JetBrains Mono', monospace",
-        boxShadow: `0 0 8px ${medal.color}33`,
-      }}>
+      <span
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full font-extrabold text-xs font-mono"
+        style={{
+          background: medal.bg, border: `1.5px solid ${medal.border}`,
+          color: medal.color,
+          boxShadow: `0 0 8px ${medal.color}33`,
+        }}
+      >
         {rank}
       </span>
     );
   }
   return (
-    <span style={{
-      color: 'var(--auth-muted)', fontSize: '0.85rem',
-      fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-      width: '32px', display: 'inline-block', textAlign: 'center',
-    }}>
+    <span className="text-[var(--text-muted)] text-[0.85rem] font-mono font-bold w-8 inline-block text-center">
       {rank}
     </span>
   );
@@ -32,96 +27,61 @@ const RankCell = ({ rank }) => {
 const LeaderboardTableRow = ({ user, i, isPinned = false, myUserId }) => {
   const navigate = useNavigate();
   const isMe     = user._id?.toString() === myUserId?.toString();
-  const tier     = getTierColors(user.rank);
+  const tier     = getTierColors(user.rating);
   const winColor = winRateColor(user.winRate);
   const isTop3   = user.globalRank <= 3;
 
   return (
     <tr
       onClick={() => navigate(`/profile/${user.displayName}`)}
-      style={{
-        cursor: "pointer",
-        borderRadius: "0.5rem",
-        color: "var(--auth-heading)",
-        background: isPinned 
-          ? "transparent" 
-          : (i % 2 !== 0 ? "transparent" : "var(--auth-card)"),
-        outline: "none",
-        transition: "background 0.15s",
-      }}
-      className="hover:bg-[var(--auth-input-bg)]"
+      className={`cursor-pointer rounded-lg text-[var(--text-primary)] outline-none transition-colors duration-150 ${isPinned ? "bg-transparent" : (i % 2 !== 0 ? "bg-transparent" : "bg-[var(--bg-surface)]")}`}
     >
-      <td style={{ padding: "0.9rem 0.9rem", borderRadius: "0.5rem 0 0 0.5rem" }}>
+      <td className="p-3.5 rounded-l-lg">
         <RankCell rank={user.globalRank} />
       </td>
       
-      <td style={{ padding: "0.9rem 0.9rem", maxWidth: "240px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
-            background: isTop3
-              ? `linear-gradient(135deg, ${tier.color}, ${tier.color}88)`
-              : "linear-gradient(135deg, var(--auth-accent), #00F5C4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "0.7rem", fontWeight: 800,
-            color: isTop3 ? "#fff" : "#0D0F14",
-            border: isTop3 ? `1.5px solid ${tier.color}` : "none",
-            boxShadow: isTop3 ? `0 0 10px ${tier.color}44` : "none",
-          }}>
-            {getInitials(user.displayName)}
+      <td className="p-3.5 max-w-[240px]">
+        <div className="flex items-center gap-2.5">
+          <div 
+            className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[0.7rem] font-extrabold"
+            style={{
+              background: isTop3
+                ? `linear-gradient(135deg, ${tier.color}, ${tier.color}88)`
+                : "linear-gradient(135deg, var(--accent-primary), #00F5C4)",
+              color: isTop3 ? "#fff" : "#0D0F14",
+              border: isTop3 ? `1.5px solid ${tier.color}` : "none",
+              boxShadow: isTop3 ? `0 0 10px ${tier.color}44` : "none",
+            }}
+          >
+            {getInitials(user.name, user.username)}
           </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{
-              display: "flex", alignItems: "center",
-              gap: "0.4rem", flexWrap: "wrap",
-            }}>
-              <span style={{
-                fontWeight: 600, fontSize: "0.9rem",
-                color: isMe ? "var(--auth-accent)" : "var(--auth-heading)",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`font-semibold text-[0.9rem] overflow-hidden text-ellipsis whitespace-nowrap ${isMe ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`}>
                 {isMe ? "You" : `@${user.displayName}`}
               </span>
             </div>
           </div>
         </div>
       </td>
-      <td
-        className="hidden md:table-cell"
-        style={{
-          padding: "0.9rem 0.9rem",
-          fontSize: "0.85rem", color: "var(--auth-muted)",
-        }}
-      >
+      <td className="hidden md:table-cell p-3.5 text-[0.85rem] text-[var(--text-muted)]">
         {user.country || "—"}
       </td>
-      <td style={{
-        padding: "0.9rem 0.9rem", textAlign: "center",
-        fontFamily: "'JetBrains Mono', monospace",
-        fontWeight: 700, fontSize: "0.9rem",
-        color: tier.color,
-      }}>
-        {user.rank ?? "—"}
-      </td>
-      <td
-        className="hidden sm:table-cell"
-        style={{
-          padding: "0.9rem 0.9rem", textAlign: "center",
-          fontSize: "0.875rem", color: "var(--auth-heading)",
-        }}
+      <td 
+        className="p-3.5 text-center font-mono font-bold text-[0.9rem]"
+        style={{ color: tier.color }}
       >
+        {user.rating ?? "—"}
+      </td>
+      <td className="hidden sm:table-cell p-3.5 text-center text-sm text-[var(--text-primary)]">
         {user.battlesPlayed ?? 0}
       </td>
-      <td
-        className="hidden sm:table-cell"
-        style={{ padding: "0.9rem 0.9rem", textAlign: "center", borderRadius: "0 0.5rem 0.5rem 0" }}
-      >
-        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
-          <span style={{
-            fontSize: "0.875rem", fontWeight: 700,
-            color: user.battlesPlayed > 0 ? winColor : "var(--auth-muted)",
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
+      <td className="hidden sm:table-cell p-3.5 text-center rounded-r-lg">
+        <div className="inline-flex flex-col items-center gap-1">
+          <span 
+            className="text-sm font-bold font-mono"
+            style={{ color: user.battlesPlayed > 0 ? winColor : "var(--text-muted)" }}
+          >
             {user.battlesPlayed > 0 ? `${user.winRate}%` : "—"}
           </span>
         </div>

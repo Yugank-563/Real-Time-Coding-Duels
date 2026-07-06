@@ -3,14 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLeaderboard } from '../features/index';
 import { selectUser } from '../features/index';
-import { useTheme, useDocumentTitle } from '../hooks/index';
+import { useDocumentTitle } from '../hooks/index';
 import { LeaderboardTable, LeaderboardFilter, Pagination } from '../components/index';
-import '../styles/auth.css';
 import { Trophy } from 'lucide-react';
 
 const LeaderboardPage = () => {
-  const { theme } = useTheme();
-  useDocumentTitle('Leaderboard');
+    useDocumentTitle('Leaderboard');
 
   const dispatch    = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,7 +20,7 @@ const LeaderboardPage = () => {
 
   // ── URL → state ────────────────────────────────────────────────────
   const page    = parseInt(searchParams.get('page'))    || 1;
-  const sort    = searchParams.get('sort')              || 'rank';
+  const sort    = searchParams.get('sort')              || 'rating';
   const order   = searchParams.get('order')             || 'desc';
   const country = searchParams.get('country')           || 'ALL';
 
@@ -38,7 +36,7 @@ const LeaderboardPage = () => {
         val === '' ||
         val === 'ALL' ||
         (key === 'page'  && Number(val) === 1)  ||
-        (key === 'sort'  && val === 'rank')      ||
+        (key === 'sort'  && val === 'rating')      ||
         (key === 'order' && val === 'desc');
       if (isDefault) params.delete(key);
       else           params.set(key, String(val));
@@ -87,51 +85,26 @@ const LeaderboardPage = () => {
   };
 
   return (
-    <div
-      className="auth-page-bg"
-      data-auth-theme={theme}
-      style={{
-        minHeight: 'calc(100vh - 64px)',
-        padding: '1rem 0',
-        display: 'block',
-        overflowY: 'auto',
-      }}
-    >
+    <div className="w-full flex flex-col">
       <div className="w-full">
 
         {/* ── Page Header ── */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '0.5rem',
-              background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            }}>
+        <div className="mb-5">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="icon-box">
               <Trophy size={20} className="text-amber-400" />
             </div>
-            <h1 style={{
-              fontSize: '1.75rem', fontWeight: 800, margin: 0,
-              color: 'var(--auth-heading)', letterSpacing: '-0.02em',
-            }}>
+            <h1 className="text-[1.75rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
               Leaderboard
             </h1>
           </div>
 
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem',
-          }}>
-            <p style={{ fontSize: '0.9rem', color: 'var(--auth-muted)', margin: 0 }}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-[0.9rem] text-[var(--text-muted)] m-0">
               Top rated competitive coders ranked by Elo rating.
             </p>
             {total > 0 && (
-              <span style={{
-                fontSize: '0.8rem', fontWeight: 600,
-                color: 'var(--auth-muted)',
-                background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)',
-                padding: '0.25rem 0.75rem', borderRadius: '9999px',
-              }}>
+              <span className="text-[0.8rem] font-semibold text-[var(--text-muted)] bg-[var(--bg-surface)] border border-[var(--bg-overlay)] px-3 py-1 rounded-full">
                 {total.toLocaleString()} users
               </span>
             )}

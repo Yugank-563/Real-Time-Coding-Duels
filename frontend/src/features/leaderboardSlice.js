@@ -4,7 +4,7 @@ import { api } from '../utils/index';
 export const fetchLeaderboard = createAsyncThunk(
   'leaderboard/fetchLeaderboard',
   async (
-    { page = 1, limit = 20, search = '', sort = 'rank', order = 'desc', country = '' } = {},
+    { page = 1, limit = 20, search = '', sort = 'rating', order = 'desc', country = '' } = {},
     { rejectWithValue }
   ) => {
     try {
@@ -68,5 +68,4 @@ const leaderboardSlice = createSlice({
 });
 
 export const {} = leaderboardSlice.actions;
-export const selectLeaderboard    = (state) => state.leaderboard;
 export default leaderboardSlice.reducer;
