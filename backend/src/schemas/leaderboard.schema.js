@@ -6,7 +6,7 @@ export const getLeaderboardSchema = z.object({
     limit: z.string().regex(/^\d+$/).optional().transform(Number),
     search: z.string().max(100, 'Search query too long').optional(),
     country: z.string().max(100, 'Country query too long').optional(),
-    sort: z.enum(['rank', 'wins', 'winRate', 'battlesPlayed']).optional().default('rank'),
+    sort: z.enum(['rating', 'wins', 'winRate', 'battlesPlayed']).optional().default('rating'),
     order: z.enum(['asc', 'desc']).optional().default('desc'),
   }).passthrough(),
 });
