@@ -1,208 +1,172 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Globe, Calendar, User as UserIcon } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Globe, Calendar, User as UserIcon, Link as LinkIcon, Edit3 } from 'lucide-react';
+import { Button, AnimationState } from '../components/index';
 import { useProfile } from '../hooks/useProfile';
 import { useDocumentTitle } from '../hooks/index';
-import RatingChart from '../components/profile/RatingChart';
-import DifficultyRing from '../components/profile/DifficultyRing';
+import { getTierColors } from '../utils/index';
+
 import EditProfileModal from '../components/profile/EditProfileModal';
+import ActivityHeatmap from '../components/profile/ActivityHeatmap';
+import RecentBattles from '../components/profile/RecentBattles';
+import ProfileSkeleton from '../components/profile/ProfileSkeleton';
 
 const ProfilePage = () => {
   const { username } = useParams();
   useDocumentTitle(`${username}'s Profile`);
-  const { theme } = useTheme();
   const { profile, loading, isOwn, handleSave } = useProfile(username);
   const [editOpen, setEditOpen] = useState(false);
 
-  const renderBio = (text) => {
-    if (!text) return null;
-    const re = /(https?:\/\/[^\s]+)/g;
-    return text.split(re).map((part, i) =>
-      /^https?:\/\//.test(part)
-        ? <a key={i} href={part} target="_blank" rel="noopener noreferrer"
-             style={{ color: 'var(--auth-btn)', textDecoration: 'underline' }}
-             onClick={e => e.stopPropagation()}>{part}</a>
-        : part
-    );
-  };
 
   if (loading) return (
-    <div className="auth-page-bg" data-auth-theme={theme || 'dark'}>
-      <div className="auth-spinner" style={{ width: 20, height: 20 }} />
+    <div className="page-bg">
+      <ProfileSkeleton />
     </div>
   );
 
   if (!profile) return (
-    <div className="auth-page-bg" data-auth-theme={theme || 'dark'}>
-      <div className="auth-card" style={{ maxWidth: 320, textAlign: 'center', margin: 'auto' }}>
-        <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.65rem' }}>👤</span>
-        <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--auth-heading)', margin: 0 }}>
-          User Not Found
-        </h2>
-        <p style={{ fontSize: '0.8rem', color: 'var(--auth-muted)', margin: '0.3rem 0 0' }}>
-          @{username} doesn't exist on BattleCode.
-        </p>
-      </div>
+    <div className="page-bg flex items-center justify-center min-h-[70vh]">
+      <AnimationState 
+        variant="404" 
+        title="User Not Found" 
+        description={`@${username} doesn't exist on BattleCode.`} 
+      />
     </div>
   );
 
-  const { user, battleStats, submissionStats, difficulties, ratingHistory } = profile;
+  const { user, battleStats, activityStats } = profile;
 
-  /* card style shorthand */
-  const card = {
-    background: 'var(--auth-card)',
-    border: '1px solid var(--auth-card-border)',
-    borderRadius: '1rem',
-    padding: '1.15rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-    width: '100%',
-    maxWidth: '100%',
-    boxSizing: 'border-box',
-  };
-
-  /* meta row item */
-  const MetaRow = ({ icon: Icon, text }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-      <Icon size={13} style={{ color: 'var(--auth-muted)', flexShrink: 0 }} />
-      <span style={{ fontSize: '0.78rem', color: 'var(--auth-heading)' }}>{text}</span>
-    </div>
-  );
 
   return (
-    <div className="auth-page-bg" data-auth-theme={theme || 'dark'}
-         style={{ justifyContent: 'flex-start', padding: '0.75rem 1rem', overflow: 'visible', minHeight: 'auto' }}>
-
-      {/* ── Page container ── */}
-      <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto',
-                    boxSizing: 'border-box' }}>
-                    
-        {/* Header */}
-        <div style={{ marginBottom: '1rem', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '0.5rem', background: 'var(--auth-card)', border: '1px solid var(--auth-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <UserIcon size={20} color="var(--auth-accent)" />
+    <div className="w-full flex flex-col">
+      <div className="w-full">
+        
+        {/* ── HEADER NAVIGATION / BREADCRUMB AREA ── */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="icon-box">
+              <UserIcon size={20} color="var(--accent-primary)" />
             </div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--auth-heading)', letterSpacing: '-0.02em' }}>
-              {isOwn ? 'My Profile' : 'Profile'}
+            <h1 className="text-[1.75rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
+              {isOwn ? 'Your Profile' : `${user.name || user.username}'s Profile`}
             </h1>
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--auth-muted)', margin: 0 }}>
-            {isOwn ? 'Manage your personal information and track your statistics.' : `View ${user.username}'s statistics and battle history.`}
+          <p className="text-[0.9rem] text-[var(--text-muted)] m-0">
+            View competitive statistics, match history, and problem-solving progress.
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', alignItems: 'center' }}>
+        <div className="w-full flex flex-col gap-6 pb-12">
+        
+        {/* ── SECTION 1 & 2: PROFILE AND RATING CARDS ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* PROFILE IDENTITY CARD */}
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] shadow-sm rounded-3xl p-6 relative overflow-hidden flex flex-col items-center text-center">
+            <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-[var(--accent-primary)]/5 to-transparent pointer-events-none -z-0" />
+            
+            <div className="flex flex-col items-center relative z-10 w-full">
 
-          {/* ── CARD 1: PERSONAL PROFILE ── */}
-          <div className="auth-card" style={card}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-              
-              {/* Header profile info */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700,
-                               color: 'var(--auth-heading)', letterSpacing: '-0.01em',
-                               lineHeight: 1.2 }}>
-                    {user.name || user.username}
-                  </h1>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--auth-muted)', fontWeight: 500 }}>
+               
+               <div className="flex flex-col items-center w-full">
+                  <div className="flex items-center gap-2 justify-center leading-none mb-1">
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight m-0">
+                      {user.name || user.username}
+                    </h1>
+                  </div>
+                  <span className="text-[0.95rem] text-[var(--text-muted)] font-medium">
                     @{user.username}
                   </span>
-                </div>
+                  
+                  <div className="flex items-center justify-center gap-3 mt-3">
+                     {user.country && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--bg-overlay)]/30 text-[var(--text-muted)]">
+                          <Globe size={13} />
+                          <span className="text-[0.75rem] font-medium">{user.country}</span>
+                        </div>
+                     )}
+                     <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--bg-overlay)]/30 text-[var(--text-muted)]">
+                        <Calendar size={13} />
+                        <span className="text-[0.75rem] font-medium">Joined {new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="w-full mt-4 pt-4 border-t border-[var(--bg-overlay)] flex flex-col gap-3 text-left">
+                 {user.bio ? (
+                   <p className="text-[0.95rem] text-[var(--text-secondary)] leading-relaxed m-0 whitespace-pre-wrap">
+                     {user.bio}
+                   </p>
+                 ) : (
+                   <p className="text-[0.9rem] text-[var(--text-muted)] italic m-0">This user hasn't added a biography yet.</p>
+                 )}
+               </div>
 
-                {isOwn && (
-                  <button type="button" onClick={() => setEditOpen(true)}
-                          className="auth-btn-primary"
-                          style={{ background: 'transparent',
-                                   border: '1px solid var(--auth-btn)',
-                                   color: 'var(--auth-btn)', boxShadow: 'none',
-                                   padding: '0.4rem 1rem', fontSize: '0.78rem',
-                                   width: 'auto', letterSpacing: '0.02em', alignSelf: 'flex-start',
-                                   maxWidth: '140px' }}>
-                    Edit Profile
-                  </button>
-                )}
-              </div>
-
-              {/* Bio */}
-              {user.bio && (
-                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--auth-muted)',
-                            lineHeight: 1.55, wordBreak: 'break-word' }}>
-                  {renderBio(user.bio)}
-                </p>
-              )}
-
-              {/* Meta block */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--auth-card-border)' }}>
-                {user.country && <MetaRow icon={Globe} text={user.country} />}
-                <MetaRow icon={Calendar}
-                         text={`Joined ${new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`} />
-              </div>
+               {isOwn && (
+                 <div className="w-full mt-4 pt-4 border-t border-[var(--bg-overlay)] flex justify-center">
+                   <Button variant="outline" onClick={() => setEditOpen(true)} className="w-1/2 min-w-[150px] text-[0.85rem] py-2.5">
+                     Edit Profile
+                   </Button>
+                 </div>
+               )}
             </div>
           </div>
 
-          {/* ── CARD 2: BATTLE HISTORY ── */}
-          <div className="auth-card" style={card}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <RatingChart
-                data={ratingHistory}
-                currentRating={user.rating}
-                totalBattles={battleStats.totalBattles}
-                winRate={battleStats.winRate}
-              />
-            </div>
-          </div>
-
-          {/* ── CARD 3: PROBLEMS STATISTICS ── */}
-          <div className="auth-card" style={card}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <DifficultyRing
-                difficulties={difficulties}
-                totalSubmissions={submissionStats.totalSubmissions}
-              />
-            </div>
-          </div>
-
-          {/* ── CARD 4: CASUAL STATISTICS ── */}
-          <div className="auth-card" style={card}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--auth-card-border)', paddingBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--auth-heading)' }}>
-                  Casual Battles
+          {/* BATTLE RATING PERFORMANCE CARD */}
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] shadow-sm rounded-3xl p-6 relative overflow-hidden group flex flex-col justify-center">
+              
+              <div className="relative z-10 mb-4 pb-3 border-b border-[var(--bg-overlay)] flex flex-col items-start text-left">
+                <h3 className="text-[1.25rem] font-bold m-0 text-[var(--text-primary)] tracking-tight">
+                  Battle Rating
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--auth-muted)', margin: 0 }}>Unrated friendly matches.</p>
+                <p className="text-[0.85rem] text-[var(--text-muted)] m-0 mt-1 font-medium">Overall competitive performance.</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
-                <div style={{ background: 'var(--auth-card-border)', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: 'var(--auth-heading)' }}>
-                    {user.casualStats?.totalBattles || 0}
+              
+              <div className="grid grid-cols-2 relative z-10 w-full h-full">
+                {/* Rating */}
+                <div className="py-5 px-4 flex flex-col items-center justify-center border-b border-r border-[var(--bg-overlay)]">
+                  <span 
+                    className="text-4xl font-black leading-none mb-1.5 tracking-tighter"
+                    style={{ color: getTierColors(user.rating || 1200).color }}
+                  >
+                    {user.rating || 1200}
                   </span>
-                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--auth-muted)' }}>Played</span>
+                  <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">Rating</span>
                 </div>
-                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#10B981' }}>
-                    {user.casualStats?.wins || 0}
+                
+                {/* Global Rank */}
+                <div className="py-5 px-4 flex flex-col items-center justify-center border-b border-[var(--bg-overlay)]">
+                  <span className="text-4xl font-extrabold text-[var(--text-primary)] leading-none mb-1.5 tracking-tight">
+                    {user.globalRank ? `#${user.globalRank}` : '—'}
                   </span>
-                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#10B981' }}>Wins</span>
+                  <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">Rank</span>
                 </div>
-                <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#EF4444' }}>
-                    {user.casualStats?.losses || 0}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#EF4444' }}>Losses</span>
-                </div>
-                <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 800, color: '#F59E0B' }}>
-                    {user.casualStats?.draws || 0}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: '#F59E0B' }}>Draws</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
+                {/* Battles */}
+                <div className="py-5 px-4 flex flex-col items-center justify-center border-r border-[var(--bg-overlay)]">
+                  <span className="text-4xl font-bold text-[var(--text-primary)] leading-none mb-1.5 tracking-tight">
+                    {battleStats.totalBattles || 0}
+                  </span>
+                  <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">Battles</span>
+                </div>
+
+                {/* Win Rate */}
+                <div className="py-5 px-4 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-bold text-[#10B981] leading-none mb-1.5 tracking-tight">
+                    {battleStats.winRate || 0}%
+                  </span>
+                  <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">Win Rate</span>
+                </div>
+              </div>
+          </div>
         </div>
+
+        {/* ── SECTION 3: ACTIVITY HEATMAP ── */}
+        <ActivityHeatmap data={profile.activityMap} stats={profile.activityStats} />
+
+        {/* ── SECTION 5: RECENT BATTLES PLACEHOLDER ── */}
+        <RecentBattles data={profile.recentBattles} />
+
       </div>
 
       {/* Modal */}
@@ -214,6 +178,7 @@ const ProfilePage = () => {
           onSave={handleSave}
         />
       )}
+      </div>
     </div>
   );
 };
