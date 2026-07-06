@@ -26,7 +26,7 @@ export const submitCodeService = async (battleId, code, language, problemId, use
     }
   }
 
-  // ── Fetch test cases ────────────────────────────────────────────────
+  // Fetch test cases
   const storageConfigured =
     problem?.testCaseConfig?.totalCount > 0 &&
     problem?.testCaseConfig?.folderPath;

@@ -114,6 +114,7 @@ export const executeCodeService = async ({ userId, slug, code, language, customI
   const submission = await createSubmission({
     userId,
     problemId:       problem._id,
+    isSubmit:        !!isSubmit,
     code,
     language,
     verdict:         'pending',

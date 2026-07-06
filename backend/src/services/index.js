@@ -9,7 +9,6 @@ export * from './auth/verifyOtp.service.js';
 export * from './auth/me.service.js';
 
 // battles folder
-export * from './battles/createPrivateRoom.service.js';
 export * from './battles/getBattleDetails.service.js';
 export * from './battles/getBattleSummary.service.js';
 export * from './battles/getLobbyStats.service.js';

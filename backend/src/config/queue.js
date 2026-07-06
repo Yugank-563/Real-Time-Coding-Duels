@@ -16,7 +16,7 @@ if (redisUrl.startsWith('rediss://')) {
   };
 }
 
-export const ioRedisConnection = new Redis(redisUrl, connectionOptions);
+const ioRedisConnection = new Redis(redisUrl, connectionOptions);
 
 ioRedisConnection.on('error', (err) => console.error('BullMQ Redis Connection Error:', err.message));
 ioRedisConnection.on('connect', () => console.log('BullMQ Redis connected'));

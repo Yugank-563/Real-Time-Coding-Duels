@@ -23,4 +23,3 @@ const b2Client = new S3Client({
 });
 
 export { b2Client, B2_BUCKET_NAME };
-export default b2Client;
