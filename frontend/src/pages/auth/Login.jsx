@@ -46,8 +46,8 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const { data } = await api.post('/auth/login', formData);
-      const { accessToken, user } = data;
-      localStorage.setItem('bc-token', accessToken);
+      const { token, user } = data;
+      localStorage.setItem('bc-token', token);
       dispatch(setUser(user));
       toast.success(`Good to see you, ${user?.username || 'Coder'}`);
       navigate('/');
