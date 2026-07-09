@@ -49,7 +49,8 @@ const LoginPage = () => {
       const { token, user } = data;
       localStorage.setItem('bc-token', token);
       dispatch(setUser(user));
-      toast.success(`Good to see you, ${user?.username || 'Coder'}`);
+      const displayName = user?.name ? user.name.split(' ')[0] : (user?.username || 'Coder');
+      toast.success(`Good to see you, ${displayName}`);
       navigate('/');
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid credentials.';
@@ -69,7 +70,7 @@ const LoginPage = () => {
             Sign in to your account
           </h1>
           <p className="text-[0.83rem] text-[var(--text-muted)] mt-1.5">
-            Welcome back, warrior
+            Code faster. Think sharper. Win.
           </p>
         </div>
 
