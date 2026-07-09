@@ -4,6 +4,7 @@ export * from './auth/login.service.js';
 export * from './auth/logout.service.js';
 export * from './auth/refreshToken.service.js';
 export * from './auth/register.service.js';
+export * from './auth/resendOTP.service.js';
 export * from './auth/resetPassword.service.js';
 export * from './auth/verifyOtp.service.js';
 export * from './auth/me.service.js';

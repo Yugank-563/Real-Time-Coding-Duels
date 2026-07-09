@@ -46,6 +46,7 @@ const SignupPage = () => {
         email: formData.email,
         password: formData.password,
       });
+      localStorage.setItem('otpResendTimestamp', Date.now().toString());
       toast.success('Verification code sent to your email');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err) {

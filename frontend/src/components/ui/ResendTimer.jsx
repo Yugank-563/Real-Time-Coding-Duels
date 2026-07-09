@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 
-// ResendTimer — shows a 60-second countdown, then a "Resend code" link.
+// ResendTimer — shows a 90-second countdown, then a "Resend code" link.
 // Used on VerifyOTP and ForgotPassword (OTP step).
 const ResendTimer = ({ onResend }) => {
-  const [seconds, setSeconds] = useState(60);
+  const [seconds, setSeconds] = useState(() => {
+    const saved = localStorage.getItem('otpResendTimestamp');
+    if (saved) {
+      const elapsed = Math.floor((Date.now() - parseInt(saved, 10)) / 1000);
+      if (elapsed < 90) {
+        return 90 - elapsed;
+      }
+    }
+    // If no valid saved time exists, or 90s have already passed, the timer is done.
+    return 0;
+  });
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -22,7 +32,13 @@ const ResendTimer = ({ onResend }) => {
             type="button"
             className="link"
             style={{ fontSize: '0.75rem' }}
-            onClick={() => { onResend(); setSeconds(60); }}
+            onClick={async () => { 
+              const success = await onResend(); 
+              if (success !== false) {
+                localStorage.setItem('otpResendTimestamp', Date.now().toString());
+                setSeconds(90); 
+              }
+            }}
           >
             Resend code
           </button>

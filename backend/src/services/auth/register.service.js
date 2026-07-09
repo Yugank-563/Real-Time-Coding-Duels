@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { sendOTPEmail } from '../../utils/email.js';
 import { findUserByEmail } from '../../repositories/index.js';
 import redis from '../../config/redis.js';
+import { generateOTP, formatNameFromEmail } from '../../utils/otpUtils.js';
 
 // POST /auth/register
 export const registerService = async (email, password) => {
@@ -13,16 +13,14 @@ export const registerService = async (email, password) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const otp = crypto.randomInt(100000, 1000000).toString();
-  const otpHash = await bcrypt.hash(otp, 10);
+  const { otp, otpHash } = await generateOTP();
 
   const payload = JSON.stringify({ passwordHash, role: 'user', otpHash });
   
   // Store in Redis (10 minutes expiry)
   await redis.set(`register:${emailLower}`, payload, { EX: 600 });
 
-  const name = emailLower.split('@')[0].split('.')[0];
-  const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+  const formattedName = formatNameFromEmail(emailLower);
 
   await sendOTPEmail(emailLower, otp, formattedName);
 

@@ -27,6 +27,12 @@ export const forgotPasswordSchema = z.object({
   }).strict(),
 });
 
+export const resendOTPSchema = z.object({
+  body: z.object({
+    email: z.string({ required_error: 'Email is required' }).email('Invalid email address format').max(100, 'Email too long'),
+  }).strict(),
+});
+
 export const resetPasswordSchema = z.object({
   body: z.object({
     email: z.string({ required_error: 'Email is required' }).email('Invalid email address format').max(100, 'Email too long'),
