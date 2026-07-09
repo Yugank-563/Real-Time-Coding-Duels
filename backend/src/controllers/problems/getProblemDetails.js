@@ -4,7 +4,7 @@ export const getProblemDetails = async (req, res, next) => {
   try {
     const { slug } = req.params;
     const problem = await getProblemDetailsService(slug);
-    const problemObj = problem.toObject ? problem.toObject() : problem;
+    const problemObj = problem.toObject ? problem.toObject({ flattenMaps: true }) : problem;
     
     // Security: Only send sample testcases to the frontend
     if (problemObj.testCases) {

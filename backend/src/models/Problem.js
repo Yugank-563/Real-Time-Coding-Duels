@@ -45,10 +45,9 @@ const problemSchema = new mongoose.Schema(
       { _id: false }
     ],
     boilerplates: {
-      cpp: {
-        type: String,
-        default: '',
-      },
+      type: Map,
+      of: String,
+      default: {},
     },
 
     testCaseConfig: {
