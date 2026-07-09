@@ -76,6 +76,15 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
   if (currentUserId) {
     const cu = await getLeaderboardUserById(currentUserId);
     if (cu) {
+      const safeSearch = search ? search.toLowerCase() : '';
+      const matchesSearch = !safeSearch || 
+        ((cu.username || '').toLowerCase().includes(safeSearch) || 
+         (cu.name || '').toLowerCase().includes(safeSearch));
+
+      const safeCountry = country && country !== 'ALL' ? country.toLowerCase() : '';
+      const matchesCountry = !safeCountry || (cu.country || '').toLowerCase() === safeCountry;
+
+      if (matchesSearch && matchesCountry) {
       const cStats = await getUserBattleStats(cu._id);
       const cuBattles = cStats.battlesPlayed;
       const cuWins = cStats.wins;
@@ -99,6 +108,7 @@ export const getLeaderboardDataService = async ({ page, limit, search, sort, ord
         losses:        cuLosses,
         winRate:       cuWinRate,
       };
+      }
     }
   }
 

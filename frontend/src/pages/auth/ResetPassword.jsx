@@ -95,12 +95,6 @@ const ResetPasswordPage = () => {
                 Reset Password
               </Button>
             </form>
-
-            <div className="text-center mt-4">
-              <Button variant="link" onClick={() => navigate('/login')}>
-                Back to Login
-              </Button>
-            </div>
       </div>
     </div>
   );

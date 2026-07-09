@@ -8,7 +8,7 @@ const Button = ({
   onClick,
   type = 'button',
   title = '',
-  loadingText = 'Please wait...',
+  loadingText = 'Processing...',
   ...props
 }) => {
   let baseClass = 'font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all duration-300 relative overflow-hidden active:scale-[0.98] ';

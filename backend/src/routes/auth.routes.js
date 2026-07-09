@@ -2,6 +2,7 @@ import express from 'express';
 import {
   register,
   verifyOTP,
+  resendOTP,
   login,
   refreshToken,
   logout,
@@ -19,7 +20,8 @@ import {
   resetPasswordSchema,
   verifyResetOTPSchema,
   refreshTokenSchema,
-  logoutSchema
+  logoutSchema,
+  resendOTPSchema
 } from '../schemas/index.js';
 
 const router = express.Router();
@@ -28,6 +30,7 @@ router.get('/me', authMiddleware, getMe);
 
 router.post('/register', authLimiter, validateRequest(registerSchema), register);
 router.post('/verify-otp', authLimiter, validateRequest(verifyOTPSchema), verifyOTP);
+router.post('/resend-otp', authLimiter, validateRequest(resendOTPSchema), resendOTP);
 router.post('/login', authLimiter, validateRequest(loginSchema), login);
 router.post('/refresh', validateRequest(refreshTokenSchema), refreshToken);
 router.post('/logout', validateRequest(logoutSchema), logout);

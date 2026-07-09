@@ -30,16 +30,19 @@ const ForgotPasswordPage = () => {
   // Step 1: Send OTP
   const handleSendOTP = async (e) => {
     if (e) e.preventDefault();
-    if (!email) { setEmailErr('Email is required.'); toast.error('Email is required.'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { setEmailErr('Enter a valid email.'); toast.error('Enter a valid email.'); return; }
+    if (!email) { setEmailErr('Email is required.'); toast.error('Email is required.'); return false; }
+    if (!/\S+@\S+\.\S+/.test(email)) { setEmailErr('Enter a valid email.'); toast.error('Enter a valid email.'); return false; }
     setEmailErr(''); setLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
+      localStorage.setItem('otpResendTimestamp', Date.now().toString());
       toast.success('Check your email for the verification code');
       setStepIdx(1);
+      return true;
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to send OTP.';
       setEmailErr(msg); toast.error(msg);
+      return false;
     } finally { setLoading(false); }
   };
 

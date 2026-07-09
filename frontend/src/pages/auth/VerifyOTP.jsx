@@ -52,11 +52,17 @@ const VerifyOTPPage = () => {
 
   const handleResend = async () => {
     try {
-      await api.post('/auth/resend-otp', { email });
+      if (mode === 'reset') {
+        await api.post('/auth/forgot-password', { email });
+      } else {
+        await api.post('/auth/resend-otp', { email });
+      }
       toast.success(`A new OTP has been sent to your email`);
       setOtp(''); setError('');
+      return true;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Please try again.');
+      return false;
     }
   };
 
@@ -85,12 +91,6 @@ const VerifyOTPPage = () => {
           <Button variant="primary" size="full" type="submit" loading={loading}>Verify Email</Button>
           <ResendTimer onResend={handleResend} />
         </form>
-
-        <div className="mt-4 text-center">
-          <Button variant="link" onClick={() => navigate(mode === 'reset' ? '/forgot-password' : '/signup')}>
-            ← Back to {mode === 'reset' ? 'Reset Password' : 'Sign Up'}
-          </Button>
-        </div>
       </div>
     </div>
   );

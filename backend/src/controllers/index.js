@@ -7,6 +7,7 @@ export * from './auth/refreshToken.js';
 export * from './auth/register.js';
 export * from './auth/resetPassword.js';
 export * from './auth/verifyOTP.js';
+export * from './auth/resendOTP.js';
 
 // battles folder
 export * from './battles/getBattleDetails.js';
