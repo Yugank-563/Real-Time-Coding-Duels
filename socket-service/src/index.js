@@ -167,7 +167,7 @@ io.use((socket, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded; // { id, role }
+    socket.user = decoded; // { id }
     socket.userId = decoded.id;
     next();
   } catch (err) {
