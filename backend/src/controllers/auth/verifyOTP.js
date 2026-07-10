@@ -15,7 +15,7 @@ export const verifyOTP = async (req, res, next) => {
     });
 
     res.json({
-      message: 'Email verified! Welcome to BattleCode',
+      message: 'Email verified! Welcome to Coduelo',
       user: formatUserDTO(user),
       token: accessToken,
     });

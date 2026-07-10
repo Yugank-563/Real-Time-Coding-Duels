@@ -26,7 +26,7 @@ app.use(express.urlencoded({ limit: '5mb', extended: true }));
 app.use(limiter);
 
 app.get('/', (req, res) => {
-  res.send('BattleCode Backend Running');
+  res.send('Backend is Running');
 });
 
 // Authentication routes

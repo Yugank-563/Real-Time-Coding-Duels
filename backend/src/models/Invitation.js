@@ -33,8 +33,6 @@ const invitationSchema = new mongoose.Schema(
       },
     },
 
-    // acceptedAt and declinedAt removed since invitations are deleted upon resolution
-
     expiresAt: {
       type: Date,
       required: true,
@@ -43,7 +41,6 @@ const invitationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: 'battleinvitations',
   }
 );
 
@@ -52,8 +49,6 @@ invitationSchema.index({ sender: 1, recipient: 1 });
 invitationSchema.virtual('isExpired').get(function () {
   return new Date() > this.expiresAt;
 });
-
-// Removed pre-save hooks for acceptedAt/declinedAt since invitations are deleted on those actions.
 
 const Invitation = mongoose.model('Invitation', invitationSchema);
 

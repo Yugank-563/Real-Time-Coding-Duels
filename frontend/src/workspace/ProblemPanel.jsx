@@ -45,7 +45,7 @@ const ProblemPanel = ({ problem }) => {
         <div className="space-y-4">
           {problem.content ? (
             <div
-              className="prose-battlecode"
+              className="prose-coduelo"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.content) }}
             />
           ) : (
