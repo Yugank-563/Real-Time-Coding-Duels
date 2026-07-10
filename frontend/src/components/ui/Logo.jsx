@@ -5,7 +5,7 @@ const Logo = ({ className = "" }) => {
     >
       <img 
         src="/favicon-dark.svg" 
-        alt="BattleCode Logo" 
+        alt="Coduelo Logo" 
         className="w-full h-full object-contain drop-shadow-md"
       />
     </div>

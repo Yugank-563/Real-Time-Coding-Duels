@@ -145,23 +145,23 @@ body {
 }
 
 /* 6. TYPOGRAPHY & PROSE (Markdown Formatting) */
-.prose-battlecode {
+.prose-coduelo {
   color: var(--text-secondary);
   font-size: 16px;
   line-height: 1.75;
 }
-.prose-battlecode p {
+.prose-coduelo p {
   margin-bottom: 12px;
 }
-.prose-battlecode strong {
+.prose-coduelo strong {
   color: var(--text-primary);
   font-weight: 600;
 }
-.prose-battlecode em {
+.prose-coduelo em {
   color: var(--text-secondary);
   font-style: italic;
 }
-.prose-battlecode code {
+.prose-coduelo code {
   background: var(--bg-overlay);
   border: 0.5px solid var(--border);
   border-radius: 4px;
@@ -170,7 +170,7 @@ body {
   font-size: 14px;
   color: var(--accent-blue);
 }
-.prose-battlecode pre {
+.prose-coduelo pre {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
@@ -182,38 +182,38 @@ body {
   margin-top: 8px;
   margin-bottom: 28px;
 }
-.prose-battlecode pre code {
+.prose-coduelo pre code {
   background: none;
   border: none;
   padding: 0;
   color: var(--text-primary);
   font-size: inherit;
 }
-.prose-battlecode pre strong {
+.prose-coduelo pre strong {
   color: var(--text-primary);
   font-weight: 600;
   display: inline;
   margin-right: 4px;
 }
-.prose-battlecode ul,
-.prose-battlecode ol {
+.prose-coduelo ul,
+.prose-coduelo ol {
   padding-left: 20px;
   margin-bottom: 12px;
 }
-.prose-battlecode li {
+.prose-coduelo li {
   margin-bottom: 4px;
 }
-.prose-battlecode img {
+.prose-coduelo img {
   max-width: 100%;
   border-radius: 6px;
 }
-.prose-battlecode a {
+.prose-coduelo a {
   color: var(--accent-primary);
   text-decoration: underline;
 }
-.prose-battlecode h1,
-.prose-battlecode h2,
-.prose-battlecode h3 {
+.prose-coduelo h1,
+.prose-coduelo h2,
+.prose-coduelo h3 {
   color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 8px;

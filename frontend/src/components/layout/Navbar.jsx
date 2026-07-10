@@ -81,7 +81,7 @@ const Navbar = () => {
                   <Logo />
             <span className={`text-xl font-extrabold tracking-wider bg-clip-text text-transparent transition-all duration-300 ${'bg-gradient-to-r from-white via-[#FAFAFD] to-[#00F5C4] hover:drop-shadow-[0_0_8px_rgba(0,245,196,0.4)]'
               }`}>
-              BATTLECODE
+              CODUELO
             </span>
           </Link>
 
@@ -269,7 +269,7 @@ const Navbar = () => {
               <div className="flex items-center justify-between pb-4 border-b border-border mb-6">
                 <div className="flex items-center gap-2">
                   <Logo />
-                  <span className="font-extrabold tracking-wider text-text-primary text-sm">BATTLECODE</span>
+                  <span className="font-extrabold tracking-wider text-text-primary text-sm">CODUELO</span>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}

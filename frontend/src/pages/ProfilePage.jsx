@@ -29,7 +29,7 @@ const ProfilePage = () => {
       <AnimationState 
         variant="404" 
         title="User Not Found" 
-        description={`@${username} doesn't exist on BattleCode.`} 
+        description={`@${username} doesn't exist on Coduelo.`} 
       />
     </div>
   );

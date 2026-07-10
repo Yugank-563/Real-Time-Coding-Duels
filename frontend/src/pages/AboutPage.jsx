@@ -97,7 +97,7 @@ const AboutPage = () => {
               </span>
             </h2>
             <p className="text-text-secondary leading-relaxed text-base">
-              BattleCode transforms standard algorithmic learning into an immersive multi-user experience. Build your speed, sharpen your problem-solving reflexes, and master Data Structures & Algorithms (DSA) through instant 1v1 arenas, live matchmaking, and dynamic coding rooms.
+              Coduelo transforms standard algorithmic learning into an immersive multi-user experience. Build your speed, sharpen your problem-solving reflexes, and master Data Structures &amp; Algorithms (DSA) through instant 1v1 arenas, live matchmaking, and dynamic coding rooms.
             </p>
           </div>
 
@@ -131,7 +131,7 @@ const AboutPage = () => {
                 </div>
                 <div>
                   &nbsp;&nbsp;<span className={'text-blue-400'}>auto</span> platform ={' '}
-                  <span className={'text-green-300'}>"BattleCode"</span>;
+                  <span className={'text-green-300'}>"Coduelo"</span>;
                 </div>
                 <div>
                   &nbsp;&nbsp;cout &lt;&lt;{' '}

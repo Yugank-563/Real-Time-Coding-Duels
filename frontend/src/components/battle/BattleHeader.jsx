@@ -36,10 +36,6 @@ const BattleHeader = ({
 
       {/* ── LEFT: Battle Info ── */}
       <div className="flex items-center gap-2.5 min-w-0 md:flex-1">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-primary/10 border border-accent-primary/20 text-accent-primary shrink-0">
-          <span className="text-sm leading-none">⚔️</span>
-        </div>
-
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 uppercase tracking-widest font-mono">
