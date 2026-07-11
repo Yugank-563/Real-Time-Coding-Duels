@@ -18,7 +18,7 @@ export default class LocalExecutor extends BaseExecutor {
     }
 
     const runId = crypto.randomUUID();
-    const tempDir = path.join('/tmp', `battlecode-${runId}`);
+    const tempDir = path.join('/tmp', `coduelo-${runId}`);
     
     let results = [];
     let testCasesPassed = 0;

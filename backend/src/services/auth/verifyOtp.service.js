@@ -30,7 +30,6 @@ export const verifyOTPService = async (email, otp) => {
     username: name.toLowerCase() + Math.floor(Math.random() * 1000), // generate a unique username
     name: name,
     passwordHash: payload.passwordHash,
-    role: payload.role,
     isVerified: true,
   });
 

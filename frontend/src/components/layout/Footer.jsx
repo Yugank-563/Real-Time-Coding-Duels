@@ -5,7 +5,7 @@ const Footer = () => {
         <div className="flex items-center justify-center gap-1.5 flex-wrap">
           <span>&copy; {new Date().getFullYear()}</span>
           <span className="font-extrabold tracking-wider text-white">
-            BATTLECODE
+            CODUELO
           </span>
           <span className="opacity-60">| Compete, Collab & Conquer the Code</span>
         </div>

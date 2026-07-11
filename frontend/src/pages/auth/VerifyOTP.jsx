@@ -41,7 +41,7 @@ const VerifyOTPPage = () => {
         const { data } = await api.post('/auth/verify-otp', { email, otp });
         localStorage.setItem('bc-token', data.accessToken);
         dispatch(setUser(data.user));
-        toast.success('Welcome to Arena ⚔️');
+        toast.success('Welcome to Coduelo');
         navigate('/');
       }
     } catch (err) {

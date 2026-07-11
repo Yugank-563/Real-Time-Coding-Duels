@@ -15,7 +15,7 @@ export const OpenRouterProvider = {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.CLIENT_URL,
-          'X-Title': 'BattleCode Platform'
+          'X-Title': 'Coduelo | Code. Duel. Conquer.'
         },
         body: JSON.stringify({
           model: 'meta-llama/llama-3-8b-instruct',

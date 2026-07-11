@@ -15,7 +15,7 @@ accountInstance.setApiKey(AccountApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 
 const sender = {
-  name: 'BattleCode Arena',
+  name: 'Coduelo Arena',
   email: process.env.BREVO_SENDER_EMAIL,
 };
 
@@ -26,15 +26,15 @@ export const sendOTPEmail = async (email, otp, name = 'User') => {
       otp,
       firstName,
       'Account Verification Key',
-      'Deploy the security credentials key below to verify your email address and authorize your coding arena membership.',
+      'Enter this code to verify your identity and gain full access to your Coduelo account.',
       '#00f0ff' // Neon Cyan
     );
 
     const emailData = {
       sender,
       to: [{ email }],
-      subject: '⚔️ [BattleCode] Account Verification Code',
-      textContent: `Hi ${firstName}, your BattleCode verification code is: ${otp}`,
+      subject: 'Account Verification Code',
+      textContent: `Hi ${firstName}, your Coduelo verification code is: ${otp}`,
       htmlContent,
     };
 
@@ -52,15 +52,15 @@ export const sendPasswordResetEmail = async (email, otp, name = 'User') => {
       otp,
       firstName,
       'Password Reset Key',
-      'A password recovery sequence was initialized. Apply the secure authorization code below to reset your password credentials.',
+      'A password reset was requested for your account. Use the code below to proceed.',
       '#9d00ff' // Neon Purple
     );
 
     const emailData = {
       sender,
       to: [{ email }],
-      subject: '⚔️ [BattleCode] Password Reset Verification Code',
-      textContent: `Hi ${firstName}, your BattleCode password reset verification code is: ${otp}`,
+      subject: 'Password Reset Verification Code',
+      textContent: `Hi ${firstName}, your Coduelo password reset verification code is: ${otp}`,
       htmlContent,
     };
 

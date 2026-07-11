@@ -41,7 +41,7 @@ const AnimationState = ({
   );
 
   const displayDesc = description || (
-    variant === '404' ? "This route doesn't exist in the BattleCode arena." :
+    variant === '404' ? "This route doesn't exist in the Coduelo arena." :
     variant === 'error' ? "We encountered an unexpected issue processing your request." :
     variant === 'empty' ? "Try adjusting your filters or search criteria." : ''
   );

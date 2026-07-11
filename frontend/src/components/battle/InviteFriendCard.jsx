@@ -33,7 +33,7 @@ const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOp
             <Users className="w-4 h-4" /> Invite a Friend
           </h2>
           <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider text-center">
-            ⚔️ Casual Sparring
+            Casual Sparring
           </span>
         </div>
 

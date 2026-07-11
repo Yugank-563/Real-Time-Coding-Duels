@@ -15,7 +15,7 @@ export const registerService = async (email, password) => {
 
   const { otp, otpHash } = await generateOTP();
 
-  const payload = JSON.stringify({ passwordHash, role: 'user', otpHash });
+  const payload = JSON.stringify({ passwordHash, otpHash });
   
   // Store in Redis (10 minutes expiry)
   await redis.set(`register:${emailLower}`, payload, { EX: 600 });
