@@ -28,10 +28,11 @@ const PracticeRoom = lazy(() => import('./pages/PracticeRoom'));
 
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFound = lazy(() => import('./components/ui/NotFound'));
 
 // ── Public Pages ──
-const AboutPage = lazy(() => import('./pages/AboutPage'));
+
 
 function App() {
   const dispatch = useDispatch();
@@ -62,7 +63,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
-        <PageLoader isLoading={true} message="Restoring authenticated session..." />
+        <PageLoader isLoading={true} />
       </div>
     );
   }
@@ -72,15 +73,16 @@ function App() {
       <Navbar />
       <Suspense fallback={
         <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
-          <PageLoader isLoading={true} message="Loading module..." />
+          <PageLoader isLoading={true} />
         </div>
       }>
         <Routes>
           {/* Public Landing / About Page */}
-          <Route path="/about" element={<AboutPage />} />
+
 
           {/* Public App Routes (with Layout) */}
           <Route element={<AppLayout />}>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
           </Route>
 
@@ -96,7 +98,7 @@ function App() {
           {/* Protected App Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<BattleLobbyPage />} />
+              <Route path="/battle" element={<BattleLobbyPage />} />
               <Route path="/battle/private/:roomId" element={<PrivateLobbyPage />} />
               <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
               <Route path="/invitations" element={<InvitationHistoryPage />} />
