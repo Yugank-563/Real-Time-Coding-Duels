@@ -42,3 +42,4 @@ export * from './users/getLeaderboard.js';
 export * from './users/getProfile.js';
 export * from './users/searchUsers.js';
 export * from './users/updateProfile.js';
+export * from './users/getPlatformStats.js';
