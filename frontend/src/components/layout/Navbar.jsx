@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, LogOut, Menu, X, Trophy, BookOpen, Home, User, FileText } from 'lucide-react';
+import { Bell, LogOut, Menu, X, Trophy, BookOpen, Home, User } from 'lucide-react';
 
 import Button from '../ui/Button';
 import Logo from '../ui/Logo';
@@ -23,7 +23,7 @@ const InvitationBadge = ({ count }) => {
 // ── NAV_LINKS CONFIG ──
 const NAV_LINKS = [
   { label: 'Home', path: '/', icon: Home },
-  { label: 'About', path: '/about', icon: FileText },
+
   { label: 'Problems', path: '/problems', icon: BookOpen },
   { label: 'Leaderboards', path: '/leaderboard', icon: Trophy },
 ];
@@ -74,11 +74,11 @@ const Navbar = () => {
       <header
         className="fixed top-0 left-0 w-full h-16 z-50 transition-all duration-300 bg-base border-b border-border shadow-sm"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
-          {/* ── LEFT: LOGO SECTION (Colors aligned with Auth) ── */}
-          <Link to="/" className="flex items-center gap-3 group">
-                  <Logo />
+          {/* ── LEFT: LOGO ── */}
+          <Link to={isAuthenticated ? '/battle' : '/'} className="flex items-center gap-3 group">
+            <Logo />
             <span className={`text-xl font-extrabold tracking-wider bg-clip-text text-transparent transition-all duration-300 ${'bg-gradient-to-r from-white via-[#FAFAFD] to-[#00F5C4] hover:drop-shadow-[0_0_8px_rgba(0,245,196,0.4)]'
               }`}>
               CODUELO
@@ -88,16 +88,19 @@ const Navbar = () => {
           {/* ── CENTER: DESKTOP NAVIGATION LINKS ── */}
           <nav className="hidden lg:flex items-center gap-1 relative">
             {NAV_LINKS.map((link, idx) => {
-              const isActive = location.pathname === link.path;
+              const actualPath = (link.label === 'Home' && isAuthenticated) ? '/battle' : link.path;
+              // Check if the current path starts with actualPath (for sub-routes of battle), but exact for others
+              const isActive = (actualPath === '/battle' && location.pathname.startsWith('/battle')) || location.pathname === actualPath;
+              
               return (
                 <NavLink
                   key={link.label}
-                  to={link.path}
+                  to={actualPath}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={(e) => {
                     // Leaderboard is a public route, allow guests
-                    const isPublicPath = ['/leaderboard', '/about', '/'].includes(link.path);
+                    const isPublicPath = ['/leaderboard', '/'].includes(link.path);
                     if (!isAuthenticated && !isPublicPath) {
                       e.preventDefault();
                       navigate('/login');
@@ -284,13 +287,15 @@ const Navbar = () => {
               {/* Navigation Links inside drawer */}
               <nav className="flex flex-col gap-3 flex-1 overflow-y-auto">
                 {NAV_LINKS.map(link => {
-                  const isActive = location.pathname === link.path;
+                  const actualPath = (link.label === 'Home' && isAuthenticated) ? '/battle' : link.path;
+                  const isActive = (actualPath === '/battle' && location.pathname.startsWith('/battle')) || location.pathname === actualPath;
+                  
                   return (
                     <NavLink
                       key={link.label}
-                      to={link.path}
+                      to={actualPath}
                       onClick={(e) => {
-                        const isPublicPath = ['/leaderboard', '/about', '/'].includes(link.path);
+                        const isPublicPath = ['/leaderboard', '/'].includes(link.path);
                         if (!isAuthenticated && !isPublicPath) {
                           e.preventDefault();
                           navigate('/login');

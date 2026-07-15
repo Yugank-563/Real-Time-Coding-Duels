@@ -21,9 +21,9 @@ const ArenaCard = ({
   return (
     <Card
       as={motion.div}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -4 }}
       hover={true}
-      className={`p-5 flex flex-col group transition-all duration-300 relative active:scale-[0.99] ${isTopic ? 'h-full md:col-span-2 lg:col-span-1' : 'h-full'}`}
+      className={`p-8 flex flex-col group transition-all duration-300 relative active:scale-[0.99] ${isTopic ? 'h-full md:col-span-2' : 'h-full'}`}
     >
       <div className="relative z-20 flex-1 flex flex-col">
         <div className="flex flex-col gap-3">
@@ -77,19 +77,21 @@ const ArenaCard = ({
             </span>
             <span className="text-[10px] font-mono text-text-muted opacity-65">{type.speed}</span>
           </div>
-          <Button
-            type="button"
-            variant={isTopic ? (selectedTopic && lobbyStatus !== 'queuing' ? 'primary' : 'secondary') : (lobbyStatus !== 'queuing' ? 'primary' : 'secondary')}
-            size="full"
-            onClick={(e) => {
-              e.stopPropagation();
-              isTopic ? handleJoinTopicQueue() : handleQuickJoin(type.id);
-            }}
-            disabled={isTopic ? (!selectedTopic || lobbyStatus === 'queuing') : (lobbyStatus === 'queuing')}
-            title={lobbyStatus === 'queuing' ? "Leave current queue first" : ""}
-          >
-            Start Match
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant={isTopic ? (selectedTopic && lobbyStatus !== 'queuing' ? 'primary' : 'secondary') : (lobbyStatus !== 'queuing' ? 'primary' : 'secondary')}
+              onClick={(e) => {
+                e.stopPropagation();
+                isTopic ? handleJoinTopicQueue() : handleQuickJoin(type.id);
+              }}
+              disabled={isTopic ? (!selectedTopic || lobbyStatus === 'queuing') : (lobbyStatus === 'queuing')}
+              title={lobbyStatus === 'queuing' ? "Leave current queue first" : ""}
+              className="w-full py-3 text-[0.95rem] tracking-wide shrink-0"
+            >
+              FIND OPPONENT
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

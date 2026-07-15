@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Globe, Calendar, User as UserIcon, Link as LinkIcon, Edit3 } from 'lucide-react';
+import { Globe, Calendar, User as UserIcon } from 'lucide-react';
 import { Button, AnimationState } from '../components/index';
 import { useProfile } from '../hooks/useProfile';
 import { useDocumentTitle } from '../hooks/index';
@@ -19,9 +19,7 @@ const ProfilePage = () => {
 
 
   if (loading) return (
-    <div className="page-bg">
-      <ProfileSkeleton />
-    </div>
+    <ProfileSkeleton />
   );
 
   if (!profile) return (
@@ -39,8 +37,6 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full">
-        
         {/* ── HEADER NAVIGATION / BREADCRUMB AREA ── */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
@@ -178,7 +174,6 @@ const ProfilePage = () => {
           onSave={handleSave}
         />
       )}
-      </div>
     </div>
   );
 };

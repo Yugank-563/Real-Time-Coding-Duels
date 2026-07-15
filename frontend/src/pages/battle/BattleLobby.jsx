@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Swords, Zap, Target } from 'lucide-react';
+import { Trophy, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { selectUser } from '../../features/index';
@@ -11,9 +11,14 @@ import { useToast, useBattleSocket, useLobbyStats, useTopicStats, useDocumentTit
 import { ArenaCard, InviteFriendCard } from '../../components/index';
 
 const BATTLE_TYPES = [
-  { id: 'random-duel', name: 'Random Duel', desc: 'A pure test of adaptability. Both your opponent and a random problem are matched to your skill rating.', hint: '🎯 Random problem matched to your skill rating', icon: Swords, speed: 'Avg wait: 15s', color: 'from-cyan-500/20 to-purple-500/20', borderColor: 'group-hover:border-cyan-400/50', topBorder: 'border-t-cyan-500' },
-  { id: 'timed-sprint', name: 'Timed Sprint', desc: 'Race against the clock in high-speed, 10-minute blitz challenges.', hint: '⚡ Easy problem — built to test your speed under pressure', icon: Zap, speed: 'Avg wait: 10s', color: 'from-emerald-500/20 to-teal-500/20', borderColor: 'group-hover:border-emerald-400/50', topBorder: 'border-t-emerald-500' },
-  { id: 'topic-duel', name: 'Topic Duel', desc: 'Master specific data structures by challenging rivals in targeted duels.', hint: '📚 Problems filtered by your chosen topic — go deep, not wide', icon: Target, speed: 'Topic selection', color: 'from-pink-500/20 to-rose-500/20', borderColor: 'group-hover:border-pink-400/50', topBorder: 'border-t-pink-500' }
+  { id: 'random-duel', name: 'Random Duel', desc: 'The ultimate test of true skill. Step into the arena to face a random challenge and a closely ranked opponent.', hint: '🎯 Opponent and difficulty closely matched to your rank', speed: 'Avg wait: 15s' },
+  { id: 'timed-sprint', name: 'Timed Sprint', desc: 'Think fast, code faster. Compete against a closely ranked rival in a rapid-fire duel with adaptive difficulty and scaling time limits.', hint: '⚡ Adaptive timer and difficulty based on your skill', speed: 'Avg wait: 15s' },
+  { id: 'topic-duel', name: 'Topic Duel', desc: 'Targeted, skill-based duels. Select your algorithmic topic while the system ensures a perfectly balanced rival and problem difficulty.', hint: '📚 Specific topic with rank-matched opponent and difficulty', speed: 'Topic selection' }
+];
+
+const MODE_OPTIONS = [
+  { id: 'ranked', icon: Trophy, label: 'Ranked' },
+  { id: 'casual', icon: Sparkles, label: 'Casual' }
 ];
 
 const BattleLobby = () => {
@@ -23,7 +28,8 @@ const BattleLobby = () => {
 
   const myUser = useSelector(selectUser);
   const { lobbyStatus } = useSelector(state => state.battle);
-  const { socket } = useBattleSocket();
+  // Initialize socket connection for lobby presence
+  useBattleSocket();
 
   // ── States & Hooks ──
   const [mode, setMode] = useState('ranked');
@@ -50,7 +56,6 @@ const BattleLobby = () => {
       return;
     }
     const selectedMode = forcedMode || mode;
-    toast.success(`Searching for a ${selectedMode === 'ranked' ? 'Ranked' : 'Casual'} ${type === 'timed-sprint' ? 'Timed Sprint' : '1v1'} match...`);
     navigate(`/battle/matchmaking?type=${type}&mode=${selectedMode}`);
   };
 
@@ -68,7 +73,6 @@ const BattleLobby = () => {
       return;
     }
     setTopicError('');
-    toast.success(`Searching for a Topic Duel match...`);
     navigate(`/battle/matchmaking?type=topic-duel&topic=${encodeURIComponent(selectedTopic)}&mode=${mode}`);
   };
 
@@ -110,7 +114,7 @@ const BattleLobby = () => {
   };
 
   return (
-    <div className="w-full bg-base text-text-primary pb-40 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
+    <div className="w-full text-text-primary pb-24 relative overflow-hidden font-sans select-none transition-colors duration-300 animate-[fadeIn_0.4s_ease-out]">
       {/* ──── DOT GRID BACKGROUND ──── */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -124,66 +128,44 @@ const BattleLobby = () => {
 
       <div className="flex flex-col gap-6 relative z-10 w-full">
         {/* Header with Mode Toggle */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[.8rem] flex items-center justify-center shadow-sm">
-                <Swords size={22} color="var(--accent-primary)" />
-              </div>
-              <h1 className="text-[1.875rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
-                Select Coding Battle
-              </h1>
-            </div>
-            <p className="text-[0.95rem] text-[var(--text-muted)] m-0 pl-[2px] transition-colors duration-300">
-              {mode === 'ranked' 
-                ? 'Competitive ranked real-time 1v1 coding duels — pick your format, join the queue, and prove your skills.'
-                : 'Casual unrated coding duels — practice without pressure and hone your skills.'}
-            </p>
-          </div>
+        <div className="flex flex-col items-center justify-center mb-2 text-center relative z-10">
+          <h2 className="text-3xl md:text-[2.5rem] font-bold text-white tracking-tight">
+            Choose Battle <span className="text-[#00F5C4]">Mode</span>
+          </h2>
+          <p className="text-slate-400 mt-2 text-[1.05rem] max-w-4xl mx-auto">
+            {mode === 'ranked' 
+              ? 'Pick your ranked format and prove your skills in synchronous arenas against players of similar rating.'
+              : 'Join casual, unrated matches to practice without pressure or affecting your rating.'}
+          </p>
 
-          <div className="w-full flex justify-center md:w-auto md:justify-end">
-            <div className="flex bg-[var(--bg-elevated)] rounded-full p-1 shadow-sm relative">
-              <button
-                onClick={() => setMode('ranked')}
-                className={`relative z-10 flex items-center gap-2 px-5 py-[0.45rem] rounded-full text-[0.8rem] font-bold transition-colors uppercase tracking-wider ${
-                  mode === 'ranked' 
-                    ? 'text-[#0D0F14]' 
-                    : 'text-[var(--text-primary)] opacity-80 hover:opacity-100 hover:bg-white/5'
-                }`}
-              >
-                {mode === 'ranked' && (
-                  <motion.div
-                    layoutId="lobbyTogglePill"
-                    className="absolute inset-0 bg-[var(--btn-primary-bg)] rounded-full -z-10 shadow-md"
-                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                  />
-                )}
-                <Swords className="w-4 h-4" /> Ranked
-              </button>
-              
-              <button
-                onClick={() => setMode('casual')}
-                className={`relative z-10 flex items-center gap-2 px-5 py-[0.45rem] rounded-full text-[0.8rem] font-bold transition-colors uppercase tracking-wider ${
-                  mode === 'casual' 
-                    ? 'text-[#0D0F14]' 
-                    : 'text-[var(--text-primary)] opacity-80 hover:opacity-100 hover:bg-white/5'
-                }`}
-              >
-                {mode === 'casual' && (
-                  <motion.div
-                    layoutId="lobbyTogglePill"
-                    className="absolute inset-0 bg-[var(--btn-primary-bg)] rounded-full -z-10 shadow-md"
-                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                  />
-                )}
-                <Zap className="w-4 h-4" /> Casual
-              </button>
+          <div className="mt-8 w-full flex justify-center">
+            <div className="flex bg-[#0D0F14] border border-slate-700/60 rounded-xl p-1 shadow-sm relative overflow-hidden">
+              {MODE_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setMode(option.id)}
+                  className={`relative z-10 flex items-center gap-2 px-6 py-2 rounded-lg text-[0.9rem] font-bold transition-colors capitalize ${
+                    mode === option.id 
+                      ? 'text-white' 
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {mode === option.id && (
+                    <motion.div
+                      layoutId="lobbyTogglePill"
+                      className="absolute inset-0 bg-[#00F5C4]/90 rounded-lg -z-10"
+                      transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                    />
+                  )}
+                  <option.icon className="w-[18px] h-[18px]" /> {option.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* ──── ARENA SELECTION CARDS ──── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch relative z-30">
+        {/* ──── ARENA SELECTION & INVITE GRID ──── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch relative z-30">
           {BATTLE_TYPES.map((type) => (
             <ArenaCard
               key={type.id}
@@ -204,17 +186,24 @@ const BattleLobby = () => {
           ))}
         </div>
 
-        {/* ──── UTILITY GRID (Invite a Friend) ──── */}
-        <div className="grid grid-cols-1 gap-8 items-stretch relative z-10">
-          {/* INVITE A FRIEND PANEL */}
-          <div className="flex flex-col gap-6">
-            <InviteFriendCard
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              handleSendInvite={handleSendInvite}
-              topicOptions={topicOptions}
-            />
-          </div>
+        {/* ──── PRIVATE MATCHES SECTION TITLE ──── */}
+        <div className="flex flex-col items-center justify-center mt-20 mb-10 text-center relative z-10">
+          <h2 className="text-3xl md:text-[2.5rem] font-bold text-white tracking-tight">
+            Private <span className="text-[#00F5C4]">Matches</span>
+          </h2>
+          <p className="text-slate-400 mt-2 text-[1.05rem]">
+            Set up a custom, unranked arena to settle scores, practice new algorithms, or just have fun coding with friends.
+          </p>
+        </div>
+
+        {/* ──── INVITE A FRIEND PANEL ──── */}
+        <div className="relative z-10 w-full">
+          <InviteFriendCard
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            handleSendInvite={handleSendInvite}
+            topicOptions={topicOptions}
+          />
         </div>
       </div>
     </div>

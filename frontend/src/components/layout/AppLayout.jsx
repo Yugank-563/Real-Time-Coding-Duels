@@ -13,11 +13,11 @@ const AppLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-base text-text-primary flex flex-col font-sans pt-16">
+    <div className="min-h-screen text-[var(--text-primary)] flex flex-col font-sans pt-16 relative z-10">
       <div className="flex flex-1 overflow-hidden">
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto flex flex-col">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 flex-1 w-full">
+        <main className="flex-1 overflow-y-auto flex flex-col relative">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 flex-1 w-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
