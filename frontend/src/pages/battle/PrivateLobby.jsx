@@ -190,7 +190,7 @@ const PrivateLobby = () => {
             transition={{ delay: 0.1 }}
             className="text-xs md:text-sm text-text-muted max-w-lg mx-auto leading-relaxed"
           >
-            Sharpen your logic and steady your typing. Only the fastest, most optimized code will survive this encounter.
+            Improve your logic and steady your typing. Only the fastest, most optimized code will survive this encounter.
           </motion.p>
         </div>
 
