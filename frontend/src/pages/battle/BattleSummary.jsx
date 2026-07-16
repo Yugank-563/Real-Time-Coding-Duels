@@ -41,7 +41,7 @@ const UserProfile = ({ player, isWinner, isMe }) => (
         {isWinner && <Trophy className={`w-3.5 h-3.5 ${isMe ? 'text-emerald-500' : 'text-accent-primary'}`} />}
       </h3>
       <span className="text-[11px] text-text-secondary font-mono mt-0.5 block">
-        Elo {player?.user?.rating}
+        Rating {player?.user?.rating}
       </span>
     </div>
   </div>

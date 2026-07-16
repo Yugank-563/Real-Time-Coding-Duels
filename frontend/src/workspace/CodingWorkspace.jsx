@@ -40,7 +40,7 @@ const CodingWorkspace = ({
 
   return (
     <div
-      className={`w-full text-text-primary flex flex-col overflow-y-auto lg:overflow-hidden bg-base relative transition-all duration-300 ${
+      className={`w-full text-text-primary flex flex-col overflow-y-auto lg:overflow-hidden relative transition-all duration-300 ${
         isEmbedded
           ? 'flex-1'
           : 'h-[calc(100vh-64px)] mt-16'

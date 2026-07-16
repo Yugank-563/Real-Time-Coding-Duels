@@ -1,6 +1,5 @@
 import {  useEffect, useState  } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords } from 'lucide-react';
 import { getInitials } from '../../utils/index';
 
 const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
@@ -43,7 +42,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
   }, [count, phase, onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col items-center justify-center overflow-hidden font-sans select-none">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden font-sans select-none">
       
       {/* Background grid */}
       <div 
@@ -66,45 +65,60 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex flex-col md:flex-row items-center justify-center gap-12 max-w-4xl w-full px-6 relative z-10"
           >
-            {/* Left player card */}
+            {/* Left player card (You) */}
             <motion.div 
-              initial={{ x: -120, opacity: 0 }}
+              initial={{ x: -30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ type: 'spring', delay: 0.2 }}
-              className="bg-[var(--bg-surface)] border-l-4 border-l-[var(--accent-blue)] border border-[var(--border)] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
+              transition={{ delay: 0.1, type: "spring" }}
+              whileHover={{ scale: 1.02 }}
+              className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group bg-surface/30 border-border/40 hover:border-accent-primary/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(0,245,196,0.1)]`}
             >
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-blue)] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
-                {getInitials(myUser?.name, myUser?.username) || 'ME'}
+              <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/0 via-transparent to-transparent group-hover:from-accent-primary/10 transition-colors duration-500 pointer-events-none" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-accent-primary/20 blur-xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="w-20 h-20 bg-elevated border-[3px] border-border rounded-full flex items-center justify-center relative z-10 shadow-lg transition-colors border-accent-primary">
+                  <span className="text-2xl font-black text-text-primary tracking-tighter">
+                    {getInitials(myUser?.name, myUser?.username) || 'ME'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="font-extrabold text-white text-base truncate">@{myUser?.username || 'You'}</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">Elo: {myUser?.elo || 1200}</p>
+              <div className="text-center relative z-10 mt-1">
+                <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{myUser?.username || 'You'}</h2>
+                <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {myUser?.rating || myUser?.elo || 1200}</p>
               </div>
             </motion.div>
 
-            {/* Central VS sword icon */}
+            {/* VS BADGE */}
             <motion.div 
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: [1, 1.2, 1], rotate: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="w-16 h-16 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-[var(--accent-blue)] relative shadow-[0_0_24px_rgba(0,229,255,0.2)]"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1, rotate: [-10, 0] }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+              className="w-14 h-14 rounded-full bg-surface border-4 border-base flex items-center justify-center z-20 shadow-xl relative"
             >
-              <Swords className="w-6 h-6 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-border/50"></div>
+              <span className="text-lg font-black italic text-text-muted pr-0.5">VS</span>
             </motion.div>
 
-            {/* Right player card */}
+            {/* Right player card (Opponent) */}
             <motion.div 
-              initial={{ x: 120, opacity: 0 }}
+              initial={{ x: 30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ type: 'spring', delay: 0.2 }}
-              className="bg-[var(--bg-surface)] border-r-4 border-r-[var(--accent-primary)] border border-[var(--border)] rounded-2xl p-6 w-[280px] text-center space-y-3 shadow-xl"
+              transition={{ delay: 0.2, type: "spring" }}
+              whileHover={{ scale: 1.02 }}
+              className={`w-full md:w-80 h-56 rounded-[2rem] border transition-all duration-300 relative overflow-hidden backdrop-blur-md flex flex-col items-center justify-center gap-3 group bg-surface/30 border-border/40 hover:border-pink-500/50 hover:bg-surface/50 hover:shadow-[0_0_40px_rgba(236,72,153,0.1)]`}
             >
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--accent-red)] to-[var(--accent-primary)] mx-auto flex items-center justify-center text-xl font-bold text-white shadow-lg">
-                {getInitials(opponent?.name, opponent?.username) || 'OP'}
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 via-transparent to-transparent group-hover:from-pink-500/10 transition-colors duration-500 pointer-events-none" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-pink-500/20 blur-xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="w-20 h-20 bg-elevated border-[3px] rounded-full flex items-center justify-center relative z-10 shadow-lg transition-colors border-pink-500">
+                  <span className="text-2xl font-black text-text-primary tracking-tighter">
+                    {getInitials(opponent?.name, opponent?.username) || 'OP'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="font-extrabold text-white text-base truncate">@{opponent?.username || 'Opponent'}</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">Elo: {opponent?.elo || 1200}</p>
+              <div className="text-center relative z-10 mt-1">
+                <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{opponent?.username || 'Opponent'}</h2>
+                <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {opponent?.rating || opponent?.elo || 1200}</p>
               </div>
             </motion.div>
           </motion.div>

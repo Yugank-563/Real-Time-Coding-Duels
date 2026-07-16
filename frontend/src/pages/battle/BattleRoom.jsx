@@ -50,8 +50,11 @@ const BattleRoom = () => {
         
         // Critical validation: do not allow re-entry to finished battles
         if (battleData.status === 'ended') {
-          toast.info('This battle has already concluded.');
-          navigate(`/battle/${battleId}/summary`, { replace: true });
+          if (battleData.players?.some(p => p.status === 'surrendered')) {
+            navigate('/', { replace: true });
+          } else {
+            navigate(`/battle/${battleId}/summary`, { replace: true });
+          }
           return;
         }
 
@@ -249,14 +252,14 @@ const BattleRoom = () => {
   }, []);
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-base text-text-primary relative select-none">
+    <div className="w-full h-screen overflow-hidden text-text-primary relative select-none">
 
       {/* ── LOADING GUARD: hide everything until server state is fetched ── */}
       {showCountdown === null && (
         <div className="fixed inset-0 z-50 bg-[#0B0F1A] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 rounded-full border-2 border-[#00E5FF]/30 border-t-[#00E5FF] animate-spin" />
-            <p className="text-[#7A9AB8] text-sm font-mono tracking-widest">Restoring battle...</p>
+            <p className="text-[#7A9AB8] text-sm font-mono tracking-widest">Synchronizing data...</p>
           </div>
         </div>
       )}
@@ -278,6 +281,7 @@ const BattleRoom = () => {
           myUserId={myUser?._id || myUser?.id}
           winnerId={battleState.winnerId}
           eloDetails={eloDetails}
+          reason={battleState.reason}
         />
       )}
 
