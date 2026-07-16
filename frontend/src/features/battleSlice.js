@@ -159,6 +159,9 @@ const battleSlice = createSlice({
       state.timer.isWarning = remaining <= 60 && remaining > 30;
       state.timer.isDanger = remaining <= 30;
     },
+    setTimerStart: (state, action) => {
+      state.timer.startTime = action.payload;
+    },
     // Legacy — kept so old imports don't break, but no longer dispatched
     tickTimer: (state) => {
       if (state.timer.remaining > 0) {
@@ -199,10 +202,11 @@ const battleSlice = createSlice({
       }
     },
     endBattle: (state, action) => {
-      const { winnerId, ratingDetails } = action.payload;
+      const { winnerId, ratingDetails, reason } = action.payload;
       state.status = 'ended';
       state.eloDetails = ratingDetails;
       state.winnerId = winnerId || null; // null = draw
+      state.reason = reason;
     },
     setAiAnalysis: (state, action) => {
       state.aiAnalysis = action.payload;
@@ -218,6 +222,7 @@ export const {
   resumeBattle,
   tickTimer,
   setTimerRemaining,
+  setTimerStart,
   setOutputState,
   setOutputProgress,
   setOutputResults,
