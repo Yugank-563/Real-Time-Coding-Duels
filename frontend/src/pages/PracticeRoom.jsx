@@ -29,7 +29,7 @@ const PracticeRoom = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
+      <div className="min-h-screen text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
         <Loader2 className="w-8 h-8 text-[var(--accent-primary)] animate-spin" />
         <span className="text-xs text-[var(--text-muted)] font-medium tracking-wide">Loading problem details...</span>
       </div>
