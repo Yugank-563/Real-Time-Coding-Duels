@@ -161,8 +161,6 @@ const LandingStats = ({ stats }) => {
     { icon: Trophy, color: 'text-[#FFBD2E]', val: stats.maxRating, label: 'Top Rating' }
   ];
 
-  const formatStat = (val) => `${Math.floor(val / 10) * 10}+`;
-
   return (
     <motion.div 
       className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-center md:justify-between items-center gap-8 md:gap-4 pb-8 bg-transparent"
@@ -174,7 +172,7 @@ const LandingStats = ({ stats }) => {
         <div key={idx} className="flex items-center gap-4 justify-center md:justify-start">
           <item.icon className={`w-8 h-8 ${item.color}`} strokeWidth={2.5} />
           <div className="flex flex-col text-left">
-            <span className="text-2xl font-black text-white leading-none tracking-tight">{formatStat(item.val)}</span>
+            <span className="text-2xl font-black text-white leading-none tracking-tight">{item.val}</span>
             <span className="text-[0.65rem] font-bold text-slate-500 tracking-widest uppercase mt-1.5">{item.label}</span>
           </div>
         </div>
@@ -190,23 +188,23 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const [platformStats, setPlatformStats] = useState({
-    maxRating: 2455,
-    battlesFought: 400,
+    maxRating: 1200,
+    battlesFought: 50,
     problemsAvailable: 49,
-    activeCoders: 50
+    activeCoders: 20
   });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get('/users/platform-stats');
+        const response = await api.get('/api/users/platform-stats');
         const data = response.data;
         // If the database has real data, use it; otherwise, keep the dummy data
         setPlatformStats({
-          maxRating: data.maxRating > 0 ? data.maxRating : 2455,
-          battlesFought: data.battlesFought > 0 ? data.battlesFought : 400,
+          maxRating: data.maxRating > 0 ? data.maxRating : 1200,
+          battlesFought: data.battlesFought > 0 ? data.battlesFought : 50,
           problemsAvailable: data.problemsAvailable > 0 ? data.problemsAvailable : 49,
-          activeCoders: data.activeCoders > 0 ? data.activeCoders : 50
+          activeCoders: data.activeCoders > 0 ? data.activeCoders : 20
         });
       } catch (error) {
         console.error('Error fetching platform stats:', error);
