@@ -5,16 +5,14 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
-const TIME_LIMITS = { 'random-duel': 1200, 'timed-sprint': 600, 'topic-duel': 1200 };
-
 const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOptions }) => {
   const [battleType, setBattleType] = useState('');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState('');
 
   const handleInvite = () => {
-    const timeLimit = TIME_LIMITS[battleType] || 1200;
-    handleSendInvite(searchTerm, 'casual', battleType, topic, timeLimit, difficulty);
+    // timeLimit is now dynamically calculated on the backend based on difficulty
+    handleSendInvite(searchTerm, 'casual', battleType, topic, undefined, difficulty);
   };
 
   return (
@@ -93,7 +91,7 @@ const InviteFriendCard = ({ searchTerm, setSearchTerm, handleSendInvite, topicOp
           </div>
         </div>
       </div>
-      <div className="flex justify-center mt-4 border-t border-border/40 pt-4">
+      <div className="flex justify-center mt-2 border-t border-border/40 pt-4">
         <Button
           variant="primary"
           onClick={handleInvite}
