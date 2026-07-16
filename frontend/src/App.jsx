@@ -62,24 +62,21 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
+      <div className="min-h-screen text-[var(--text-primary)] flex flex-col items-center justify-center font-sans">
         <PageLoader isLoading={true} />
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Navbar />
       <Suspense fallback={
-        <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
+        <div className="min-h-screen text-[var(--text-primary)] flex flex-col items-center justify-center font-sans gap-3">
           <PageLoader isLoading={true} />
         </div>
       }>
         <Routes>
-          {/* Public Landing / About Page */}
-
-
           {/* Public App Routes (with Layout) */}
           <Route element={<AppLayout />}>
             <Route path="/" element={<LandingPage />} />
@@ -113,7 +110,9 @@ function App() {
           </Route>
 
           {/* Global Fallback */}
-          <Route path="*" element={<NotFound />} />
+          <Route element={<AppLayout />}>
+            <Route path="*" element={<NotFound />} />
+          </Route>
         </Routes>
       </Suspense>
     </BrowserRouter>
