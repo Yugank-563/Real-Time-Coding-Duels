@@ -12,7 +12,6 @@ const verifyParticipant = async (battleId, userId, actionName) => {
 
   const playerIdx = battle.players.findIndex(p => p.user.toString() === userId);
   if (playerIdx === -1) {
-    console.warn(`[Security] User ${userId} attempted unauthorized socket action: ${actionName} on battle ${battleId}`);
     return null;
   }
   return { battle, playerIdx };
@@ -42,7 +41,13 @@ const handleLobbyCleanup = async (battleId, userId, io) => {
       // Automatically remove every participant from the Socket room
       io.in(roomName).socketsLeave(roomName);
       
-      console.log(`Lobby ${battleId} cancelled because host ${userId} left.`);
+    } else {
+      // It's the guest leaving
+      const roomName = `battle:${battleId}`;
+      io.to(roomName).emit('battle:guest_left', {
+        message: 'The opponent has left the lobby.',
+        userId
+      });
     }
   } catch (err) {
     console.error('Lobby cleanup error:', err.message);
@@ -102,8 +107,6 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
     ratingDetails,
     reason
   });
-
-  console.log(`Battle ${battle._id.toString()} resolved by ${reason.toLowerCase()}. Winner: ${winnerId ?? 'Draw'}`);
 };
 
 export const registerBattleHandlers = (io, socket) => {
@@ -125,13 +128,13 @@ export const registerBattleHandlers = (io, socket) => {
       const roomName = `battle:${battleId}`;
       socket.join(roomName);
       socket.currentBattleId = battleId; // Track current lobby for disconnect cleanup
-      console.log(`Socket ${socket.id} joined room ${roomName}`);
- 
+
       // Critical validation: reject joining ended battles
       if (battle.status === 'ended' || battle.status === 'cancelled') {
+        const hasSurrendered = battle.players.some(p => p.status === 'surrendered');
         socket.emit('battle:error', { 
           message: 'Battle has already concluded or was cancelled.',
-          redirect: `/battle/${battleId}/summary` 
+          redirect: hasSurrendered ? '/' : `/battle/${battleId}/summary` 
         });
         return;
       }
@@ -181,12 +184,14 @@ export const registerBattleHandlers = (io, socket) => {
       if (!verify) return;
       const { battle } = verify;
 
+      // Set the true start time to 8.5 seconds in the future (to account for UI countdown)
+      battle.startTime = new Date(Date.now() + 8500);
+      await battle.save();
+
       const roomName = `battle:${battleId}`;
-      io.to(roomName).emit('battle:start');
-      console.log(`Broadcasted countdown start for battle room ${battleId}`);
+      io.to(roomName).emit('battle:start', { startTime: battle.startTime });
 
       if (battle.battleType === 'timed-sprint') {
-        console.log(`Setting a 300s server-side timeout for Timed Sprint battle: ${battleId}`);
         setTimeout(async () => {
           try {
             const freshBattle = await Battle.findById(battleId);
@@ -194,7 +199,6 @@ export const registerBattleHandlers = (io, socket) => {
 
             await resolveBattleTimeout(freshBattle, io, 'Server-side timeout');
           } catch (timeoutErr) {
-            console.error('Server sprint timeout callback error:', timeoutErr.message);
           }
         }, 300000); // 5 minutes
       }
@@ -224,7 +228,7 @@ export const registerBattleHandlers = (io, socket) => {
       const opponentIdx = playerIdx === 0 ? 1 : 0;
       const opponentId = battle.players[opponentIdx].user.toString();
       battle.winner = opponentId;
-
+      battle.markModified('players');
       await battle.save();
 
       // Process Stats: surrendering user loses (0), opponent wins (1)
@@ -239,9 +243,8 @@ export const registerBattleHandlers = (io, socket) => {
       io.to(roomName).emit('battle:end', {
         winnerId: opponentId,
         ratingDetails,
+        reason: 'Surrender'
       });
-
-      console.log(`Battle ${battleId} resolved by surrender. Winner: ${opponentId}`);
     } catch (err) {
       console.error('battle:surrender error:', err.message);
     }
@@ -266,7 +269,6 @@ export const registerBattleHandlers = (io, socket) => {
         const timeLimitMs = (battle.timeLimit || 1200) * 1000;
         // Allow 5 seconds of grace period for network delays
         if (timeElapsedMs < (timeLimitMs - 5000)) {
-          console.warn(`[Security] Client ${socket.userId} attempted early timeout on ${battleId}. Elapsed: ${timeElapsedMs}ms, Required: ${timeLimitMs}ms`);
           return;
         }
       }

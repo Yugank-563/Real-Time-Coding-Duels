@@ -19,12 +19,11 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import { connectDB } from '../../backend/src/config/db.js';
 
-const PORT = process.env.SOCKET_PORT || 5001;
+const PORT = process.env.SOCKET_PORT;
 const mongoUri = process.env.MONGO_URI;
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const redisUrl = process.env.REDIS_URL;
 
 if (!mongoUri) {
-  console.error('MONGO_URI is missing!');
   process.exit(1);
 }
 
@@ -55,7 +54,7 @@ await Promise.all([pubClient.connect(), adapterSubClient.connect()]);
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -71,8 +70,6 @@ await subClient.connect();
 await subClient.subscribe('battle:events', (message) => {
   try {
     const { battleId, event, data } = JSON.parse(message);
-    console.log(`Redis Pub/Sub received [${event}] for battle ${battleId}`);
-
     // Broadcast message to Socket room corresponding to battleId
     io.to(`battle:${battleId}`).emit(event, data);
   } catch (error) {
@@ -86,10 +83,6 @@ await subClient.subscribe('submission:events', (message) => {
     const { submissionId, userId, battleId, type } = data;
 
     if (type === 'progress') {
-      // Chunk terminal logging to prevent log spam for massive datasets
-      if (data.done === 1 || data.done === data.total || data.done % 20 === 0) {
-        console.log(`Redis Pub/Sub received submission progress for ${submissionId}: ${data.done}/${data.total}`);
-      }
       io.to(`user:${userId}`).emit('submission:progress', {
         submissionId,
         done: data.done,
@@ -99,8 +92,6 @@ await subClient.subscribe('submission:events', (message) => {
     }
 
     const { verdict, testCasesPassed, totalTestCases, results, isSubmit } = data;
-    console.log(`Redis Pub/Sub received submission result for ${submissionId} (isSubmit: ${isSubmit})`);
-
     // Send feedback directly to user socket
     io.to(`user:${userId}`).emit('submission:result', {
       submissionId,
@@ -135,9 +126,7 @@ await subClient.subscribe('submission:events', (message) => {
 await subClient.subscribe('ai:analysis_ready', (message) => {
   try {
     const data = JSON.parse(message);
-    const { submissionId, userId, aiAnalysis } = data;
-    console.log(`Redis Pub/Sub received AI analysis for submission ${submissionId}`);
-    
+    const { submissionId, userId, aiAnalysis } = data;    
     io.to(`user:${userId}`).emit('ai:analysis_ready', {
       submissionId,
       aiAnalysis
@@ -151,7 +140,6 @@ await subClient.subscribe('ai:analysis_ready', (message) => {
 await subClient.subscribe('invitation:events', (message) => {
   try {
     const { userId, event, data } = JSON.parse(message);
-    console.log(`Redis Pub/Sub received [${event}] for user ${userId}`);
     io.to(`user:${userId}`).emit(event, data);
   } catch (error) {
     console.error('Error handling Redis Pub/Sub invitation message:', error.message);
@@ -183,18 +171,12 @@ io.use((socket, next) => {
 
 // 4. Map namespace connection flows
 io.on('connection', (socket) => {
-  console.log(`Socket client connected: socket=${socket.id}, user=${socket.userId}`);
-
   // Join self-user channel for targeted events
   socket.join(`user:${socket.userId}`);
 
   // Register feature handlers
   registerMatchmakingHandlers(io, socket);
   registerBattleHandlers(io, socket);
-
-  socket.on('disconnect', () => {
-    console.log(`Socket client disconnected: ${socket.id}`);
-  });
 });
 
 httpServer.listen(PORT, () => {
