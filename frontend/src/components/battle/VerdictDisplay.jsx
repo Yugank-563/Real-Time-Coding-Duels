@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, ShieldAlert, Award, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
+import { Trophy, ShieldAlert, Award, ArrowRight } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import Button from '../ui/Button';
 
-const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
+const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState('verdict'); // 'verdict' | 'progression'
   
@@ -19,13 +19,17 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
   const isWinner = !isDraw && (winnerId === myUserId);
 
   // Progression counters — safe even when eloDetails is null (draw with no ELO calc)
-  const [currentElo, setCurrentElo] = useState(eloDetails?.oldElo || 1200);
+  const myEloData = eloDetails 
+    ? (eloDetails.userId === myUserId ? eloDetails : eloDetails.opponent) 
+    : null;
+
+  const [currentElo, setCurrentElo] = useState(myEloData?.oldElo || 1200);
 
   useEffect(() => {
     if (phase !== 'progression') return;
 
     // 1. Elo increment counting animation
-    const eloTarget = eloDetails?.newElo || 1200;
+    const eloTarget = myEloData?.newElo || 1200;
     const duration = 1500; // ms
     const incrementTime = 30; // ms
     const totalSteps = duration / incrementTime;
@@ -47,7 +51,7 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
     return () => {
       clearInterval(eloTimer);
     };
-  }, [phase, eloDetails]);
+  }, [phase, myEloData]);
 
   return (
     <div className="fixed inset-0 z-50 bg-[var(--bg-base)]/95 backdrop-blur-md flex flex-col items-center justify-center overflow-hidden font-sans select-none p-4">
@@ -81,8 +85,12 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
                   <Trophy className="w-10 h-10" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-black text-emerald-400 tracking-tight">🏆 DUEL VICTORY!</h1>
-                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">You compiled, verified, and dominated the coding challenge successfully before the opponent.</p>
+                  <h1 className="text-3xl font-black text-emerald-400 tracking-tight">
+                    {reason === 'Surrender' ? 'OPPONENT LEFT!' : 'DUEL VICTORY!'}
+                  </h1>
+                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+                    {reason === 'Surrender' ? 'Your opponent has exited the battle. You win by default!' : 'You compiled, verified, and dominated the coding challenge successfully before the opponent.'}
+                  </p>
                 </div>
               </div>
             ) : isDraw ? (
@@ -101,20 +109,44 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
                   <ShieldAlert className="w-10 h-10" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-black text-red-400 tracking-tight">😤 DEFEATED</h1>
-                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">The opponent compiled and passed all test cases first. Review the summary editorial code to refactor strategies.</p>
+                  <h1 className="text-3xl font-black text-red-400 tracking-tight">
+                    {reason === 'Surrender' ? 'BATTLE EXITED' : 'DEFEATED'}
+                  </h1>
+                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+                    {reason === 'Surrender' ? 'You have left the battle and conceded the match.' : 'The opponent compiled and passed all test cases first. Review the summary editorial code to refactor strategies.'}
+                  </p>
                 </div>
               </div>
             )}
 
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
-              onClick={() => setPhase('progression')}
-            >
-              Reveal ELO Rewards →
-            </Button>
+            {reason === 'Surrender' && mode === 'casual' ? (
+              <Button
+                variant="outline-danger"
+                size="lg"
+                className="w-full mt-6"
+                onClick={() => navigate(`/`)}
+              >
+                Return to Home
+              </Button>
+            ) : reason === 'Surrender' && mode !== 'casual' ? (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+                onClick={() => setPhase('progression')}
+              >
+                View Rating Updates
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+                onClick={() => mode === 'casual' ? navigate(`/battle/${battleId}/summary`) : setPhase('progression')}
+              >
+                {mode === 'casual' ? 'Proceed to Battle Summary' : 'View Rating Updates'}
+              </Button>
+            )}
           </motion.div>
         )}
 
@@ -128,18 +160,16 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
             transition={{ type: 'spring', duration: 0.6 }}
             className="max-w-md w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-3xl p-8 space-y-6 text-center shadow-2xl relative"
           >
-            <h2 className="text-xs uppercase font-extrabold tracking-widest text-[var(--text-muted)]">Combat Arena Report</h2>
+            <h2 className="text-xs uppercase font-extrabold tracking-widest text-[var(--text-muted)]">Rating Evaluation</h2>
             
             {/* ELO Rating Progression Slider */}
             <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute top-2 right-4 text-[10px] text-[var(--text-muted)] font-mono">{mode === 'casual' ? 'Casual Mode' : 'Season 4'}</div>
-              
               <div className="flex items-center justify-center gap-8 mt-2">
                 <div className="text-center">
                   <span className="text-[10px] text-[var(--text-muted)] block uppercase">
-                    {mode === 'casual' ? 'Rating Unchanged' : 'Rating ELO'}
+                    Old Rating
                   </span>
-                  <div className="text-3xl font-black text-white font-mono mt-1">{currentElo}</div>
+                  <div className="text-3xl font-black text-white font-mono mt-1">{myEloData?.oldElo || 1200}</div>
                 </div>
                 
                 <div className="text-slate-500">
@@ -148,33 +178,36 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails }) => {
 
                 <div className="text-center">
                   <span className="text-[10px] text-[var(--text-muted)] block uppercase">
-                    {mode === 'casual' ? 'ELO Shift' : 'ELO Shift'}
+                    New Rating
                   </span>
-                  <div className={`text-2xl font-black font-mono mt-1.5 flex items-center justify-center gap-0.5 ${
-                    mode === 'casual' ? 'text-purple-400' : isWinner ? 'text-emerald-400' : isDraw ? 'text-purple-400' : 'text-red-400'
+                  <div className={`text-3xl font-black font-mono mt-1 ${
+                    !myEloData || myEloData.eloChange === 0 ? 'text-purple-400' : myEloData.eloChange > 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    {mode === 'casual' ? (
-                      <>±0</>
-                    ) : isWinner ? (
-                      <><ArrowUpRight className="w-4 h-4" /> +{eloDetails?.eloChange}</>
-                    ) : isDraw ? (
-                      <>±0</>
-                    ) : (
-                      <><ArrowDownRight className="w-4 h-4" /> {eloDetails?.eloChange}</>
-                    )}
+                    {currentElo}
                   </div>
                 </div>
               </div>
             </div>
             {/* Proceeds buttons */}
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)]"
-              onClick={() => navigate(`/battle/${battleId}/summary`)}
-            >
-              Proceed to Battle Summary →
-            </Button>
+            {reason === 'Surrender' ? (
+              <Button
+                variant="outline-danger"
+                size="lg"
+                className="w-full mt-6"
+                onClick={() => navigate(`/`)}
+              >
+                Return to Home
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)]"
+                onClick={() => navigate(`/battle/${battleId}/summary`)}
+              >
+                Proceed to Battle Summary
+              </Button>
+            )}
           </motion.div>
         )}
 
