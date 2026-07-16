@@ -24,7 +24,7 @@ const axiosWithRetry = async (url, payload, config, isGet = false, maxRetries = 
 };
 
 // Batch size must not exceed Judge0's API limit (20 per request on RapidAPI)
-const BATCH_SIZE = parseInt(process.env.JUDGE0_BATCH_SIZE, 10) || 20;
+const BATCH_SIZE = parseInt(process.env.JUDGE0_BATCH_SIZE, 10);
 
 const decodeHTMLEntities = (str) => {
   if (typeof str !== 'string') return str;

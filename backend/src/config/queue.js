@@ -1,7 +1,7 @@
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const redisUrl = process.env.REDIS_URL;
 
 // Setup highly robust connection configuration supporting standard and secure SSL (Upstash) connections
 const connectionOptions = {
@@ -19,8 +19,6 @@ if (redisUrl.startsWith('rediss://')) {
 const ioRedisConnection = new Redis(redisUrl, connectionOptions);
 
 ioRedisConnection.on('error', (err) => console.error('BullMQ Redis Connection Error:', err.message));
-ioRedisConnection.on('connect', () => console.log('BullMQ Redis connected'));
-
 // Create the submission Queue
 export const submissionQueue = new Queue('submission-queue', {
   connection: ioRedisConnection,
