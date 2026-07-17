@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api, getSocket } from '../utils/index';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from './useToast';
 
 export const useInvitations = () => {
   const [invitations, setInvitations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const socketRef = useRef(null);
   const toast = useToast();
+  const navigate = useNavigate();
 
   const fetchActive = useCallback(async () => {
     setIsLoading(true);
@@ -16,7 +17,7 @@ export const useInvitations = () => {
         setInvitations(data.invitations || []);
       }
     } catch (err) {
-      console.error('Failed to fetch active invitations:', err);
+      // Empty catch block
     } finally {
       setIsLoading(false);
     }
@@ -32,8 +33,6 @@ export const useInvitations = () => {
     fetchActive();
 
     const socket = getSocket();
-    socketRef.current = socket;
-
     socket.on('battle:invite:new', (invite) => {
       // API now returns the populated invite directly
       const formattedInvite = {
@@ -44,22 +43,14 @@ export const useInvitations = () => {
         expiresAt: invite.expiresAt,
       };
       setInvitations(prev => [formattedInvite, ...prev]);
-      let msg = `You received an invitation from ${invite.sender.username} for a ${invite.battleMode === 'timed-sprint' ? 'Timed Sprint' : invite.battleMode === 'topic-duel' ? 'Topic Duel' : 'Random Duel'}.`;
-      if (invite.metadata?.topic) {
-        msg += ` Topic: ${invite.metadata.topic}.`;
-      }
-      if (invite.metadata?.difficulty) {
-        msg += ` Difficulty: ${invite.metadata.difficulty}.`;
-      }
+      let msg = `You received a battle invitation from @${invite.sender.username}`;
       toast.info(msg);
     });
 
     socket.on('battle:invite:accepted', (data) => {
       const { room } = data;
-      toast.success(`Entering the Private Lobby...`);
-      
       setTimeout(() => {
-        window.location.href = `/battle/private/${room._id || room.id}`;
+        navigate(`/battle/private/${room._id || room.id}`);
       }, 1000);
     });
 
@@ -80,8 +71,7 @@ export const useInvitations = () => {
     try {
       const { data } = await api.post(`/api/invitations/${inviteId}/accept`);
       if (data.success) {
-        setInvitations(prev => prev.filter(inv => inv._id !== inviteId));
-        window.location.href = `/battle/private/${data.room?._id || data.room?.id}`;
+        navigate(`/battle/private/${data.room?._id || data.room?.id}`);
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;

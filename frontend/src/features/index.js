@@ -4,7 +4,7 @@ export { default as authReducer } from './authSlice';
 
 // battle slice
 export { 
-  setLobbyStatus, setSuggestedTopic, initBattle, resumeBattle, tickTimer, setTimerRemaining, setOutputState, setOutputProgress, 
+  setLobbyStatus, setSuggestedTopic, initBattle, resumeBattle, tickTimer, setTimerRemaining, setTimerStart, setOutputState, setOutputProgress, 
   setOutputResults, endBattle, setAiAnalysis, resetBattleState, selectBattle 
 } from './battleSlice';
 export { default as battleReducer } from './battleSlice';

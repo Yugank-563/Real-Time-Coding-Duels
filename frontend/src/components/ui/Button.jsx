@@ -25,6 +25,8 @@ const Button = ({
     baseClass += 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]/50 ';
   } else if (variant === 'outline') {
     baseClass += 'bg-transparent border border-[var(--border)] text-[var(--btn-primary-bg)] hover:border-[var(--btn-primary-bg)] hover:text-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg)]/10 hover:shadow-glow-primary ';
+  } else if (variant === 'outline-danger') {
+    baseClass += 'bg-transparent border border-[var(--accent-red)]/30 text-[var(--accent-red)] hover:border-[var(--accent-red)] hover:text-[var(--accent-red)] hover:bg-[var(--accent-red)]/10 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] ';
   } else if (variant === 'success') {
     baseClass += 'bg-[var(--accent-emerald)] text-[var(--bg-base)] hover:brightness-110 shadow-[0_0_15px_rgba(16,185,129,0.3)] ';
   } else if (variant === 'link') {

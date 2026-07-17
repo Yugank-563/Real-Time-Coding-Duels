@@ -9,6 +9,7 @@ import {
   setOutputResults,
   setOutputProgress,
   setAiAnalysis,
+  setTimerStart,
   selectUser
 } from '../../features/index';
 
@@ -49,7 +50,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
         socket.emit('battle:join', { battleId });
       }
       if (queueType) {
-        console.log('Auto-joining matchmaking queue for format:', queueType);
         const searchParams = new URLSearchParams(window.location.search);
         const topic = searchParams.get('topic') || '';
         const mode = searchParams.get('mode') || 'ranked';
@@ -66,11 +66,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
 
     // ── MATCHMAKING EVENTS ──
     socket.on('matchmaking:found', (data) => {
-      console.log('Match paired successfully!', data);
-      const oppName = data.opponents
-        ? data.opponents.map(o => `@${o.username}`).join(' & ')
-        : `@${data.opponent?.username || 'Opponent'}`;
-      toast.success(`You are paired against ${oppName}. Starting duel...`);
       // Initialize battle in store (Note: BattleRoom component will trigger countdown)
       dispatch(setLobbyStatus({ status: 'matched', battleId: data.battleId }));
     });
@@ -91,41 +86,26 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     });
 
     // ── BATTLE LIFE-CYCLE EVENTS ──
-    socket.on('battle:start', () => {
-      console.log('Pre-battle countdown completed. Coding starts!');
+    socket.on('battle:start', (data) => {
+      if (data && data.startTime) {
+        dispatch(setTimerStart(data.startTime));
+      }
     });
 
 
     socket.on('battle:end', (data) => {
-      const activeUser = userRef.current;
-
-      const isMeWinner = data.winnerId === activeUser?.id || data.winnerId === activeUser?._id;
-      const isWinner = isMeWinner;
-
-      const eloDiff = data.ratingDetails?.eloChange !== undefined ? data.ratingDetails.eloChange : 0;
-      const eloText = eloDiff >= 0 ? `+${eloDiff}` : `${eloDiff}`;
-
-      if (isWinner) {
-        toast.success(`Congratulations, you won the battle! (${eloText} ELO)`);
-      } else {
-        toast.error(`Duel lost. Better luck next time! (${eloText} ELO)`);
-      }
       dispatch(endBattle(data));
     });
 
-    socket.on('battle:submission_result', (data) => {
-      
-    });
+
 
     // ── SUBMISSION PROGRESS EVENT ──
     socket.on('submission:progress', (data) => {
-      console.log('Received submission progress:', data.done, '/', data.total);
       dispatch(setOutputProgress({ done: data.done, total: data.total }));
     });
 
     // ── SUBMISSION RESULT EVENT ──
     socket.on('submission:result', (data) => {
-      console.log('Received submission verdict:', data.verdict);
 
       // Update output screen console
       if (data.verdict === 'AC') {
@@ -144,15 +124,12 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     });
 
     socket.on('ai:analysis_ready', (data) => {
-      console.log('AI Analysis Ready:', data);
       if (data.aiAnalysis) {
         dispatch(setAiAnalysis(data.aiAnalysis));
-        toast.info('Click to view insights and optimizations.');
       }
     });
 
     socket.on('battle:problem_error', (data) => {
-      toast.error(data.message || 'LeetCode problem service is currently down. Requeuing...');
       dispatch(setLobbyStatus('queuing'));
       window.location.href = '/';
     });
@@ -171,7 +148,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     return () => {
       if (socket) {
         if (queueType) {
-          console.log('Auto-leaving queue on unmount for format:', queueType);
           const searchParams = new URLSearchParams(window.location.search);
           const mode = searchParams.get('mode') || 'ranked';
           const topic = searchParams.get('topic');
@@ -200,7 +176,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
         socket.off('error');
         socket.off('battle:error');
         
-        console.log('Unmounted socket listeners.');
       }
     };
   }, [battleId, queueType, user?.id, dispatch]);

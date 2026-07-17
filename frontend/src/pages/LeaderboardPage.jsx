@@ -86,58 +86,56 @@ const LeaderboardPage = () => {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full">
 
-        {/* ── Page Header ── */}
-        <div className="mb-5">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="icon-box">
-              <Trophy size={20} className="text-amber-400" />
-            </div>
-            <h1 className="text-[1.75rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
-              Leaderboard
-            </h1>
+      {/* ── Page Header ── */}
+      <div className="mb-5">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="icon-box">
+            <Trophy size={20} className="text-amber-400" />
           </div>
-
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-[0.9rem] text-[var(--text-muted)] m-0">
-              Top rated competitive coders ranked by Elo rating.
-            </p>
-            {total > 0 && (
-              <span className="text-[0.8rem] font-semibold text-[var(--text-muted)] bg-[var(--bg-surface)] border border-[var(--bg-overlay)] px-3 py-1 rounded-full">
-                {total.toLocaleString()} users
-              </span>
-            )}
-          </div>
+          <h1 className="text-[1.75rem] font-extrabold m-0 text-[var(--text-primary)] tracking-[-0.02em]">
+            Leaderboard
+          </h1>
         </div>
 
-        {/* ── Filter Row ── */}
-        <LeaderboardFilter
-          search={localSearch}
-          setSearch={setLocalSearch}
-          country={country}
-          setCountry={setCountry}
-          countries={countries}
-        />
-
-        {/* ── Table ── */}
-        <LeaderboardTable
-          users={users}
-          currentUserStats={currentUserLeaderboard}
-          loading={loading}
-          error={error}
-          myUserId={myUserId}
-          sort={sort}
-          order={order}
-          onSort={onSort}
-        />
-
-        {/* ── Pagination ── */}
-        {!loading && !error && (
-          <Pagination pagination={pagination} setPage={setPage} label="users" />
-        )}
-
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <p className="text-[0.9rem] text-[var(--text-muted)] m-0">
+            Top rated competitive coders ranked by rating.
+          </p>
+          {total > 0 && (
+            <span className="text-[0.8rem] font-semibold text-[var(--text-muted)] bg-[var(--bg-surface)] border border-[var(--bg-overlay)] px-3 py-1 rounded-full">
+              {total.toLocaleString()} users
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* ── Filter Row ── */}
+      <LeaderboardFilter
+        search={localSearch}
+        setSearch={setLocalSearch}
+        country={country}
+        setCountry={setCountry}
+        countries={countries}
+      />
+
+      {/* ── Table ── */}
+      <LeaderboardTable
+        users={users}
+        currentUserStats={currentUserLeaderboard}
+        loading={loading}
+        error={error}
+        myUserId={myUserId}
+        sort={sort}
+        order={order}
+        onSort={onSort}
+      />
+
+      {/* ── Pagination ── */}
+      {!loading && !error && (
+        <Pagination pagination={pagination} setPage={setPage} label="users" />
+      )}
+
     </div>
   );
 };

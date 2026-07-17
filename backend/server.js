@@ -9,7 +9,7 @@ await connectDB();
 // Start Background AI Worker Queue Listener
 await startAiWorker();
 
-const PORT = process.env.BACKEND_PORT || 5000;
+const PORT = process.env.BACKEND_PORT;
 
 const server = app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);

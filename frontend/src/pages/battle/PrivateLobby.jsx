@@ -7,6 +7,7 @@ import { selectUser } from '../../features/index';
 import { useToast, useDocumentTitle } from '../../hooks/index';
 import { useBattleSocket } from '../../hooks/index';
 import { api } from '../../utils/index';
+import { PageLoader } from '../../components/index';
 
 const PrivateLobby = () => {
   const { roomId } = useParams();
@@ -60,11 +61,9 @@ const PrivateLobby = () => {
     if (socket) {
       const handlePlayerJoined = () => {
         fetchLobbyDetails();
-        toast.info('A new participant entered the lobby.');
       };
 
       const handleBattleStart = () => {
-        toast.success('Prepare yourself, the custom duel is beginning!');
         navigate(`/battle/${roomId}`);
       };
 
@@ -76,9 +75,6 @@ const PrivateLobby = () => {
           );
           return { ...prev, players: newPlayers };
         });
-        if (data.userId !== myUser?._id) {
-          toast.info('The guest is ready for battle.');
-        }
       };
 
       const handleLobbyClosed = (data) => {
@@ -86,25 +82,25 @@ const PrivateLobby = () => {
         navigate('/');
       };
 
+      const handleGuestLeft = (data) => {
+        toast.info(data.message || 'The opponent has left the lobby.');
+      };
+
       socket.on('battle:player_joined', handlePlayerJoined);
       socket.on('battle:start', handleBattleStart);
       socket.on('battle:player_ready', handlePlayerReady);
       socket.on('battle:lobby_closed', handleLobbyClosed);
+      socket.on('battle:guest_left', handleGuestLeft);
 
       return () => {
         socket.off('battle:player_joined', handlePlayerJoined);
         socket.off('battle:start', handleBattleStart);
         socket.off('battle:player_ready', handlePlayerReady);
         socket.off('battle:lobby_closed', handleLobbyClosed);
+        socket.off('battle:guest_left', handleGuestLeft);
       };
     }
   }, [socket, roomId]);
-
-  // Track isStarting for unmount cleanup (Not needed if we remove unmount emit, but keeping for safety)
-  const isStartingRef = useRef(isStarting);
-  useEffect(() => {
-    isStartingRef.current = isStarting;
-  }, [isStarting]);
 
   const [isReadying, setIsReadying] = useState(false);
 
@@ -142,11 +138,7 @@ const PrivateLobby = () => {
   };
 
   if (!battle) {
-    return (
-      <div className="min-h-[70vh] bg-base text-text-primary flex items-center justify-center font-sans">
-        <p className="text-sm text-text-secondary animate-pulse italic">Retrieving private custom lobby...</p>
-      </div>
-    );
+    return <PageLoader isLoading={true} message="Entering Private Lobby..." variant="dual-ring" />;
   }
 
   const isHost = battle.host === (myUser?._id || myUser?.id);
@@ -225,7 +217,7 @@ const PrivateLobby = () => {
 
             <div className="text-center relative z-10 mt-1">
               <h2 className="text-lg font-black text-text-primary tracking-tight">@{p1.user.name}</h2>
-              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {p1.user.rating || 1200}</p>
+              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">Rating {p1.user.rating || 1200}</p>
             </div>
           </motion.div>
 
@@ -273,7 +265,7 @@ const PrivateLobby = () => {
 
                 <div className="text-center relative z-10 mt-1">
                   <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{p2.user.name}</h2>
-                  <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {p2.user.rating || 1200}</p>
+                  <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">Rating {p2.user.rating || 1200}</p>
                 </div>
               </>
             ) : (
@@ -362,7 +354,7 @@ const PrivateLobby = () => {
              {/* LEAVE BUTTON */}
              <button
                onClick={() => {
-                 if (isHost && !isStarting) {
+                 if (!isStarting) {
                    socket.emit('battle:leave_lobby', { battleId: battle._id });
                  }
                  navigate('/');

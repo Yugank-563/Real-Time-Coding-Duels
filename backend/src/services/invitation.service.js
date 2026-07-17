@@ -78,6 +78,19 @@ export const acceptInvitationService = async (inviteId, userId) => {
     },
     { upsert: true, new: true }
   );
+
+  const getDynamicTimeLimit = (mode, diff) => {
+    const diffLower = (diff || 'medium').toLowerCase();
+    if (mode === 'timed-sprint') {
+      if (diffLower === 'easy') return 15 * 60;
+      if (diffLower === 'hard') return 45 * 60;
+      return 30 * 60; // medium
+    } else {
+      if (diffLower === 'easy') return 30 * 60;
+      if (diffLower === 'hard') return 80 * 60;
+      return 50 * 60; // medium
+    }
+  };
   
   // Create 2-player active battle
   const battle = await createBattle({
@@ -85,7 +98,7 @@ export const acceptInvitationService = async (inviteId, userId) => {
     mode: 'casual',
     status: 'waiting',
     startTime: new Date(),
-    timeLimit: invite.metadata?.timeLimit ? parseInt(invite.metadata.timeLimit, 10) : (invite.battleMode === 'timed-sprint' ? 600 : 1200),
+    timeLimit: getDynamicTimeLimit(invite.battleMode, dbProblem.difficulty),
     problem: dbProblem._id,
     difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
     roomName: `Battle: ${invite.sender.username} vs You`,

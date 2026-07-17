@@ -2,7 +2,7 @@ import { createSubmission, findProblemBySlugOrTitle } from '../../repositories/i
 import { submissionQueue } from '../../config/queue.js';
 import { getTestCases as getB2TestCases, getReferenceSolution } from '../testCaseService.js';
 
-const TC_SUBMIT_COUNT_B2 = parseInt(process.env.TC_SUBMIT_LIMIT, 10) || 100;
+const TC_SUBMIT_COUNT_B2 = parseInt(process.env.TC_SUBMIT_LIMIT, 10);
 
 
 const buildRunTestCases = async (problem, customInputs) => {

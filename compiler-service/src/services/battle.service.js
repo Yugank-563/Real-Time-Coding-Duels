@@ -35,7 +35,14 @@ export class BattleService {
           // Compute stats and Elo progression changes
           const opponentIdx = playerIdx === 0 ? 1 : 0;
           const opponentId = battle.players[opponentIdx].user.toString();
-          eloDetails = await processBattleResult(userId.toString(), opponentId, 1, battle.mode || 'ranked');
+          
+          const timeElapsed = battle.startTime ? (Date.now() - new Date(battle.startTime).getTime()) / 1000 : null;
+          const options = {
+            timeElapsed,
+            timeLimit: battle.timeLimit || 1800
+          };
+          
+          eloDetails = await processBattleResult(userId.toString(), opponentId, 1, battle.mode || 'ranked', options);
 
           if (eloDetails) {
             battle.players[playerIdx].ratingChange = eloDetails.eloChange || 0;

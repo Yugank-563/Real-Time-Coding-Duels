@@ -73,6 +73,19 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     return;
   }
 
+  const getDynamicTimeLimit = (mode, diff) => {
+    const diffLower = (diff || 'medium').toLowerCase();
+    if (mode === 'timed-sprint') {
+      if (diffLower === 'easy') return 15 * 60;
+      if (diffLower === 'hard') return 45 * 60;
+      return 30 * 60; // medium
+    } else {
+      if (diffLower === 'easy') return 30 * 60;
+      if (diffLower === 'hard') return 80 * 60;
+      return 50 * 60; // medium
+    }
+  };
+
   const battleData = {
     players: [
       { user: userId, status: 'ready' },
@@ -82,8 +95,8 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     battleType,
     mode,
     status: 'active',
-    startTime: new Date(),
-    timeLimit: battleType === 'timed-sprint' ? 600 : 1200,
+    startTime: new Date(Date.now() + 8500), // Offset 8.5s for UI countdown
+    timeLimit: getDynamicTimeLimit(battleType, dbProblem.difficulty),
   };
   
   if (battleType === 'topic-duel' && topic) {
@@ -174,7 +187,7 @@ export const registerMatchmakingHandlers = (io, socket) => {
       }
 
       let elapsedSeconds = 0;
-      let eloTolerance = (battleType === 'topic-duel') ? 150 : 100;
+      let eloTolerance = 10;
 
       // Start periodic pairing loop (every 2 seconds)
       const matchmakingInterval = setInterval(async () => {
@@ -182,12 +195,12 @@ export const registerMatchmakingHandlers = (io, socket) => {
           elapsedSeconds += 2;
 
           // Progressively expand Elo search range
-          const expandEvery = 20;
+          const expandEvery = 22;
           if (elapsedSeconds % expandEvery === 0) {
-            eloTolerance += 50;
+            eloTolerance += 5;
 
           }
-          if (elapsedSeconds >= 50) {
+          if (elapsedSeconds >= 60) {
             clearInterval(matchmakingInterval);
             activeQueueIntervals.delete(socket.id);
             delete socket.currentQueueData;
@@ -278,7 +291,6 @@ export const registerMatchmakingHandlers = (io, socket) => {
       
       delete socket.currentQueueData;
 
-
       socket.emit('matchmaking:left');
     } catch (err) {
       console.error('[Matchmaking] leave error:', err.message);
@@ -307,6 +319,5 @@ export const registerMatchmakingHandlers = (io, socket) => {
     }
     
     userSocketMap.delete(socket.userId);
-    console.log(`[Matchmaking] Cleaned up on disconnect for socket ${socket.id}`);
   });
 };
