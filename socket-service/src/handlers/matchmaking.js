@@ -11,7 +11,6 @@ import {
 import { 
   findUserById,
   createBattle,
-  findOneAndUpdateProblem
 } from '../../../backend/src/repositories/index.js';
 import { matchmakingSchema } from '../schemas/socket.schema.js';
 import { validateSocketPayload } from '../utils/validation.js';
@@ -34,31 +33,25 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
     let problemData;
     let difficulty = 'MEDIUM';
 
-    if (battleType === 'topic') {
+    // Combine solved problems from both players to exclude them
+    const excludedIds = [
+      ...(user?.solvedProblems || []),
+      ...(opponent?.solvedProblems || [])
+    ];
+
+    if (battleType === 'topic-duel') {
       difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rating || 1200)) / 2));
-      problemData = await getRandomProblem(topic, difficulty);
+      problemData = await getRandomProblem(topic, difficulty, excludedIds);
     } else if (battleType === 'sprint') {
       difficulty = 'EASY';
-      problemData = await getRandomProblem('Array', 'EASY');
+      problemData = await getRandomProblem(null, 'EASY', excludedIds);
     } else {
       difficulty = eloToDifficulty(Math.round((myElo + (opponent?.rating || 1200)) / 2));
-      problemData = await getRandomProblem('Array', difficulty);
+      problemData = await getRandomProblem(null, difficulty, excludedIds);
     }
 
-    const dbDiff = difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
-    const query = problemData.titleSlug ? { titleSlug: problemData.titleSlug } : { title: problemData.title };
-    dbProblem = await findOneAndUpdateProblem(
-      query,
-      { 
-        ...problemData,
-        description: problemData.content || problemData.description || '',
-        difficulty: dbDiff,
-        boilerplates: (problemData.boilerplates && problemData.boilerplates.cpp)
-          ? problemData.boilerplates
-          : { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
-      },
-      { upsert: true, new: true }
-    );
+    // getRandomProblem always fetches from MongoDB and returns a real document with _id
+    dbProblem = problemData;
   } catch (fetchErr) {
     io.to(`user:${userId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
     io.to(`user:${matchedUserId}`).emit('battle:problem_error', { message: 'Problem fetch failed. Requeuing...' });
@@ -76,13 +69,13 @@ const executeMatchCreation = async (userId, matchedUserId, myElo, topic, battleT
   const getDynamicTimeLimit = (mode, diff) => {
     const diffLower = (diff || 'medium').toLowerCase();
     if (mode === 'timed-sprint') {
-      if (diffLower === 'easy') return 15 * 60;
-      if (diffLower === 'hard') return 45 * 60;
-      return 30 * 60; // medium
+      if (diffLower === 'easy') return 10 * 60;
+      if (diffLower === 'hard') return 30 * 60;
+      return 20 * 60; // medium
     } else {
-      if (diffLower === 'easy') return 30 * 60;
-      if (diffLower === 'hard') return 80 * 60;
-      return 50 * 60; // medium
+      if (diffLower === 'easy') return 20 * 60;
+      if (diffLower === 'hard') return 60 * 60;
+      return 40 * 60; // medium
     }
   };
 
@@ -187,7 +180,7 @@ export const registerMatchmakingHandlers = (io, socket) => {
       }
 
       let elapsedSeconds = 0;
-      let eloTolerance = 10;
+      let eloTolerance = mode === 'casual' ? 50 : 30;
 
       // Start periodic pairing loop (every 2 seconds)
       const matchmakingInterval = setInterval(async () => {
@@ -197,8 +190,7 @@ export const registerMatchmakingHandlers = (io, socket) => {
           // Progressively expand Elo search range
           const expandEvery = 22;
           if (elapsedSeconds % expandEvery === 0) {
-            eloTolerance += 5;
-
+            eloTolerance += mode === 'casual' ? 20 : 10;
           }
           if (elapsedSeconds >= 60) {
             clearInterval(matchmakingInterval);

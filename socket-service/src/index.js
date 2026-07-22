@@ -109,30 +109,8 @@ await subClient.subscribe('submission:events', (message) => {
         totalTestCases,
       });
     }
-
-    // Trigger AI Analysis in background (Only for fully Accepted submissions as requested)
-    if ((verdict === 'Accepted' || verdict === 'AC') && isSubmit) {
-      // Use Redis Pub/Sub to trigger AI Analysis (Decoupled architecture)
-      pubClient.publish('trigger_ai_analysis', submissionId).catch(err => {
-        console.error('Failed to trigger AI Analysis via Redis', err);
-      });
-    }
   } catch (error) {
     console.error('Error handling Redis Pub/Sub submission message:', error.message);
-  }
-});
-
-// Listen for AI analysis completion
-await subClient.subscribe('ai:analysis_ready', (message) => {
-  try {
-    const data = JSON.parse(message);
-    const { submissionId, userId, aiAnalysis } = data;    
-    io.to(`user:${userId}`).emit('ai:analysis_ready', {
-      submissionId,
-      aiAnalysis
-    });
-  } catch (error) {
-    console.error('Error handling Redis Pub/Sub ai:analysis_ready message:', error.message);
   }
 });
 
@@ -159,12 +137,6 @@ io.use((socket, next) => {
     socket.userId = decoded.id;
     next();
   } catch (err) {
-    // Only log genuinely unexpected errors — not standard token client issues
-    if (err.name !== 'JsonWebTokenError' && err.name !== 'TokenExpiredError') {
-      console.error('Socket Auth Unexpected Error:', err.message);
-    } else {
-      console.warn(`Socket Auth Failed (${err.name}): ${err.message}`);
-    }
     return next(new Error('Authentication failed: Invalid token.'));
   }
 });
