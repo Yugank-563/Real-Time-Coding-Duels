@@ -10,6 +10,11 @@ const MonacoEditorComponent = React.memo(({
   settings,
 }) => {
   const localRef = useRef(null);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const handleEditorDidMount = (editor, monaco) => {
     localRef.current = editor;
@@ -17,7 +22,9 @@ const MonacoEditorComponent = React.memo(({
     
     editor.onDidChangeModelContent(() => {
       const val = editor.getValue();
-      onChange(val);
+      if (onChangeRef.current) {
+        onChangeRef.current(val);
+      }
     });
   };
 

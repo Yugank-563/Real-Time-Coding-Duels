@@ -42,7 +42,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
   }, [count, phase, onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden font-sans select-none">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden font-sans select-none bg-surface">
       
       {/* Background grid */}
       <div 
@@ -84,7 +84,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               </div>
               <div className="text-center relative z-10 mt-1">
                 <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{myUser?.username || 'You'}</h2>
-                <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">ELO {myUser?.rating || myUser?.elo || 1200}</p>
+                <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase mt-0.5">RATING {myUser?.rating || myUser?.elo || 1200}</p>
               </div>
             </motion.div>
 
@@ -118,7 +118,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               </div>
               <div className="text-center relative z-10 mt-1">
                 <h2 className="text-lg font-black text-text-primary tracking-tight max-w-[180px] truncate">@{opponent?.username || 'Opponent'}</h2>
-                <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">ELO {opponent?.rating || opponent?.elo || 1200}</p>
+                <p className="text-[10px] text-pink-500/80 font-bold tracking-widest uppercase mt-0.5">RATING {opponent?.rating || opponent?.elo || 1200}</p>
               </div>
             </motion.div>
           </motion.div>
@@ -141,7 +141,7 @@ const BattleCountdown = ({ myUser, opponent, problemTitle, onComplete }) => {
               "{problemTitle || 'Loading Challenge'}"
             </h2>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Read the description constraints carefully. Compile examples rapidly. Solve first to dominate ELO points.
+              Read the description constraints carefully. Compile examples rapidly. Solve first to dominate rating points.
             </p>
           </motion.div>
         )}

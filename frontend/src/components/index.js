@@ -36,7 +36,3 @@ export { default as Navbar } from './layout/Navbar';
 export { default as ProtectedRoute } from './layout/ProtectedRoute';
 export { default as AppLayout } from './layout/AppLayout';
 export { default as AuthLayout } from './layout/AuthLayout';
-
-// ai folder
-export { AIReviewCard } from './ai/AIReviewCard.jsx';
-export { AIReviewSkeleton } from './ai/AIReviewSkeleton.jsx';

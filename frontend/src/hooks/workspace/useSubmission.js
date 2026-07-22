@@ -14,24 +14,38 @@ const buildResultObj = (data, isSubmitAction = false) => ({
   totalTestCases: data.totalTestCases,
   results: data.results || [],
   runProgress: { done: data.testCasesPassed || 0, total: data.totalTestCases || 0, isSubmit: isSubmitAction },
-  aiAnalysis: data.aiAnalysis,
   originalCode: data.originalCode,
   submissionId: data.submissionId
 });
 
-export const useSubmission = (initialOutput = null) => {
+export const useSubmission = (initialOutput = null, slug = '') => {
   const toast = useToast();
-  const [localOutput, setLocalOutput] = useState({
-    state: 'idle',
-    results: [],
-    errorMessage: '',
-    verdict: null,
-    executionTime: 0,
-    memory: 0,
-    testCasesPassed: 0,
-    totalTestCases: 0,
-    runProgress: { done: 0, total: 0 }
-  });
+  
+  const getInitialState = () => {
+    if (slug) {
+      const saved = localStorage.getItem(`coduelo_result_${slug}`);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse cached output');
+        }
+      }
+    }
+    return {
+      state: 'idle',
+      results: [],
+      errorMessage: '',
+      verdict: null,
+      executionTime: 0,
+      memory: 0,
+      testCasesPassed: 0,
+      totalTestCases: 0,
+      runProgress: { done: 0, total: 0 }
+    };
+  };
+
+  const [localOutput, setLocalOutput] = useState(getInitialState);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isExecutingRef = useRef(false);
@@ -43,9 +57,15 @@ export const useSubmission = (initialOutput = null) => {
       // If output is managed externally (e.g. Redux), let the parent call its state updater
       // But we still support updating the local state if needed.
     } else {
-      setLocalOutput(val);
+      setLocalOutput(prev => {
+        const nextState = typeof val === 'function' ? val(prev) : val;
+        if (slug) {
+          localStorage.setItem(`coduelo_result_${slug}`, JSON.stringify(nextState));
+        }
+        return nextState;
+      });
     }
-  }, [initialOutput]);
+  }, [initialOutput, slug]);
 
   const runCode = useCallback(async (slug, code, language, cases) => {
     if (isExecutingRef.current) return;
@@ -88,16 +108,10 @@ export const useSubmission = (initialOutput = null) => {
 
       const resultObj = buildResultObj(data);
 
-      if (!initialOutput) {
-        setLocalOutput(resultObj);
-      }
+      setOutput(resultObj);
 
-      if (data.verdict === 'AC') {
-        toast.success('Your custom case passed!');
-      } else {
-        toast.warning('Run Failed: ' + data.verdict);
-      }
       return resultObj;
+      
     } catch (err) {
       console.error('Run failed:', err);
       toast.error(err.message || err.response?.data?.message || 'Sandbox timeout or internal error.');
@@ -148,16 +162,9 @@ export const useSubmission = (initialOutput = null) => {
 
       const resultObj = buildResultObj(data, true);
 
-      if (!initialOutput) {
-        setLocalOutput(resultObj);
-      }
+      setOutput(resultObj);
 
-      if (data.verdict === 'AC') {
-        toast.success('All constraints verified successfully.');
-        toast.info('Generating performance insights...');
-      } else {
-        toast.warning(`Passed: ${data.testCasesPassed} / ${data.totalTestCases}`);
-      }
+
       return resultObj;
     } catch (err) {
       console.error('Submit failed:', err);

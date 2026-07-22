@@ -14,7 +14,7 @@ const PracticeRoom = () => {
   // 2. State hooks
   const editor = useEditorState(problem);
   const testcase = useTestcaseManager(variables, initialTestcases);
-  const submission = useSubmission();
+  const submission = useSubmission(null, slug);
 
   const handleRun = () => {
     if (!problem) return;
@@ -38,7 +38,6 @@ const PracticeRoom = () => {
 
   return (
     <CodingWorkspace
-      mode="practice"
       problem={problem}
       code={editor.code}
       onCodeChange={editor.setCode}

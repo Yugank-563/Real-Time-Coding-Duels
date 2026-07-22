@@ -102,7 +102,6 @@ const BattleRoom = () => {
           setShowCountdown(true);
         }
       } catch (err) {
-        console.error('Failed to load battle coordinates:', err.message);
         toast.error('Unable to retrieve battle room configuration.');
         navigate('/', { replace: true });
       }
@@ -123,7 +122,7 @@ const BattleRoom = () => {
   const initialCases = problem ? getInitialCases(problem, vars) : [['']];
 
   // Editor and testcase state hooks
-  const editor = useEditorState(problem);
+  const editor = useEditorState(problem, 'cpp', 'battle');
   const testcase = useTestcaseManager(vars, initialCases);
 
   // Server-authoritative timer — both users compute from the same startTime
@@ -183,13 +182,7 @@ const BattleRoom = () => {
 
       dispatch(setOutputResults(mappedResult));
 
-      if (runResult.verdict === 'AC') {
-        toast.success('Your custom case passed!');
-      } else {
-        toast.warning('Run Failed: ' + runResult.verdict);
-      }
     } catch (err) {
-      console.error('Run failed:', err.message);
       toast.error(err.message || err.response?.data?.message || 'Internal sandbox compiler error.');
       dispatch(setOutputState('idle'));
     } finally {
@@ -215,10 +208,7 @@ const BattleRoom = () => {
           problemId: problem._id,
         }
       );
-
-      toast.info('Evaluating code against hidden test cases inside secure Docker sandbox...');
     } catch (err) {
-      console.error('Submission failed:', err.message);
       toast.error(err.response?.data?.message || 'Internal sandbox compiler error.');
       dispatch(setOutputState('idle'));
     } finally {
@@ -298,7 +288,6 @@ const BattleRoom = () => {
             onExitBattle={handleSurrender}
           />
         }
-        mode="battle"
         problem={problem}
         code={editor.code}
         onCodeChange={handleCodeChange}
@@ -314,7 +303,7 @@ const BattleRoom = () => {
         onCaseInputChange={testcase.handleCaseInputChange}
         onAddCase={testcase.handleAddCase}
         onDeleteCase={testcase.handleDeleteCase}
-        output={{ ...output, aiAnalysis: battleState.aiAnalysis }}
+        output={output}
         showRunButton={true}
         showSubmitButton={true}
       />

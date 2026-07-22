@@ -1,4 +1,4 @@
-import { Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { VerdictBadge } from '../../components';
 
 const formatOutputValue = (val) => {
@@ -64,43 +64,71 @@ const ResultTab = ({
         {hasResults && verdict && (
           <div className="flex flex-col h-full">
             {/* Verdict Details */}
-            <div className="px-5 py-4 flex flex-col gap-1 border-b border-border bg-elevated/20 shrink-0">
-              <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
+            <div className={`px-5 py-5 flex flex-col gap-3 border-b border-border shrink-0 transition-colors duration-500 ${
+              verdict === 'AC' ? 'bg-[#2DB55D]/10 relative overflow-hidden' :
+              (verdict === 'WA' || verdict === 'CE') ? 'bg-[#EF4743]/10 relative overflow-hidden' :
+              'bg-elevated/20'
+            }`}>
+              {/* Optional background glow for AC/WA/CE */}
+              {verdict === 'AC' && (
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#2DB55D] to-transparent opacity-70" />
+              )}
+              {(verdict === 'WA' || verdict === 'CE') && (
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#EF4743] to-transparent opacity-70" />
+              )}
+
+              <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
                 {verdict === 'AC' ? (
-                  <h2 className="text-xl font-bold text-[#2DB55D] flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" /> Accepted
+                  <h2 className="text-2xl font-black text-[#2DB55D] flex items-center gap-2 drop-shadow-sm tracking-tight">
+                    <CheckCircle className="w-6 h-6" /> Accepted
                   </h2>
                 ) : verdict === 'WA' ? (
-                  <h2 className="text-xl font-bold text-[#EF4743] flex items-center gap-2">
-                    <XCircle className="w-5 h-5" /> Wrong Answer
+                  <h2 className="text-2xl font-black text-[#EF4743] flex items-center gap-2 drop-shadow-sm tracking-tight">
+                    <XCircle className="w-6 h-6" /> Wrong Answer
+                  </h2>
+                ) : verdict === 'CE' ? (
+                  <h2 className="text-2xl font-black text-[#EF4743] flex items-center gap-2 drop-shadow-sm tracking-tight">
+                    <AlertTriangle className="w-6 h-6" /> Compilation Error
                   </h2>
                 ) : (
                   <VerdictBadge verdict={verdict} />
                 )}
                 {totalTestCases > 0 && (
-                  <span className="text-sm font-semibold text-text-secondary mt-0.5">
-                    {testCasesPassed} {"/"} {totalTestCases} testcases passed
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    verdict === 'AC' ? 'bg-[#2DB55D]/20 text-[#2DB55D]' :
+                    (verdict === 'WA' || verdict === 'CE') ? 'bg-[#EF4743]/20 text-[#EF4743]' :
+                    'bg-white/10 text-text-secondary'
+                  }`}>
+                    {testCasesPassed} / {totalTestCases} Testcases Passed
                   </span>
                 )}
+
               </div>
+              
               {(executionTime != null || memory != null) && (
-                <div className="text-[11px] text-text-muted font-mono mt-1">
-                  {executionTime != null && `Runtime: ${executionTime} ms`}
-                  {memory != null && `  ·  Memory: ${memoryMB} MB`}
+                <div className="flex items-center gap-4 text-[11px] font-mono text-text-secondary">
+                  {executionTime != null && (
+                    <div className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-md">
+                      <span className="opacity-60">Runtime:</span>
+                      <span className="font-semibold text-text-primary">{executionTime} ms</span>
+                    </div>
+                  )}
+                  {memory != null && (
+                    <div className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-md">
+                      <span className="opacity-60">Memory:</span>
+                      <span className="font-semibold text-text-primary">{memoryMB} MB</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
 
             {verdict === 'CE' && errorMessage ? (
-              <div className="p-4 flex-1">
-                <div className="p-3 bg-red-500/6 border border-red-500/20 rounded-xl space-y-1.5">
-                  <span className="text-[9px] uppercase font-black tracking-wider text-red-400 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Compiler Output
-                  </span>
-                  <pre className="text-red-300 font-mono text-[11px] whitespace-pre overflow-x-auto leading-relaxed select-text code-scroll-x">
-                    {errorMessage}
-                  </pre>
+              <div className="flex-1 p-4 flex flex-col min-h-0 space-y-2">
+                <p className="text-[11px] text-text-muted font-mono font-medium">Compiler Output</p>
+                <div className="flex-1 bg-elevated border border-border rounded-xl p-4 font-mono text-sm leading-relaxed text-[#EF4743] overflow-x-auto overflow-y-auto whitespace-pre code-scroll-x scrollbar-thin">
+                  {errorMessage}
                 </div>
               </div>
             ) : (
@@ -178,8 +206,28 @@ const ResultTab = ({
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 text-xs text-text-muted italic">
-                    {verdict === 'AC' ? '✓ All test cases passed.' : '✗ Some test cases failed.'}
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    {verdict === 'AC' ? (
+                      <>
+                        <div className="w-14 h-14 rounded-full bg-[#2DB55D]/10 flex items-center justify-center mb-4">
+                          <CheckCircle className="w-7 h-7 text-[#2DB55D]" />
+                        </div>
+                        <h3 className="text-base font-bold text-text-primary mb-1">Execution Successful</h3>
+                        <p className="text-xs text-text-muted max-w-[250px]">
+                          Your code successfully passed all provided test cases.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-14 h-14 rounded-full bg-[#EF4743]/10 flex items-center justify-center mb-4">
+                          <XCircle className="w-7 h-7 text-[#EF4743]" />
+                        </div>
+                        <h3 className="text-base font-bold text-text-primary mb-1">Execution Failed</h3>
+                        <p className="text-xs text-text-muted max-w-[250px]">
+                          Some test cases did not pass. Select the test cases above to debug.
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

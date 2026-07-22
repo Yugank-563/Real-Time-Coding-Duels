@@ -20,7 +20,6 @@ import { setUser, setLoading, selectAuthLoading } from './features/index';
 const BattleLobbyPage = lazy(() => import('./pages/battle/BattleLobby'));
 const MatchmakingPage = lazy(() => import('./pages/battle/Matchmaking'));
 const BattleRoomPage = lazy(() => import('./pages/battle/BattleRoom'));
-const BattleSummaryPage = lazy(() => import('./pages/battle/BattleSummary'));
 const InvitationHistoryPage = lazy(() => import('./pages/battle/InvitationHistory'));
 const PrivateLobbyPage = lazy(() => import('./pages/battle/PrivateLobby'));
 const ProblemsPage = lazy(() => import('./pages/ProblemsPage'));
@@ -99,7 +98,6 @@ function App() {
               <Route path="/battle/private/:roomId" element={<PrivateLobbyPage />} />
               <Route path="/battle/matchmaking" element={<MatchmakingPage />} />
               <Route path="/invitations" element={<InvitationHistoryPage />} />
-              <Route path="/battle/:battleId/summary" element={<BattleSummaryPage />} />
               <Route path="/problems" element={<ProblemsPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>

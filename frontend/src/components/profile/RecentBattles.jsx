@@ -84,7 +84,7 @@ const RecentBattles = ({ data, loading }) => {
                     </div>
                     {battle.ratingChange !== undefined && (
                       <span className={`text-[0.75rem] font-bold ${battle.ratingChange > 0 ? 'text-[#10B981]' : battle.ratingChange < 0 ? 'text-[#EF4444]' : 'text-[var(--text-muted)]'}`}>
-                        <span className="hidden sm:inline">(</span>{battle.ratingChange > 0 ? '+' : ''}{battle.ratingChange} ELO<span className="hidden sm:inline">)</span>
+                        <span className="hidden sm:inline">(</span>{battle.ratingChange > 0 ? '+' : ''}{battle.ratingChange} Rating<span className="hidden sm:inline">)</span>
                       </span>
                     )}
                  </div>
