@@ -11,7 +11,6 @@ export * from './auth/resendOTP.js';
 
 // battles folder
 export * from './battles/getBattleDetails.js';
-export * from './battles/getBattleSummary.js';
 export * from './battles/getHealth.js';
 export * from './battles/getLobbyStats.js';
 export * from './battles/getQueueStatus.js';
@@ -21,7 +20,6 @@ export * from './battles/joinQueue.js';
 export * from './battles/leaveQueue.js';
 export * from './battles/startPrivateBattle.js';
 export * from './battles/readyPrivateBattle.js';
-export * from './battles/getAiReview.js';
 export * from './battles/surrenderBattle.js';
 
 // problems folder

@@ -48,6 +48,13 @@ export const submitCodeService = async (battleId, code, language, problemId, use
     type:       'hidden',
   }));
 
+  // Truncate test cases for DB to avoid MongoDB 16MB document size limit
+  const dbTestCases = testCases.map((tc) => ({
+    ...tc,
+    input: tc.input ? String(tc.input).substring(0, 1000) : '',
+    output: tc.output ? String(tc.output).substring(0, 1000) : '',
+  }));
+
   // Create the Submission document inside MongoDB
   const submission = await createSubmission({
     userId,
@@ -57,7 +64,7 @@ export const submitCodeService = async (battleId, code, language, problemId, use
     language,
     verdict: 'pending',
     totalTestCases: testCases.length,
-    testCases,
+    testCases: dbTestCases,
   });
 
   // Add task to BullMQ Redis Queue

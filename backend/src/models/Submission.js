@@ -68,27 +68,6 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    improvedCode: {
-      type: String,
-      default: null,
-    },
-    aiAnalysis: {
-      type: mongoose.Schema.Types.Mixed,
-      default: null,
-    },
-    aiAnalysisStatus: {
-      type: String,
-      enum: ['none', 'pending', 'completed', 'failed', 'expired'],
-      default: 'none',
-    },
-    aiAnalysisGeneratedAt: {
-      type: Date,
-      default: null,
-    },
-    aiAnalysisExpiresAt: {
-      type: Date,
-      default: null,
-    },
   },
   {
     timestamps: true,

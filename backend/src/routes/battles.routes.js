@@ -6,14 +6,12 @@ import {
   getQueueStatus,
   getBattleDetails,
   surrenderBattle,
-  getBattleSummary,
   getTopicStats,
   getLobbyStats,
   getTopics,
   startPrivateBattle,
   readyPrivateBattle,
-  getHealth,
-  getAiReview
+  getHealth
 } from '../controllers/index.js';
 import {
   battleActionSchema,
@@ -45,7 +43,5 @@ router.post('/private/:id/ready', validateRequest(battleActionSchema), readyPriv
 // Dynamic ID routes
 router.get('/:id', validateRequest(battleActionSchema), getBattleDetails);
 router.post('/:id/surrender', validateRequest(battleActionSchema), surrenderBattle);
-router.get('/:id/summary', validateRequest(battleActionSchema), getBattleSummary);
-router.get('/:id/ai-review', validateRequest(battleActionSchema), getAiReview);
 
 export default router;

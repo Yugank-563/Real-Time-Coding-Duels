@@ -5,7 +5,7 @@ import {
   createInvitation, 
   fetchActiveInvitations,
   createBattle,
-  findOneAndUpdateProblem
+  findUserById,
 } from '../repositories/index.js';
 import { getRandomProblem } from './problemService.js';
 import redis from '../config/redis.js';
@@ -66,42 +66,42 @@ export const acceptInvitationService = async (inviteId, userId) => {
 
   // Fetch Problem
   const difficulty = invite.metadata?.difficulty || 'Medium';
-  const problemData = await getRandomProblem('Array', difficulty);
+  
+  const senderUser = await findUserById(invite.sender._id);
+  const recipientUser = await findUserById(userId);
+  const excludedIds = [
+    ...(senderUser?.solvedProblems || []),
+    ...(recipientUser?.solvedProblems || [])
+  ];
 
-  let dbProblem = await findOneAndUpdateProblem(
-    { titleSlug: problemData.titleSlug || problemData.title },
-    {
-      ...problemData,
-      difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
-      description: problemData.content || problemData.description || '',
-      boilerplates: problemData.boilerplates || { cpp: `class Solution {\npublic:\n    // Write your code here\n};` }
-    },
-    { upsert: true, new: true }
-  );
+  const problemData = await getRandomProblem(null, difficulty, excludedIds);
+
+  // getRandomProblem always returns a real MongoDB document with _id — no upsert needed
+  let dbProblem = problemData;
 
   const getDynamicTimeLimit = (mode, diff) => {
     const diffLower = (diff || 'medium').toLowerCase();
     if (mode === 'timed-sprint') {
-      if (diffLower === 'easy') return 15 * 60;
-      if (diffLower === 'hard') return 45 * 60;
-      return 30 * 60; // medium
+      if (diffLower === 'easy') return 10 * 60; // Temp set to 1 min for testing
+      if (diffLower === 'hard') return 30 * 60;
+      return 20 * 60; // medium
     } else {
-      if (diffLower === 'easy') return 30 * 60;
-      if (diffLower === 'hard') return 80 * 60;
-      return 50 * 60; // medium
+      if (diffLower === 'easy') return 20 * 60;
+      if (diffLower === 'hard') return 60 * 60;
+      return 40 * 60; // medium
     }
   };
   
   // Create 2-player active battle
   const battle = await createBattle({
     battleType: invite.battleMode || 'random-duel',
-    mode: 'casual',
+    mode: invite.metadata?.mode || 'casual',
     status: 'waiting',
     startTime: new Date(),
     timeLimit: getDynamicTimeLimit(invite.battleMode, dbProblem.difficulty),
     problem: dbProblem._id,
     difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
-    roomName: `Battle: ${invite.sender.username} vs You`,
+
     host: invite.sender._id,
     players: [
       { user: invite.sender._id, status: 'not_ready' },

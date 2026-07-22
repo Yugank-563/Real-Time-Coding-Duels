@@ -75,6 +75,7 @@ export const getRecentRankedBattles = (userId, limitNum = 10) =>
   Battle.find({
     'players.user': userId,
     mode: 'ranked',
+    isCasual: { $ne: true },
     status: 'ended'
   })
   .sort({ createdAt: -1 })

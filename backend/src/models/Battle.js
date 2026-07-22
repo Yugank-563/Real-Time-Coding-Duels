@@ -48,10 +48,7 @@ const battleSchema = new mongoose.Schema(
       required: true,
       default: 'ranked',
     },
-    roomName: {
-      type: String,
-      default: '',
-    },
+
     isCasual: {
       type: Boolean,
       default: false,
