@@ -55,7 +55,15 @@ adapterSubClient.on('error', (err) => console.error('Socket Redis Adapter Sub Cl
 
 await Promise.all([pubClient.connect(), adapterSubClient.connect()]);
 
-const httpServer = createServer();
+const httpServer = createServer((req, res) => {
+  if (req.method === 'GET' && req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Socket Service is Running');
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL,
