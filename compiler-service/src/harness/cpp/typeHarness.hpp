@@ -79,9 +79,11 @@ inline string _serialize(const char* val) { return string("\"") + _escapeStr(str
 inline string _serialize(ListNode* head) {
     string res = "[";
     ListNode* curr = head;
-    while (curr) {
+    unordered_set<ListNode*> visited;
+    while (curr && visited.find(curr) == visited.end()) {
+        visited.insert(curr);
         res += to_string(curr->val);
-        if (curr->next) res += ",";
+        if (curr->next && visited.find(curr->next) == visited.end()) res += ",";
         curr = curr->next;
     }
     return res + "]";

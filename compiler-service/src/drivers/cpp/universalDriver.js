@@ -91,6 +91,8 @@ export class UniversalCppDriver {
    */
   cleanParamType(paramStr) {
     let t = paramStr.replace(/\bconst\b/g, '').trim();
+    // Separate pointer/reference symbols from variable names (e.g. "*head" -> "* head")
+    t = t.replace(/([*&]+)\s*([a-zA-Z_][a-zA-Z0-9_]*)/g, '$1 $2');
     // Separate & from identifier names with a space
     t = t.replace(/&/g, ' ').trim();
     // Replace multiple spaces with a single space
@@ -99,12 +101,13 @@ export class UniversalCppDriver {
     const tokens = t.split(' ');
     if (tokens.length > 1) {
       const lastToken = tokens[tokens.length - 1];
-      if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(lastToken) && !['int', 'long', 'char', 'double', 'float', 'bool', 'string', 'unsigned', 'signed', 'short'].includes(lastToken)) {
+      const builtins = ['int', 'long', 'char', 'double', 'float', 'bool', 'string', 'unsigned', 'signed', 'short'];
+      if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(lastToken) && !builtins.includes(lastToken)) {
         tokens.pop();
         t = tokens.join(' ').trim();
       }
     }
-    return t;
+    return t.replace(/\s+\*/g, '*');
   }
 
   /**
@@ -127,6 +130,30 @@ export class UniversalCppDriver {
       const varName = `_p${idx}`;
       paramReads.push(`    auto ${varName} = _deserialize<${cleanType}>(_readLine());`);
       callArgs.push(varName);
+
+      if (sig.params.length === 1 && cleanType === 'ListNode*') {
+        paramReads.push(`    string _posLine = _readLine();
+    if (!_posLine.empty()) {
+        try {
+            int _pos = stoi(_posLine);
+            if (_pos >= 0 && ${varName} != nullptr) {
+                ListNode* _curr = ${varName};
+                ListNode* _target = nullptr;
+                ListNode* _tail = nullptr;
+                int _idx = 0;
+                while (_curr != nullptr) {
+                    if (_idx == _pos) _target = _curr;
+                    _tail = _curr;
+                    _curr = _curr->next;
+                    _idx++;
+                }
+                if (_tail != nullptr && _target != nullptr) {
+                    _tail->next = _target;
+                }
+            }
+        } catch (...) {}
+    }`);
+      }
     });
 
     const isVoid = sig.returnType === 'void';

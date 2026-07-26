@@ -1,6 +1,19 @@
+import http from 'http';
 import './env.js'; // Loads env vars first before worker/DB imports
 import { connectDB } from '../../backend/src/config/db.js';
 import './worker.js'; // Starts the BullMQ worker
+
+const PORT = process.env.PORT || 10002;
+
+// Lightweight HTTP server for Render health checks and port binding
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Compiler Service Worker is active\n');
+});
+
+server.listen(PORT, () => {
+  console.log(`Compiler Service running on port ${PORT}`);
+});
 
 const mongoUri = process.env.MONGO_URI;
 
