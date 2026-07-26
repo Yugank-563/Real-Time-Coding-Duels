@@ -56,9 +56,14 @@ adapterSubClient.on('error', (err) => console.error('Socket Redis Adapter Sub Cl
 await Promise.all([pubClient.connect(), adapterSubClient.connect()]);
 
 const httpServer = createServer((req, res) => {
-  if (req.method === 'GET' && req.url === '/') {
+  const urlPath = req.url ? req.url.split('?')[0] : '/';
+  if ((req.method === 'GET' || req.method === 'HEAD') && (urlPath === '/' || urlPath === '/health')) {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Socket Service is Running');
+    if (req.method !== 'HEAD') {
+      res.end('Socket Service is Running');
+    } else {
+      res.end();
+    }
   } else {
     res.writeHead(404);
     res.end();
