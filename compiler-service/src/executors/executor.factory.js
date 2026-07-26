@@ -1,23 +1,23 @@
 import Judge0Executor from './judge0.executor.js';
-import MockExecutor from './mock.executor.js';
 import LocalExecutor from './local.executor.js';
-
 
 class ExecutorFactory {
   constructor() {
     this.judge0 = new Judge0Executor();
-    this.mock = new MockExecutor();
     this.local = new LocalExecutor();
   }
 
   /**
    * Get target execution strategy.
-   * Supports future integrations like Docker, Piston, etc.
+   * Configurable via EXECUTOR_TYPE env variable ('local', 'judge0').
+   * Defaults to 'local' for fast, zero-latency execution.
    * @returns {BaseExecutor}
    */
   getExecutor() {
-    // We are now defaulting to the LocalExecutor to bypass Judge0 RapidAPI
-    // 50MB network payload limits and prevent crashing on massive test cases (e.g. 3Sum).
+    const type = (process.env.EXECUTOR_TYPE || 'local').toLowerCase().trim();
+    if (type === 'judge0')
+      return this.judge0;
+    
     return this.local;
   }
 }
