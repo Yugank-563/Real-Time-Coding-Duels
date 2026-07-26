@@ -21,7 +21,7 @@ const Matchmaking = () => {
   // States
   const [elapsed, setElapsed] = useState(0);
   const [dots, setDots] = useState('');
-  const [eloRange, setEloRange] = useState(10);
+  const [eloRange, setEloRange] = useState(mode === 'casual' ? 50 : 30);
 
   // Connect to active socket handler
   const { leaveQueue } = useBattleSocket(null, battleType);
@@ -53,8 +53,12 @@ const Matchmaking = () => {
   // 2. Expand ELO pairing range over time
   useEffect(() => {
     if (elapsed > 0 && elapsed % 22 === 0) {
-      setEloRange((prev) => prev + 5);
-      toast.info(`Expanding search range to ±${eloRange + 5} rating points...`);
+      const increment = mode === 'casual' ? 20 : 10;
+      setEloRange((prev) => {
+        const nextRange = prev + increment;
+        toast.info(`Expanding search range to ±${nextRange} rating points...`);
+        return nextRange;
+      });
     }
   }, [elapsed]);
 

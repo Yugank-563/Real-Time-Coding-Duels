@@ -62,8 +62,21 @@ export const processBattleResult = async (userId, opponentId, actualScore, mode 
   }
 
   // 1. Calculate Elo Change
-  const { newElo: myNewElo, change: myEloChange } = calculateElo(myElo, oppElo, actualScore, K);
-  const { newElo: oppNewElo, change: oppEloChange } = calculateElo(oppElo, myElo, 1 - actualScore, K);
+  let myNewElo, myEloChange, oppNewElo, oppEloChange;
+  if (actualScore === 0.5) {
+    // Draw -> Strict 0 rating change
+    myNewElo = myElo;
+    myEloChange = 0;
+    oppNewElo = oppElo;
+    oppEloChange = 0;
+  } else {
+    const myResult = calculateElo(myElo, oppElo, actualScore, K);
+    const oppResult = calculateElo(oppElo, myElo, 1 - actualScore, K);
+    myNewElo = myResult.newElo;
+    myEloChange = myResult.change;
+    oppNewElo = oppResult.newElo;
+    oppEloChange = oppResult.change;
+  }
 
   // 2. Update Player A (User)
   await updateUserById(userId, { rating: myNewElo });

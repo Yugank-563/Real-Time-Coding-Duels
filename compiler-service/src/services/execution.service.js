@@ -1,5 +1,5 @@
 import { getTestCases as getB2TestCases } from '../../../backend/src/services/testCaseService.js';
-import { Problem, Submission } from '../../../backend/src/models/index.js';
+import { findProblemById, updateSubmissionById } from '../../../backend/src/repositories/index.js';
 import { driverFactory } from '../drivers/driver.factory.js';
 import { executorFactory } from '../executors/executor.factory.js';
 import { battleService } from './battle.service.js';
@@ -14,18 +14,17 @@ export class ExecutionService {
 
     try {
       // 1. Fetch problem details
-      const problem = await Problem.findById(problemId);
+      const problem = await findProblemById(problemId);
       const problemTitle = problem ? problem.title : '';
 
       // 2. Determine test cases to run
       let testCases = incomingTCs || [];
 
-      // If test cases weren't sent over BullMQ (to save payload limit), fetch directly from B2
       if (!testCases.length && problem?.testCaseConfig?.folderPath) {
          const storedCases = await getB2TestCases(problem, 500); // Max 500 cases
          testCases = storedCases.map((tc) => ({
-            input: tc.input,
-            output: tc.expectedOutput,
+            input: typeof tc.input === 'object' && tc.input !== null ? JSON.stringify(tc.input) : String(tc.input ?? ''),
+            output: typeof tc.expectedOutput === 'object' && tc.expectedOutput !== null ? JSON.stringify(tc.expectedOutput) : String(tc.expectedOutput ?? ''),
             caseNumber: tc.caseNumber,
             type: 'hidden',
             isAnyOrder: problem.titleSlug === '3sum' || problem.titleSlug === 'two-sum'
@@ -33,21 +32,23 @@ export class ExecutionService {
       } else if (!testCases.length) {
          // Fallback to basic DB sample test cases if B2 is disabled
          testCases = (problem?.testCases || []).map((tc, i) => ({
-            input:      tc.input,
-            output:     tc.output || '',
+            input: typeof tc.input === 'object' && tc.input !== null ? JSON.stringify(tc.input) : String(tc.input ?? ''),
+            output: typeof tc.output === 'object' && tc.output !== null ? JSON.stringify(tc.output) : String(tc.output ?? ''),
             caseNumber: i + 1,
             type:       tc.isSample ? 'sample' : 'hidden',
             isAnyOrder: problem?.titleSlug === '3sum' || problem?.titleSlug === 'two-sum'
          }));
       }
+      
+      // Ensure all testcases have string inputs/outputs to prevent truthiness bugs (e.g., output: 0)
+      testCases = testCases.map(tc => ({
+         ...tc,
+         input: typeof tc.input === 'object' && tc.input !== null ? JSON.stringify(tc.input) : String(tc.input ?? ''),
+         output: typeof tc.output === 'object' && tc.output !== null ? JSON.stringify(tc.output) : String(tc.output ?? '')
+      }));
 
       if (!testCases.length) {
         logger.warn(`[ExecutionService] No test cases for submission ${submissionId}`);
-      }
-
-      console.log(`[VERIFY-STEP4] Received ${testCases.length} test cases for execution.`);
-      if (testCases.length > 0) {
-        console.log(`[VERIFY-STEP4] First TC Input: ${String(testCases[0].input).slice(0, 50)} | Expected: ${String(testCases[0].output).slice(0, 50)}`);
       }
 
       // 2.5 Compute missing expected outputs via reference solution if available
@@ -78,17 +79,12 @@ export class ExecutionService {
             }
             
             if (refResult && refResult.results) {
-               console.log(`[VERIFY-STEP5] Reference solution returned ${refResult.results.length} results.`);
                refResult.results.forEach(res => {
-                  console.log(`[VERIFY-STEP5] Ref case ${res.caseNumber} returned statusId ${res.statusId}, output: '${res.output}'`);
                   if (res.statusId === 3) { // If reference solution succeeded without crashing
                     const originalTc = testCases.find(tc => tc.caseNumber === res.caseNumber);
                     if (originalTc) {
                         originalTc.output = (res.output || '').trim(); // Set as the expected output!
-                        console.log(`[VERIFY-STEP5] Assigned expected output to testcase ${originalTc.caseNumber}: ${originalTc.output}`);
                     }
-                  } else {
-                     console.log(`[VERIFY-STEP5] Ref solution failed. compileErr/stderr:`, refResult.errorMessage);
                   }
                });
             }
@@ -134,8 +130,15 @@ export class ExecutionService {
         }
       }
 
+      // Truncate test cases for DB to avoid MongoDB 16MB document size limit
+      const dbTestCases = testCases.map(tc => ({
+        ...tc,
+        input: tc.input ? String(tc.input).substring(0, 1000) : '',
+        output: tc.output ? String(tc.output).substring(0, 1000) : ''
+      }));
+
       // 5. Persist result to MongoDB
-      const submission = await Submission.findByIdAndUpdate(
+      const submission = await updateSubmissionById(
         submissionId,
         {
           verdict:          executionResult.verdict,
@@ -146,12 +149,21 @@ export class ExecutionService {
           errorMessage:     executionResult.errorMessage,
           output:           executionResult.output || '',
           results:          executionResult.results || [],
-          testCases:        testCases, // Save dynamically computed expected outputs
-        },
-        { new: true }
+          testCases:        dbTestCases, // Save dynamically computed expected outputs (truncated)
+        }
       );
 
       logger.info(`[ExecutionService] Submission ${submissionId} → ${executionResult.verdict} (${executionResult.testCasesPassed}/${testCases.length})`);
+
+      // Add problem to user's solved list if they passed completely (Practice or Battle)
+      if (executionResult.verdict === 'Accepted' || executionResult.verdict === 'AC') {
+        try {
+          const { addSolvedProblemToUser } = await import('../../../backend/src/repositories/index.js');
+          await addSolvedProblemToUser(submission.userId, submission.problemId);
+        } catch (err) {
+          logger.error(`Failed to update solvedProblems for user ${submission.userId}:`, err);
+        }
+      }
 
       // 6. Update battle state if submission is part of a match
       if (submission?.battleId) {
@@ -181,7 +193,7 @@ export class ExecutionService {
       logger.error(`[ExecutionService] Pipeline failed on submission ${submissionId}:`, err.stack);
 
       try {
-        await Submission.findByIdAndUpdate(submissionId, {
+        await updateSubmissionById(submissionId, {
           verdict:      'RE',
           errorMessage: err.message,
         });

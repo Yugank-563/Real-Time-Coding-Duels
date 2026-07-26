@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export const useEditorState = (problem, initialLanguage = 'cpp') => {
+export const useEditorState = (problem, initialLanguage = 'cpp', mode = 'practice') => {
   const [selectedLanguage, setSelectedLanguage] = useState(initialLanguage);
   const [codeMap, setCodeMap] = useState({});
 
@@ -17,8 +17,20 @@ export const useEditorState = (problem, initialLanguage = 'cpp') => {
   // Load code template / cache when problem changes
   useEffect(() => {
     if (!problem) return;
-    const cacheKey = `bc-code-${problemId}`;
-    const saved = localStorage.getItem(cacheKey);
+    const cacheKey = `bc-code-${mode}-${problemId}`;
+    let saved = localStorage.getItem(cacheKey);
+    
+    // Legacy migration: If new mode cache is empty but an old generic cache exists, migrate it to Practice mode
+    if (!saved && mode === 'practice') {
+      const legacyKey = `bc-code-${problemId}`;
+      const legacySaved = localStorage.getItem(legacyKey);
+      if (legacySaved) {
+        saved = legacySaved;
+        localStorage.setItem(cacheKey, legacySaved); // migrate it to the new key
+        localStorage.removeItem(legacyKey); // clean up the old one
+      }
+    }
+    
     let initialMap = {};
     if (saved) {
       try {
@@ -29,15 +41,18 @@ export const useEditorState = (problem, initialLanguage = 'cpp') => {
     }
 
     const mergedMap = {};
-    const languages = ['cpp', 'py', 'js'];
+    const languages = ['cpp'];
     languages.forEach(lang => {
-      mergedMap[lang] = initialMap[lang] || problem.boilerplates?.[lang] || '';
+      const cachedCode = initialMap[lang];
+      const boilerplate = problem.boilerplates?.[lang] || '';
+      
+      // If there's no cached code OR it's just empty spaces/newlines, use the boilerplate
+      if (!cachedCode || cachedCode.trim() === '') {
+        mergedMap[lang] = boilerplate;
+      } else {
+        mergedMap[lang] = cachedCode;
+      }
     });
-
-    // Make sure we fallback to a sensible template if empty
-    if (!mergedMap.cpp && problem.boilerplates?.cpp) {
-      mergedMap.cpp = problem.boilerplates.cpp;
-    }
 
     setCodeMap(mergedMap);
   }, [problemId, problem]);
@@ -45,7 +60,7 @@ export const useEditorState = (problem, initialLanguage = 'cpp') => {
   const updateCode = (lang, newCode) => {
     setCodeMap(prev => {
       const updated = { ...prev, [lang]: newCode };
-      const cacheKey = `bc-code-${problemId}`;
+      const cacheKey = `bc-code-${mode}-${problemId}`;
       localStorage.setItem(cacheKey, JSON.stringify(updated));
       return updated;
     });

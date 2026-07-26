@@ -11,10 +11,10 @@ const initialState = {
   opponents: [],
   topic: '',
   timer: {
-    total: 1200,
-    remaining: 1200,
+    total: 0,
+    remaining: 0,
     startTime: null,   // ISO string from server — source of truth for both users
-    timeLimit: 1200,   // seconds
+    timeLimit: 0,   // seconds
     isWarning: false,
     isDanger: false,
   },
@@ -37,7 +37,6 @@ const initialState = {
   invitedUser: null,
   eloDetails: null,
   winnerId: null,
-  aiAnalysis: null,
 };
 
 const battleSlice = createSlice({
@@ -201,23 +200,25 @@ const battleSlice = createSlice({
          };
       }
     },
+    setEloDetails: (state, action) => {
+      state.eloDetails = action.payload;
+    },
     endBattle: (state, action) => {
       const { winnerId, ratingDetails, reason } = action.payload;
       state.status = 'ended';
-      state.eloDetails = ratingDetails;
+      if (ratingDetails !== undefined) {
+        state.eloDetails = ratingDetails;
+      }
       state.winnerId = winnerId || null; // null = draw
       state.reason = reason;
     },
-    setAiAnalysis: (state, action) => {
-      state.aiAnalysis = action.payload;
-    },
+
     resetBattleState: () => initialState,
   },
 });
 
 export const {
   setLobbyStatus,
-  setSuggestedTopic,
   initBattle,
   resumeBattle,
   tickTimer,
@@ -226,8 +227,8 @@ export const {
   setOutputState,
   setOutputProgress,
   setOutputResults,
+  setEloDetails,
   endBattle,
-  setAiAnalysis,
   resetBattleState,
 } = battleSlice.actions;
 

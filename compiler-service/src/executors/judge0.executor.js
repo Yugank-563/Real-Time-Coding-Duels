@@ -83,22 +83,37 @@ const checkAnyOrderMatch = (stdout, expected) => {
 
 const adjustCompileError = (compileOutput, sourceCode) => {
   if (!compileOutput || !sourceCode) return compileOutput;
+  
+  // Strip "cc1plus: some warnings being treated as errors"
+  let adjusted = compileOutput.replace(/cc1plus: some warnings being treated as errors\n?/g, '');
+  
   const lines = sourceCode.split('\n');
   const markerIndex = lines.findIndex(l => l.includes('// %%USER_CODE_START%%'));
-  if (markerIndex === -1) return compileOutput;
   
-  const offset = markerIndex + 1;
-  let adjusted = compileOutput.replace(/main\.cpp:(\d+):(\d+):/g, (match, p1, p2) => {
-    const adjustedLine = Math.max(1, parseInt(p1) - offset);
-    return `main.cpp:${adjustedLine}:${p2}:`;
-  });
+  if (markerIndex !== -1) {
+    const offset = markerIndex + 1;
+    
+    // Replace "/tmp/coduelo-.../main.cpp:12:5:" with "Line X:"
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?main\.cpp:(\d+):(?:\d+:)?/g, (match, p1) => {
+      const adjustedLine = Math.max(1, parseInt(p1) - offset);
+      return `Line ${adjustedLine}:`;
+    });
+
+    // Replace other occurrences of "/tmp/coduelo-.../main.cpp:" with "Error: "
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?main\.cpp:/g, 'Error: ');
+
+    // Adjust line numbers on the left side of snippets (e.g. "   12 |")
+    adjusted = adjusted.replace(/(^\s*)(\d+)(\s*\|)/gm, (match, p1, p2, p3) => {
+      const adjustedLine = Math.max(1, parseInt(p2) - offset);
+      return `${p1}${adjustedLine}${p3}`;
+    });
+  } else {
+    // Even if we don't have the marker, we should still strip the absolute paths.
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?(?:main\.[a-z]+|Solution\.[a-z]+|solution\.[a-z]+):(\d+):(?:\d+:)?/g, 'Line $1:');
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?(?:main\.[a-z]+|Solution\.[a-z]+|solution\.[a-z]+):/g, 'Error: ');
+  }
   
-  adjusted = adjusted.replace(/(^\s*)(\d+)(\s*\|)/gm, (match, p1, p2, p3) => {
-    const adjustedLine = Math.max(1, parseInt(p2) - offset);
-    return `${p1}${adjustedLine}${p3}`;
-  });
-  
-  return adjusted;
+  return adjusted.trim();
 };
 
 export class Judge0Executor extends BaseExecutor {
@@ -134,6 +149,9 @@ export class Judge0Executor extends BaseExecutor {
           cpu_time_limit: 2,
           memory_limit: 262144, // 256MB
         };
+        if (language === 'cpp' || language === 'c' || language === 'c++') {
+          submissionPayload.compiler_options = '-Werror=return-type';
+        }
         const hasMultipleOutputs = tc.output && tc.output.includes('|||OR|||');
         if (tc.output && tc.output.trim() && !tc.isAnyOrder && !hasMultipleOutputs) {
           submissionPayload.expected_output = encodeBase64(tc.output.trim());
@@ -281,6 +299,9 @@ export class Judge0Executor extends BaseExecutor {
           cpu_time_limit: 1.0, // Strict C++ timeout
           memory_limit:   262144,
         };
+        if (language === 'cpp' || language === 'c' || language === 'c++') {
+          sub.compiler_options = '-Werror=return-type';
+        }
         const hasMultipleOutputs = tc.output && tc.output.includes('|||OR|||');
         if (tc.output && tc.output.trim() && !tc.isAnyOrder && !hasMultipleOutputs) {
           sub.expected_output = encodeBase64(tc.output.trim());

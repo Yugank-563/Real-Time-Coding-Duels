@@ -61,31 +61,19 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
   battle.status = 'ended';
   battle.endTime = new Date();
 
+  if (battle.winner) {
+    await battle.save();
+    const roomName = `battle:${battle._id.toString()}`;
+    io.to(roomName).emit('battle:end', {
+      winnerId: battle.winner,
+      reason
+    });
+    return;
+  }
+
   const p1 = battle.players[0];
   const p2 = battle.players[1];
   let winnerId = null; 
-
-  try {
-    const p1Sub = await Submission.findOne({ userId: p1.user, problemId: battle.problem }).sort({ createdAt: -1 });
-    const p2Sub = await Submission.findOne({ userId: p2.user, problemId: battle.problem }).sort({ createdAt: -1 });
-
-    // Fallback to 50 if no submission found to be safe
-    const p1Total = p1Sub?.totalTestCases || 50;
-    const p2Total = p2Sub?.totalTestCases || 50;
-
-    const p1Percent = p1Total > 0 ? p1.progress / p1Total : 0;
-    const p2Percent = p2Total > 0 ? p2.progress / p2Total : 0;
-
-    if (p1Percent >= 0.5 || p2Percent >= 0.5) {
-      if (p1.progress > p2.progress) {
-        winnerId = p1.user.toString();
-      } else if (p2.progress > p1.progress) {
-        winnerId = p2.user.toString();
-      }
-    }
-  } catch (err) {
-    console.error('Error calculating 50% threshold for timeout win:', err);
-  }
 
   battle.winner = winnerId;
   await battle.save();
@@ -97,6 +85,13 @@ const resolveBattleTimeout = async (battle, io, reason = 'Timeout') => {
     const p2Id = p2.user.toString();
     const score = winnerId === p1Id ? 1 : winnerId === p2Id ? 0 : 0.5;
     ratingDetails = await processBattleResult(p1Id, p2Id, score, battle.mode || 'ranked');
+
+    if (ratingDetails) {
+      battle.players[0].ratingChange = ratingDetails.eloChange || 0;
+      battle.players[1].ratingChange = ratingDetails.opponent?.eloChange || 0;
+      battle.markModified('players');
+      await battle.save();
+    }
   } catch (eloErr) {
     console.error('Stats processing failed after timeout:', eloErr.message);
   }
@@ -191,7 +186,8 @@ export const registerBattleHandlers = (io, socket) => {
       const roomName = `battle:${battleId}`;
       io.to(roomName).emit('battle:start', { startTime: battle.startTime });
 
-      if (battle.battleType === 'timed-sprint') {
+      if (battle.timeLimit) {
+        const timeoutMs = (battle.timeLimit * 1000) + 8500;
         setTimeout(async () => {
           try {
             const freshBattle = await Battle.findById(battleId);
@@ -199,8 +195,9 @@ export const registerBattleHandlers = (io, socket) => {
 
             await resolveBattleTimeout(freshBattle, io, 'Server-side timeout');
           } catch (timeoutErr) {
+            console.error('Timeout resolution error:', timeoutErr);
           }
-        }, 300000); // 5 minutes
+        }, timeoutMs); 
       }
     } catch (err) {
       console.error('Sprint timeout set error:', err.message);
@@ -227,24 +224,42 @@ export const registerBattleHandlers = (io, socket) => {
 
       const opponentIdx = playerIdx === 0 ? 1 : 0;
       const opponentId = battle.players[opponentIdx].user.toString();
-      battle.winner = opponentId;
-      battle.markModified('players');
-      await battle.save();
 
-      // Process Stats: surrendering user loses (0), opponent wins (1)
-      let ratingDetails = null;
-      try {
-        ratingDetails = await processBattleResult(socket.userId, opponentId, 0, battle.mode || 'ranked');
-      } catch (eloErr) {
-        console.error('Stats processing failed after surrender:', eloErr.message);
+      if (!battle.winner) {
+        battle.winner = opponentId;
+        battle.markModified('players');
+        await battle.save();
+
+        // Process Stats: surrendering user loses (0), opponent wins (1)
+        let ratingDetails = null;
+        try {
+          ratingDetails = await processBattleResult(socket.userId, opponentId, 0, battle.mode || 'ranked');
+          if (ratingDetails) {
+            battle.players[playerIdx].ratingChange = ratingDetails.eloChange || 0;
+            battle.players[opponentIdx].ratingChange = ratingDetails.opponent?.eloChange || 0;
+            battle.markModified('players');
+            await battle.save();
+          }
+        } catch (eloErr) {
+          console.error('Stats processing failed after surrender:', eloErr.message);
+        }
+
+        const roomName = `battle:${battleId}`;
+        io.to(roomName).emit('battle:end', {
+          winnerId: opponentId,
+          ratingDetails,
+          reason: 'Surrender'
+        });
+      } else {
+        // Winner already decided, just end the room for the remaining player
+        battle.markModified('players');
+        await battle.save();
+        const roomName = `battle:${battleId}`;
+        io.to(roomName).emit('battle:end', {
+          winnerId: battle.winner,
+          reason: 'Surrender'
+        });
       }
-
-      const roomName = `battle:${battleId}`;
-      io.to(roomName).emit('battle:end', {
-        winnerId: opponentId,
-        ratingDetails,
-        reason: 'Surrender'
-      });
     } catch (err) {
       console.error('battle:surrender error:', err.message);
     }
@@ -263,12 +278,11 @@ export const registerBattleHandlers = (io, socket) => {
 
       if (battle.status !== 'active') return;
       
-      // Server-side time validation
+      // Server-side time validation — only accept timeout when time limit has been reached
       if (battle.startTime) {
         const timeElapsedMs = Date.now() - new Date(battle.startTime).getTime();
         const timeLimitMs = (battle.timeLimit || 1200) * 1000;
-        // Allow 5 seconds of grace period for network delays
-        if (timeElapsedMs < (timeLimitMs - 5000)) {
+        if (timeElapsedMs < timeLimitMs) {
           return;
         }
       }

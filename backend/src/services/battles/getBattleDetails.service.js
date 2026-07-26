@@ -24,7 +24,7 @@ export const getBattleDetailsService = async (battleId, userId) => {
   const isPlayer = battle.players.some(p => p.user._id.toString() === userId);
 
   return {
-    ...battle.toObject(),
+    ...battle.toObject({ flattenMaps: true }),
     isParticipant: isPlayer // Let frontend know if they need to formally join
   };
 };

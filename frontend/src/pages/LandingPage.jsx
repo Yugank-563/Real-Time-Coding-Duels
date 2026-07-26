@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Swords, Cpu, BarChart3, Activity, Users, Target, Trophy } from 'lucide-react';
+import { Swords, BarChart3, Activity, Users, Target, Trophy, Zap, Search, UserPlus, Gamepad2, Award, Medal, Crown, Star, Flame } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { selectUser } from '../features/index';
 import { useDocumentTitle } from '../hooks/index';
@@ -35,12 +35,12 @@ const FEATURES_DATA = [
     desc: 'Face real opponents in live coding duels. First to solve the algorithm wins the rating.'
   },
   {
-    icon: Cpu,
+    icon: Users,
     hoverShadowClass: 'hover:shadow-[0_10px_30px_rgba(108,99,255,0.05)]',
     hoverBgClass: 'group-hover:bg-[rgba(108,99,255,0.05)]',
     iconColorClass: 'text-[var(--accent-primary)]',
-    title: 'AI Code Analysis',
-    desc: 'After every battle, our advanced AI reviews your code and suggests crucial optimizations.'
+    title: 'Play with Friends',
+    desc: 'Create custom causual rooms to practice algorithms or race against your friends without losing Rating.'
   },
   {
     icon: BarChart3,
@@ -48,31 +48,40 @@ const FEATURES_DATA = [
     hoverBgClass: 'group-hover:bg-[rgba(255,184,0,0.05)]',
     iconColorClass: 'text-[var(--accent-amber)]',
     title: 'Rating System',
-    desc: 'Climb the global leaderboard with a rigorous, skill-based rating that actually reflects your level.'
+    desc: 'Your skill determines your rank. Defeat rivals to gain points and dominate the leaderboard.'
   }
 ];
 
 const HOW_IT_WORKS_DATA = [
   {
-    num: 1,
+    icon: Zap,
+    iconColorClass: 'text-[var(--accent-blue)]',
     borderClass: 'border-[var(--accent-blue)]',
     shadowClass: 'shadow-[0_0_15px_rgba(0,245,196,0.2)]',
+    hoverShadowClass: 'hover:shadow-[0_10px_30px_rgba(0,245,196,0.05)]',
+    hoverBgClass: 'group-hover:bg-[rgba(0,245,196,0.05)]',
     title: 'Match Instantly',
-    desc: 'Find an opponent at your exact skill level in seconds.'
+    desc: 'Our smart matchmaking instantly pairs you with an opponent at your exact skill level.'
   },
   {
-    num: 2,
+    icon: Activity,
+    iconColorClass: 'text-[var(--accent-primary)]',
     borderClass: 'border-[var(--accent-primary)]',
     shadowClass: 'shadow-[0_0_15px_rgba(108,99,255,0.2)]',
+    hoverShadowClass: 'hover:shadow-[0_10px_30px_rgba(108,99,255,0.05)]',
+    hoverBgClass: 'group-hover:bg-[rgba(108,99,255,0.05)]',
     title: 'Solve Under Pressure',
-    desc: 'Race against the clock to write the fastest, optimized algorithm.'
+    desc: 'Race against the clock and your rival to write the fastest, most optimized algorithm.'
   },
   {
-    num: 3,
+    icon: Flame,
+    iconColorClass: 'text-[var(--accent-amber)]',
     borderClass: 'border-[var(--accent-amber)]',
     shadowClass: 'shadow-[0_0_15px_rgba(255,184,0,0.2)]',
-    title: 'Climb the Ranks',
-    desc: 'Gain rating, learn from AI analysis, and dominate the leaderboard.'
+    hoverShadowClass: 'hover:shadow-[0_10px_30px_rgba(255,184,0,0.05)]',
+    hoverBgClass: 'group-hover:bg-[rgba(255,184,0,0.05)]',
+    title: 'Claim Your Victory',
+    desc: 'Earn rating points with every victory and prove you are the fastest coder in the world.'
   }
 ];
 
@@ -155,12 +164,14 @@ const HeroEditor = () => {
 
 const LandingStats = ({ stats }) => {
   const STATS_DATA = [
-    { icon: Activity, color: 'text-[var(--accent-blue)]', val: stats.battlesFought, label: 'Battles Fought' },
-    { icon: Users, color: 'text-[var(--accent-primary)]', val: stats.activeCoders, label: 'Coders Online' },
-    { icon: Target, color: 'text-[#00F5C4]', val: stats.problemsAvailable, label: 'Problems' },
-    { icon: Trophy, color: 'text-[#FFBD2E]', val: stats.maxRating, label: 'Top Rating' }
+    { icon: Activity, color: 'text-[var(--accent-blue)]', val: Math.max(stats.battlesFought || 0, 50), label: 'Battles Fought' },
+    { icon: Users, color: 'text-[var(--accent-primary)]', val: Math.max(stats.activeCoders || 0, 20), label: 'Coders Online' },
+    { icon: Target, color: 'text-[#00F5C4]', val: Math.max(stats.problemsAvailable || 0, 30), label: 'Problems' },
+    { icon: Trophy, color: 'text-[#FFBD2E]', val: Math.max(stats.maxRating || 0, 1200), label: 'Top Rating' }
   ];
 
+  // Always show rounded-down to nearest 10 with a "+" suffix e.g. 49 → "40+", 1247 → "1240+"
+  const formatStat = (val) => `${Math.floor((val || 0) / 10) * 10}+`;
   return (
     <motion.div 
       className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-center md:justify-between items-center gap-8 md:gap-4 pb-8 bg-transparent"
@@ -172,7 +183,7 @@ const LandingStats = ({ stats }) => {
         <div key={idx} className="flex items-center gap-4 justify-center md:justify-start">
           <item.icon className={`w-8 h-8 ${item.color}`} strokeWidth={2.5} />
           <div className="flex flex-col text-left">
-            <span className="text-2xl font-black text-white leading-none tracking-tight">{item.val}</span>
+            <span className="text-2xl font-black text-white leading-none tracking-tight">{formatStat(item.val)}</span>
             <span className="text-[0.65rem] font-bold text-slate-500 tracking-widest uppercase mt-1.5">{item.label}</span>
           </div>
         </div>
@@ -190,7 +201,7 @@ const LandingPage = () => {
   const [platformStats, setPlatformStats] = useState({
     maxRating: 1200,
     battlesFought: 50,
-    problemsAvailable: 49,
+    problemsAvailable: 30,
     activeCoders: 20
   });
 
@@ -199,12 +210,12 @@ const LandingPage = () => {
       try {
         const response = await api.get('/api/users/platform-stats');
         const data = response.data;
-        // If the database has real data, use it; otherwise, keep the dummy data
+        // Set raw data; LandingStats will handle the Math.max fallback automatically
         setPlatformStats({
-          maxRating: data.maxRating > 0 ? data.maxRating : 1200,
-          battlesFought: data.battlesFought > 0 ? data.battlesFought : 50,
-          problemsAvailable: data.problemsAvailable > 0 ? data.problemsAvailable : 49,
-          activeCoders: data.activeCoders > 0 ? data.activeCoders : 20
+          maxRating: data.maxRating || 0,
+          battlesFought: data.battlesFought || 0,
+          problemsAvailable: data.problemsAvailable || 0,
+          activeCoders: data.activeCoders || 0
         });
       } catch (error) {
         console.error('Error fetching platform stats:', error);
@@ -292,8 +303,8 @@ const LandingPage = () => {
             {/* Cards */}
             {FEATURES_DATA.map((feature, idx) => (
               <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8 }} className={`flex flex-col items-center text-center gap-4 p-8 rounded-2xl bg-white/[0.02] backdrop-blur-md border border-white/5 transition-all duration-300 group relative overflow-hidden shadow-sm ${feature.hoverShadowClass} hover:bg-white/[0.03]`}>
-                <div className={`p-5 bg-white/[0.04] ${feature.hoverBgClass} rounded-2xl shadow-sm group-hover:scale-110 transition-all duration-500`}>
-                  <feature.icon className={`w-8 h-8 ${feature.iconColorClass}`} />
+                <div className={`p-4 bg-white/[0.04] ${feature.hoverBgClass} rounded-2xl shadow-sm group-hover:scale-110 transition-all duration-500`}>
+                  <feature.icon className={`w-7 h-7 ${feature.iconColorClass}`} />
                 </div>
                 <h3 className="text-xl font-bold text-white tracking-tight mt-2">{feature.title}</h3>
                 <p className="text-[1rem] text-slate-400 leading-relaxed">
@@ -322,14 +333,16 @@ const LandingPage = () => {
             viewport={{ once: true, amount: 0.3 }}
             variants={containerVariants}
           >
-            <div className="hidden lg:block absolute top-6 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-[var(--accent-primary)] to-transparent -translate-y-1/2 z-0 opacity-60 animate-pulse shadow-[0_0_10px_rgba(108,99,255,0.5)]" />
+            
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8 relative z-10">
               {HOW_IT_WORKS_DATA.map((step, idx) => (
-                <motion.div key={idx} variants={itemVariants} className="flex flex-col items-center text-center">
-                  <div className={`w-12 h-12 rounded-full bg-[var(--bg-base)] border-2 ${step.borderClass} flex items-center justify-center font-bold text-white mb-6 ${step.shadowClass}`}>{step.num}</div>
-                  <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                  <p className="text-slate-400 text-[0.95rem] leading-relaxed max-w-[250px]">{step.desc}</p>
+                <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8 }} className={`flex flex-col items-center text-center gap-4 p-8 rounded-2xl bg-white/[0.02] backdrop-blur-md border border-white/5 transition-all duration-300 group relative overflow-hidden shadow-sm ${step.hoverShadowClass} hover:bg-white/[0.03]`}>
+                  <div className={`p-4 bg-white/[0.04] ${step.hoverBgClass} rounded-2xl shadow-sm group-hover:scale-110 transition-all duration-500`}>
+                    <step.icon className={`w-7 h-7 ${step.iconColorClass || 'text-white'}`} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">{step.title}</h3>
+                  <p className="text-slate-400 text-[0.95rem] leading-relaxed">{step.desc}</p>
                 </motion.div>
               ))}
             </div>

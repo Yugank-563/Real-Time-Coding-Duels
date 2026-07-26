@@ -279,12 +279,12 @@ export function buildDynamicDriver(code) {
 
     // ── Step B: Collect all method signatures in the public section ──────────
     const allMethods = [];
-    const sigRegex = /([\w:<>*&\s,]+?)\s+([a-z]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?\{/g;
+    const sigRegex = /([\w:<>*&\s,]+?)\s*(\*|&)?\s*([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?\{/g;
     let m;
     while ((m = sigRegex.exec(searchArea)) !== null) {
-        const returnType = m[1].trim();
-        const name = m[2].trim();
-        const paramsStr = m[3].trim();
+        const returnType = (m[1] + (m[2] || '')).trim();
+        const name = m[3].trim();
+        const paramsStr = m[4].trim();
         if (['if', 'for', 'while', 'switch', 'catch', 'do'].includes(name)) continue;
         allMethods.push({ returnType, name, paramsStr });
     }

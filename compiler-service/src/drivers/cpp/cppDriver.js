@@ -42,12 +42,14 @@ const EXCEPTION_HEADERS = {
 
 // ─── Shared C++ headers ──────────────────────────────────────────────────────
 const STANDARD_IMPORTS = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
 `;
 
 const LIST_NODE_DEF = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -62,6 +64,7 @@ struct ListNode {
 `;
 
 const TREE_NODE_DEF = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -77,6 +80,7 @@ struct TreeNode {
 `;
 
 const LIST_AND_TREE_DEF = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;

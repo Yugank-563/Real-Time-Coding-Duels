@@ -11,7 +11,6 @@ export * from './auth/me.service.js';
 
 // battles folder
 export * from './battles/getBattleDetails.service.js';
-export * from './battles/getBattleSummary.service.js';
 export * from './battles/getLobbyStats.service.js';
 export * from './battles/getTopicStats.service.js';
 export * from './battles/getTopics.service.js';
@@ -19,7 +18,6 @@ export * from './battles/joinQueue.service.js';
 export * from './battles/startPrivateBattle.service.js';
 export * from './battles/readyPrivateBattle.service.js';
 export * from './battles/surrenderBattle.service.js';
-export * from './battles/getAiReview.service.js';
 
 // problems folder
 export * from './problems/executeCode.service.js';

@@ -38,7 +38,6 @@ export const getSubmissionStatusService = async (submissionId, userId) => {
     totalTestCases: submission.totalTestCases,
     errorMessage: submission.errorMessage,
     results: formattedResults.length > 0 ? formattedResults : storedResults,
-    aiAnalysis: submission.aiAnalysis,
     originalCode: submission.code,
   };
 };

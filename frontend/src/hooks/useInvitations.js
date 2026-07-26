@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, getSocket } from '../utils/index';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from './useToast';
 
 export const useInvitations = () => {
@@ -8,6 +8,7 @@ export const useInvitations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const fetchActive = useCallback(async () => {
     setIsLoading(true);
@@ -30,8 +31,7 @@ export const useInvitations = () => {
       return;
     }
 
-    fetchActive();
-
+    // Socket listeners
     const socket = getSocket();
     socket.on('battle:invite:new', (invite) => {
       // API now returns the populated invite directly
@@ -66,6 +66,13 @@ export const useInvitations = () => {
       }
     };
   }, [fetchActive]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('bc-token');
+    if (token && token !== 'undefined' && token !== 'null') {
+      fetchActive();
+    }
+  }, [location.pathname, fetchActive]);
 
   const acceptInvite = async (inviteId) => {
     try {

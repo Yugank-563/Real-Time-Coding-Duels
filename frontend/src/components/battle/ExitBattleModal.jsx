@@ -18,7 +18,7 @@ const ExitBattleModal = ({ show, onCancel, onConfirm, isCasual }) => {
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
             Are you sure you want to exit the battle? Doing so will count as an immediate <span className="text-red-400 font-bold">Loss</span>
             {!isCasual && (
-              <> and <span className="text-red-400 font-semibold underline">deduct ELO rank rating points</span> from your score</>
+              <> and <span className="text-red-400 font-semibold underline">deduct rating points</span> from your score</>
             )}.
           </p>
           <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 flex items-start gap-2.5">

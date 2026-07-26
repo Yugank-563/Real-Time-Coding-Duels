@@ -37,6 +37,13 @@ const findOneAndUpdate = (filter, updateData, options = { upsert: true, new: tru
   Problem.findOneAndUpdate(filter, updateData, options);
 
 
+const findProblemSample = async (query, size = 20) => {
+  return Problem.aggregate([
+    { $match: query },
+    { $sample: { size } }
+  ]);
+};
+
 // Backward Compatibility Aliases
 export const findProblemById = findById;
 export const findProblemBySlugOrTitle = findBySlugOrTitle;
@@ -44,3 +51,4 @@ export const findProblemsByQuery = findByQuery;
 export const countProblems = count;
 export const getPaginatedProblems = getPaginated;
 export const findOneAndUpdateProblem = findOneAndUpdate;
+export const findProblemSampleQuery = findProblemSample;

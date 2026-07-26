@@ -1,14 +1,9 @@
 import './src/config/env.js';
 import app from './app.js';
 import { connectDB } from './src/config/db.js';
-import { startAiWorker } from './src/ai/services/orchestrator.service.js';
 
 // Connect to Database
 await connectDB();
-
-// Start Background AI Worker Queue Listener
-await startAiWorker();
-
 const PORT = process.env.BACKEND_PORT;
 
 const server = app.listen(PORT, () => {

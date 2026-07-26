@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Code, CheckSquare, Braces, RotateCcw } from 'lucide-react';
-import { formatCppCode } from '../../utils/index';
+import { Code, CheckSquare, RotateCcw, Terminal } from 'lucide-react';
 import MonacoEditorComponent from './MonacoEditorComponent';
 import TestcaseTab from './TestcaseTab';
 import ResultTab from './ResultTab';
-import AIReviewTab from './AIReviewTab';
 import { Button } from '../../components/index';
 
 
@@ -28,7 +26,6 @@ const EditorPanel = ({
   showRunButton = true,
   showSubmitButton = true,
   problem,
-  mode = 'practice',
 }) => {
   const [activeTab, setActiveTab] = useState('code');
   const editorRef = useRef(null);
@@ -43,19 +40,6 @@ const EditorPanel = ({
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
       if (onSubmit) onSubmit();
     });
-  };
-
-  const handleFormatCode = () => {
-    if (language !== 'cpp') return; // C++ formatter only
-    if (editorRef.current) {
-      const currentCode = editorRef.current.getValue();
-      const formatted = formatCppCode(currentCode);
-      editorRef.current.setValue(formatted);
-      onCodeChange(formatted);
-    } else {
-      const formatted = formatCppCode(code || '');
-      onCodeChange(formatted);
-    }
   };
 
   const handleResetCode = () => {
@@ -162,37 +146,15 @@ const EditorPanel = ({
               activeTab === 'result' ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
             }`}
           >
+            <Terminal className={`w-3.5 h-3.5 ${activeTab === 'result' ? 'text-blue-400' : 'text-text-muted'}`} />
             <span>Result</span>
           </button>
-
-          {mode === 'practice' && ((verdict === 'AC' && runProgress?.isSubmit) || output?.aiAnalysis) && (
-            <>
-              <span className="text-text-muted/30">|</span>
-              <button
-                onClick={() => setActiveTab('ai-review')}
-                className={`flex items-center gap-1.5 transition-colors ${
-                  activeTab === 'ai-review' ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
-                }`}
-              >
-                <span className="flex items-center gap-1.5">
-                  <span className="text-purple-400">✧</span> AI Review
-                </span>
-              </button>
-            </>
-          )}
         </div>
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 select-none">
           {activeTab === 'code' && (
             <div className="flex items-center gap-0.5">
-              <button
-                onClick={handleFormatCode}
-                className="w-7 h-7 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
-                title="Format Code (C++)"
-              >
-                <Braces className="w-3.5 h-3.5" />
-              </button>
               <button
                 onClick={handleResetCode}
                 className="w-7 h-7 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
@@ -250,17 +212,6 @@ const EditorPanel = ({
           runProgress={runProgress}
         />
 
-        {/* AI Review Tab (Only in Practice Mode) */}
-        {mode === 'practice' && (
-          <AIReviewTab
-            isActive={activeTab === 'ai-review'}
-            verdict={verdict}
-            aiAnalysis={output?.aiAnalysis || null}
-            originalCode={output?.originalCode || null}
-            submissionId={output?.submissionId || null}
-            isSubmit={runProgress?.isSubmit}
-          />
-        )}
       </div>
 
       {/* ── ROW 3: FOOTER BAR (ALWAYS VISIBLE) ── */}
@@ -274,30 +225,32 @@ const EditorPanel = ({
           )}
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          {showRunButton && (
-            <Button
-              variant="primary"
-              onClick={onRun}
-              loading={isRunning}
-              disabled={isSubmitting}
-              className="!px-4 !py-1.5 !text-xs !font-bold"
-            >
-              Run Code
-            </Button>
-          )}
-          {showSubmitButton && (
-            <Button
-              variant="primary"
-              onClick={onSubmit}
-              loading={isSubmitting}
-              disabled={isRunning}
-              className="!px-5 !py-1.5 !text-xs !font-bold"
-            >
-              Submit
-            </Button>
-          )}
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            <>
+              {showRunButton && (
+                <Button
+                  variant="primary"
+                  onClick={onRun}
+                  loading={isRunning}
+                  disabled={isSubmitting}
+                  className="!px-4 !py-1.5 !text-xs !font-bold"
+                >
+                  Run Code
+                </Button>
+              )}
+              {showSubmitButton && (
+                <Button
+                  variant="primary"
+                  onClick={onSubmit}
+                  loading={isSubmitting}
+                  disabled={isRunning}
+                  className="!px-5 !py-1.5 !text-xs !font-bold"
+                >
+                  Submit
+                </Button>
+              )}
+            </>
         </div>
       </div>
     </div>

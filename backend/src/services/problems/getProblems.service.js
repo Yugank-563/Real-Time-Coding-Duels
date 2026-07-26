@@ -7,10 +7,8 @@ export const getProblemsService = async ({ pageNum, limitNum, search, difficulty
   const query = {};
   if (search) {
     const safeSearch = escapeRegex(search);
-    query.$or = [
-      { title: { $regex: safeSearch, $options: 'i' } },
-      { tags: { $regex: safeSearch, $options: 'i' } }
-    ];
+    // Only search by title, as there's a dedicated dropdown for tags.
+    query.title = { $regex: safeSearch, $options: 'i' };
   }
   if (difficulty && difficulty !== 'ALL') {
     const safeDifficulty = escapeRegex(difficulty);

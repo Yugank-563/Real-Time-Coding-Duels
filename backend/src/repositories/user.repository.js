@@ -49,6 +49,12 @@ const updateById = (id, update) =>
 export const updateRefreshToken = (id, token) => 
   User.findByIdAndUpdate(id, { refreshToken: token }, { new: true });
 
+export const addSolvedProblemToUser = (userId, problemId) =>
+  User.updateOne(
+    { _id: userId },
+    { $addToSet: { solvedProblems: problemId } }
+  );
+
 
 // Backward Compatibility Aliases
 export const createUser = create;

@@ -100,7 +100,7 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
                 </div>
                 <div>
                   <h1 className="text-3xl font-black text-purple-400 tracking-tight">🤝 DRAW CLASH</h1>
-                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">Both developers matched speed constraints equally. The arena ELO rating points remain steady.</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">Both developers matched speed constraints equally. The arena rating points remain steady.</p>
                 </div>
               </div>
             ) : (
@@ -132,7 +132,7 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:!text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
                 onClick={() => setPhase('progression')}
               >
                 View Rating Updates
@@ -141,10 +141,10 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
-                onClick={() => mode === 'casual' ? navigate(`/battle/${battleId}/summary`) : setPhase('progression')}
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:!text-[var(--bg-base)] shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+                onClick={() => mode === 'casual' ? navigate(`/`) : setPhase('progression')}
               >
-                {mode === 'casual' ? 'Proceed to Battle Summary' : 'View Rating Updates'}
+                {mode === 'casual' ? 'Return to Home' : 'View Rating Updates'}
               </Button>
             )}
           </motion.div>
@@ -162,7 +162,7 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
           >
             <h2 className="text-xs uppercase font-extrabold tracking-widest text-[var(--text-muted)]">Rating Evaluation</h2>
             
-            {/* ELO Rating Progression Slider */}
+            {/* Rating Progression Slider */}
             <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 relative overflow-hidden">
               <div className="flex items-center justify-center gap-8 mt-2">
                 <div className="text-center">
@@ -172,8 +172,22 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
                   <div className="text-3xl font-black text-white font-mono mt-1">{myEloData?.oldElo || 1200}</div>
                 </div>
                 
-                <div className="text-slate-500">
-                  <ArrowRight className="w-5 h-5 animate-pulse" />
+                <div className="flex flex-col items-center gap-1">
+                  <ArrowRight className="w-5 h-5 text-slate-500 animate-pulse" />
+                  {myEloData && myEloData.eloChange !== 0 && (
+                    <span className={`text-[11px] font-black tracking-widest px-2 py-0.5 rounded-full ${
+                      myEloData.eloChange > 0
+                        ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                        : 'text-red-400 bg-red-500/10 border border-red-500/20'
+                    }`}>
+                      {myEloData.eloChange > 0 ? `+${myEloData.eloChange}` : myEloData.eloChange}
+                    </span>
+                  )}
+                  {(!myEloData || myEloData.eloChange === 0) && (
+                    <span className="text-[11px] font-black tracking-widest px-2 py-0.5 rounded-full text-purple-400 bg-purple-500/10 border border-purple-500/20">
+                      ±0
+                    </span>
+                  )}
                 </div>
 
                 <div className="text-center">
@@ -187,6 +201,7 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
                   </div>
                 </div>
               </div>
+
             </div>
             {/* Proceeds buttons */}
             {reason === 'Surrender' ? (
@@ -202,10 +217,10 @@ const VerdictDisplay = ({ battleId, myUserId, winnerId, eloDetails, reason }) =>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:text-[var(--bg-base)]"
-                onClick={() => navigate(`/battle/${battleId}/summary`)}
+                className="w-full mt-6 text-[var(--accent-blue)] border-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:!text-[var(--bg-base)]"
+                onClick={() => navigate(`/`)}
               >
-                Proceed to Battle Summary
+                Return to Home
               </Button>
             )}
           </motion.div>

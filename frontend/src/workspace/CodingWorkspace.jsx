@@ -4,7 +4,6 @@ import { ResizableLayout, ProblemPanel, EditorPanel } from './index';
 
 const CodingWorkspace = ({
   headerComponent,
-  mode = 'practice',
   problem,
   code,
   onCodeChange,
@@ -73,7 +72,6 @@ const CodingWorkspace = ({
             <ProblemPanel
               problem={problem}
               hasSubmitted={output?.verdict !== null}
-              mode={mode}
             />
 
             <EditorPanel
@@ -96,7 +94,6 @@ const CodingWorkspace = ({
               showRunButton={showRunButton}
               showSubmitButton={showSubmitButton}
               problem={problem}
-              mode={mode}
             />
           </ResizableLayout>
         </div>

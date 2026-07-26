@@ -8,8 +8,8 @@ import {
   setLobbyStatus,
   setOutputResults,
   setOutputProgress,
-  setAiAnalysis,
   setTimerStart,
+  setEloDetails,
   selectUser
 } from '../../features/index';
 
@@ -93,6 +93,17 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     });
 
 
+    socket.on('battle:winner_declared', (data) => {
+      if (userRef.current?.id === data.winnerId) {
+        dispatch(endBattle(data));
+      } else {
+        if (data.ratingDetails) {
+          dispatch(setEloDetails(data.ratingDetails));
+        }
+        toast.info("Opponent has won! You can continue solving, or exit from battle.", { autoClose: false });
+      }
+    });
+
     socket.on('battle:end', (data) => {
       dispatch(endBattle(data));
     });
@@ -107,12 +118,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
     // ── SUBMISSION RESULT EVENT ──
     socket.on('submission:result', (data) => {
 
-      // Update output screen console
-      if (data.verdict === 'AC') {
-        toast.success(`All ${data.testCasesPassed}/${data.totalTestCases} test cases passed.`);
-      } else {
-        toast.warning(`Passed: ${data.testCasesPassed}/${data.totalTestCases}`);
-      }
 
       dispatch(setOutputResults({
         verdict: data.verdict,
@@ -121,12 +126,6 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
         totalTestCases: data.totalTestCases,
         isSubmit: true
       }));
-    });
-
-    socket.on('ai:analysis_ready', (data) => {
-      if (data.aiAnalysis) {
-        dispatch(setAiAnalysis(data.aiAnalysis));
-      }
     });
 
     socket.on('battle:problem_error', (data) => {
@@ -168,12 +167,10 @@ export const useBattleSocket = (battleId = null, queueType = null) => {
         socket.off('battle:start');
 
         socket.off('battle:end');
+        socket.off('battle:winner_declared');
         socket.off('battle:submission_result');
         socket.off('submission:progress');
-        socket.off('submission:result');
-        socket.off('ai:analysis_ready');
-        socket.off('battle:problem_error');
-        socket.off('error');
+        socket.off('battle_winner');
         socket.off('battle:error');
         
       }
