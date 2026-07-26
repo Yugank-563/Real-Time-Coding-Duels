@@ -44,6 +44,10 @@ const BattleRoom = () => {
   // Initialize and fetch battle details
   useEffect(() => {
     const fetchBattleDetails = async () => {
+      if (!battleId || battleId === 'undefined') {
+        navigate('/', { replace: true });
+        return;
+      }
       try {
         const res = await api.get(`/api/battles/${battleId}`);
         const battleData = res.data;

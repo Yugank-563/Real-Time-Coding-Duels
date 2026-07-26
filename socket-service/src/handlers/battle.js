@@ -161,6 +161,33 @@ export const registerBattleHandlers = (io, socket) => {
     }
   });
 
+  // Handle player ready toggle
+  socket.on('battle:player_ready', async (raw_data) => {
+    try {
+      const data = validateSocketPayload(battleSocketSchema, raw_data, socket, 'battle:player_ready');
+      if (!data) return;
+
+      const { battleId, isReady } = data;
+      const verify = await verifyParticipant(battleId, socket.userId, 'battle:player_ready');
+      if (!verify) return;
+
+      const { battle, playerIdx } = verify;
+      if (battle.status !== 'waiting') return;
+
+      // Update in DB
+      battle.players[playerIdx].status = isReady ? 'ready' : 'not_ready';
+      await battle.save();
+
+      // Broadcast to room
+      io.to(`battle:${battleId}`).emit('battle:player_ready', {
+        userId: socket.userId,
+        isReady
+      });
+    } catch (err) {
+      console.error('battle:player_ready error:', err.message);
+    }
+  });
+
   // Handle implicit disconnects (browser close, network drop)
   socket.on('disconnect', async () => {
     if (socket.currentBattleId) {

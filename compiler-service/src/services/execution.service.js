@@ -160,12 +160,12 @@ export class ExecutionService {
       logger.info(`[ExecutionService] Submission ${submissionId} → ${executionResult.verdict} (${executionResult.testCasesPassed}/${testCases.length})`);
 
       // Add problem to user's solved list if they passed completely (Practice or Battle)
-      if (executionResult.verdict === 'Accepted' || executionResult.verdict === 'AC') {
+      if ((executionResult.verdict === 'Accepted' || executionResult.verdict === 'AC') && submission?.userId && submission?.problemId) {
         try {
           const { addSolvedProblemToUser } = await import('../../../backend/src/repositories/index.js');
           await addSolvedProblemToUser(submission.userId, submission.problemId);
         } catch (err) {
-          logger.error(`Failed to update solvedProblems for user ${submission.userId}:`, err);
+          logger.error(`Failed to update solvedProblems for user ${submission?.userId}:`, err);
         }
       }
 
