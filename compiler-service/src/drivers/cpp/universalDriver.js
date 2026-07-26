@@ -1,9 +1,16 @@
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const HARNESS_PATH = path.resolve(__dirname, '../../harness/cpp/typeHarness.hpp');
+let HARNESS_CONTENT = '';
+try {
+  HARNESS_CONTENT = fs.readFileSync(HARNESS_PATH, 'utf-8');
+} catch (err) {
+  console.error('Failed to load typeHarness.hpp:', err.message);
+}
 
 /**
  * Universal Dynamic C++ Driver Builder.
@@ -119,7 +126,7 @@ export class UniversalCppDriver {
   wrap(code, problemTitle = '') {
     const sig = this.parseSignature(code, problemTitle);
 
-    const headerInclude = `#include "${HARNESS_PATH}"`;
+    const headerInclude = HARNESS_CONTENT || `#include "${HARNESS_PATH}"`;
 
     // Generate parameter reading lines
     const paramReads = [];
