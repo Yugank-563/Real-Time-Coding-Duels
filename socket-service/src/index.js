@@ -23,7 +23,7 @@ if (fs.existsSync(path.resolve(__dirname, '../../.env'))) {
 
 import { connectDB } from './config/db.js';
 
-const PORT = process.env.SOCKET_PORT;
+const PORT = process.env.PORT || process.env.SOCKET_PORT || 10000;
 const mongoUri = process.env.MONGO_URI;
 const redisUrl = process.env.REDIS_URL;
 
