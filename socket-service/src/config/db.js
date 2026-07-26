@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { connectDB as backendConnectDB } from '../../../backend/src/config/db.js';
 
 export const connectDB = async () => {
   const mongoUri = process.env.MONGO_URI;
@@ -8,6 +9,7 @@ export const connectDB = async () => {
 
   try {
     const conn = await mongoose.connect(mongoUri);
+    await backendConnectDB().catch(err => console.warn('[db] Backend Mongoose connection notice:', err.message));
     return conn;
   } catch (err) {
     console.error('[db] MongoDB connection error:', err.message);

@@ -28,7 +28,18 @@ redis.on('ready', () => console.log('redis connected'));
 try {
   await redis.connect();
 } catch (err) {
-  console.warn('Redis Connection failed on startup.');
+  console.warn('Redis Connection failed on startup:', err.message);
 }
+
+export const ensureRedisConnected = async () => {
+  if (!redis.isOpen) {
+    try {
+      await redis.connect();
+    } catch (err) {
+      console.error('Redis auto-reconnect failed:', err.message);
+    }
+  }
+  return redis;
+};
 
 export default redis;

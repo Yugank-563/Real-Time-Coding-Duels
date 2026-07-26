@@ -25,6 +25,10 @@ const PrivateLobby = () => {
   const { socket } = useBattleSocket(roomId);
 
   const fetchLobbyDetails = async () => {
+    if (!roomId || roomId === 'undefined') {
+      navigate('/', { replace: true });
+      return;
+    }
     try {
       const res = await api.get(`/api/battles/${roomId}`);
       

@@ -112,8 +112,8 @@ export const acceptInvitationService = async (inviteId, userId) => {
   // Delete the invitation from DB once the battle is successfully created
   await invite.deleteOne();
 
-  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room: battle });
-  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room: battle });
+  emitSocketEvent(invite.sender._id.toString(), 'battle:invite:accepted', { invitation: invite, room: battle.toObject({ flattenMaps: true }) });
+  emitSocketEvent(userId, 'battle:invite:accepted', { invitation: invite, room: battle.toObject({ flattenMaps: true }) });
 
   return { invite, room: battle };
 };
