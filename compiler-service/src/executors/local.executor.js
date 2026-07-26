@@ -93,8 +93,9 @@ export default class LocalExecutor extends BaseExecutor {
              expectedOutput = this._sortAnyOrder(expectedOutput);
           }
 
-          // Robust comparison: ignore all whitespaces in both output and expected, and normalize single quotes to double quotes
-          const normalize = (str) => str.replace(/\s/g, '').replace(/'/g, '"');
+          // Robust comparison: decode HTML entities, ignore all whitespaces, normalize quotes
+          const decodeHTMLEntities = (str) => typeof str === 'string' ? str.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>') : str;
+          const normalize = (str) => decodeHTMLEntities(str).replace(/\s/g, '').replace(/'/g, '"');
           const normActual = normalize(actualOutput);
           const normExpected = normalize(expectedOutput);
 
@@ -104,7 +105,10 @@ export default class LocalExecutor extends BaseExecutor {
             statusId = 3;
             testCasesPassed++;
           } else if (normActual === normExpected) {
-            statusId = 3; // AC
+            statusId = 3; // AC (Direct Match)
+            testCasesPassed++;
+          } else if (tc.isAnyOrder || this._sortAnyOrder(actualOutput) === this._sortAnyOrder(expectedOutput)) {
+            statusId = 3; // AC (Any Order Permutation Match)
             testCasesPassed++;
           } else {
             console.log(`[DEBUG-MISMATCH] Case: ${tc.caseNumber}`);
@@ -221,16 +225,35 @@ export default class LocalExecutor extends BaseExecutor {
     });
   }
 
-  // Helper function to handle AnyOrder problems (like 3Sum)
+  // Helper function to handle AnyOrder problems (like 3Sum, N-Queens, Subsets)
   _sortAnyOrder(outputStr) {
+    if (!outputStr) return '';
+    const decodeHTMLEntities = (str) => typeof str === 'string'
+      ? str.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      : str;
+    const cleanStr = decodeHTMLEntities(String(outputStr)).replace(/\s/g, '');
+
     try {
-      const lines = outputStr.trim().split('\n');
+      const json = JSON.parse(cleanStr);
+      if (Array.isArray(json)) {
+        const sorted = json.map(item => {
+          if (Array.isArray(item)) {
+            return [...item].sort((a, b) => String(a).localeCompare(String(b)));
+          }
+          return item;
+        }).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+        return JSON.stringify(sorted);
+      }
+    } catch (e) {}
+
+    try {
+      const lines = cleanStr.trim().split('\n');
       return lines
-        .map(line => line.trim().split(/\s+/).sort((a,b) => Number(a)-Number(b)).join(' '))
+        .map(line => line.trim().split(/[, ]+/).sort((a, b) => String(a).localeCompare(String(b))).join(','))
         .sort()
         .join('\n');
     } catch (e) {
-      return outputStr;
+      return cleanStr;
     }
   }
 

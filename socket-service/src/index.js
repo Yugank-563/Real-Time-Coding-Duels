@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from 'redis';
@@ -14,10 +15,13 @@ import { registerBattleHandlers } from './handlers/battle.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load central environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load environment variables
+dotenv.config();
+if (fs.existsSync(path.resolve(__dirname, '../../.env'))) {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+}
 
-import { connectDB } from '../../backend/src/config/db.js';
+import { connectDB } from './config/db.js';
 
 const PORT = process.env.SOCKET_PORT;
 const mongoUri = process.env.MONGO_URI;

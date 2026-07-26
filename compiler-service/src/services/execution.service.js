@@ -40,11 +40,15 @@ export class ExecutionService {
          }));
       }
       
-      // Ensure all testcases have string inputs/outputs to prevent truthiness bugs (e.g., output: 0)
+      // Ensure all testcases have string inputs/outputs and decode HTML entities
+      const decodeHTMLEntities = (str) => typeof str === 'string'
+        ? str.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        : str;
+
       testCases = testCases.map(tc => ({
          ...tc,
          input: typeof tc.input === 'object' && tc.input !== null ? JSON.stringify(tc.input) : String(tc.input ?? ''),
-         output: typeof tc.output === 'object' && tc.output !== null ? JSON.stringify(tc.output) : String(tc.output ?? '')
+         output: decodeHTMLEntities(typeof tc.output === 'object' && tc.output !== null ? JSON.stringify(tc.output) : String(tc.output ?? ''))
       }));
 
       if (!testCases.length) {
