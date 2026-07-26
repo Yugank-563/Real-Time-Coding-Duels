@@ -62,25 +62,47 @@ export const getVariableNames = (problem) => {
   return ['input'];
 };
 
-export const getInitialCases = (problem, vars) => {
+export const getInitialCases = (problem, vars = []) => {
   if (!problem) return [];
 
   let casesList = [];
 
+  const numVars = Array.isArray(vars) && vars.length > 0 ? vars.length : 1;
+
   // Parse from problem.testCases array
   if (problem.testCases && problem.testCases.length > 0) {
     casesList = problem.testCases.map(tc => {
-      if (tc.input.includes('\n')) {
-        return tc.input.split('\n');
-      } else if (tc.input.includes(',')) {
+      const rawInput = (tc.input !== undefined && tc.input !== null) ? String(tc.input) : '';
+
+      // If function only has 1 input parameter (e.g. isPalindrome(string s)), don't split by commas!
+      if (numVars === 1) {
+        return [rawInput];
+      }
+
+      if (rawInput.includes('\n')) {
+        return rawInput.split('\n');
+      } else if (rawInput.includes(',')) {
         const parts = [];
         let current = '';
         let bracketDepth = 0;
-        for (let i = 0; i < tc.input.length; i++) {
-          const char = tc.input[i];
-          if (char === '[' || char === '{') bracketDepth++;
-          else if (char === ']' || char === '}') bracketDepth--;
-          if (char === ',' && bracketDepth === 0) {
+        let inString = false;
+        let stringChar = '';
+
+        for (let i = 0; i < rawInput.length; i++) {
+          const char = rawInput[i];
+          if ((char === '"' || char === "'") && (i === 0 || rawInput[i - 1] !== '\\')) {
+            if (!inString) {
+              inString = true;
+              stringChar = char;
+            } else if (char === stringChar) {
+              inString = false;
+            }
+          }
+          if (!inString) {
+            if (char === '[' || char === '{') bracketDepth++;
+            else if (char === ']' || char === '}') bracketDepth--;
+          }
+          if (char === ',' && bracketDepth === 0 && !inString) {
             parts.push(current.trim());
             current = '';
           } else {
@@ -90,7 +112,7 @@ export const getInitialCases = (problem, vars) => {
         if (current) parts.push(current.trim());
         return parts;
       } else {
-        return [tc.input];
+        return [rawInput];
       }
     });
   }

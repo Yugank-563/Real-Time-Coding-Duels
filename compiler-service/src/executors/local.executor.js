@@ -10,6 +10,29 @@ import logger from '../utils/logger.js';
 
 const execAsync = promisify(exec);
 
+const adjustCompileError = (compileOutput, sourceCode) => {
+  if (!compileOutput || !sourceCode) return compileOutput;
+  let adjusted = compileOutput.replace(/cc1plus: some warnings being treated as errors\n?/g, '');
+  const lines = sourceCode.split('\n');
+  const markerIndex = lines.findIndex(l => l.includes('// %%USER_CODE_START%%'));
+  if (markerIndex !== -1) {
+    const offset = markerIndex + 1;
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?main\.cpp:(\d+):(?:\d+:)?/g, (match, p1) => {
+      const adjustedLine = Math.max(1, parseInt(p1) - offset);
+      return `Line ${adjustedLine}:`;
+    });
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?main\.cpp:/g, 'Error: ');
+    adjusted = adjusted.replace(/(^\s*)(\d+)(\s*\|)/gm, (match, p1, p2, p3) => {
+      const adjustedLine = Math.max(1, parseInt(p2) - offset);
+      return `${p1}${adjustedLine}${p3}`;
+    });
+  } else {
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?(?:main\.[a-z]+|Solution\.[a-z]+|solution\.[a-z]+):(\d+):(?:\d+:)?/g, 'Line $1:');
+    adjusted = adjusted.replace(/(?:\/[^\s]*\/)?(?:main\.[a-z]+|Solution\.[a-z]+|solution\.[a-z]+):/g, 'Error: ');
+  }
+  return adjusted.trim();
+};
+
 export default class LocalExecutor extends BaseExecutor {
   // Executes all testcases sequentially using local file streams
   async executeBatch(code, language, testCases, onProgress) {
@@ -44,7 +67,7 @@ export default class LocalExecutor extends BaseExecutor {
           executionTime: 0,
           memory: 0,
           results: [],
-          errorMessage: compileErr.stderr || compileErr.message,
+          errorMessage: adjustCompileError(compileErr.stderr || compileErr.message, code),
           output: ''
         };
       }
@@ -61,8 +84,8 @@ export default class LocalExecutor extends BaseExecutor {
           const { stdout, stderr, time, memory } = await this._runBinary(binaryFile, inputFile);
           
           let statusId = 4; // WA
-          let expectedOutput = (tc.output || '').trim();
-          let actualOutput = (stdout || '').trim();
+          let expectedOutput = String(tc.output ?? '').trim();
+          let actualOutput = String(stdout ?? '').trim();
 
           // Custom check for "any order" problems (like 3Sum)
           if (tc.isAnyOrder) {

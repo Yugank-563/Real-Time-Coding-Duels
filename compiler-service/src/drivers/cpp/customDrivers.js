@@ -169,6 +169,7 @@ int main() {
 // Mapped by normalized problem title
 
 const listNodeDef = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -181,6 +182,7 @@ struct ListNode {
 `;
 
 const treeNodeDef = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -194,6 +196,7 @@ struct TreeNode {
 `;
 
 const standardImports = `
+#pragma GCC diagnostic error "-Wreturn-type"
 #include <bits/stdc++.h>
 
 using namespace std;
