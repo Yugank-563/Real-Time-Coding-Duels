@@ -1,51 +1,82 @@
-# ⚔️ Coduelo — Real-Time Coding Duels Platform
+# ⚔️ Coduelo - Real-Time Coding Duels Platform [![Live Demo](https://img.shields.io/badge/Live%20Demo-6366f1?style=flat-square)](https://coduelo.vercel.app)
 
-> A high-performance, real-time multiplayer competitive coding battle platform featuring 1v1 duels, live code execution, automatic data-structure serialization, and instant test case evaluation.
+## 💡 What is Coduelo?
+
+> **Think Faster. Solve Under Pressure. Perform When It Matters Most.**
+
+**Coduelo** is a real-time competitive 1v1 coding platform built for speed, precision, and high-stakes problem solving. Developers race head-to-head live where every second counts:
+
+- ⚡ **Rapid Problem Solving**: Train to analyze constraints, select data structures, and write optimal code at high speed.
+- ⏱️ **Head-to-Head Speed Duels**: Race live against real opponents—the first valid submission to pass test cases wins.
+- 🧠 **High-Speed Execution Under Pressure**: Build split-second algorithmic decision-making for time-critical coding interviews.
 
 ---
 
-## 🌟 Overview
+## ✨ Key Features & Highlights
 
-**Coduelo** is an end-to-end real-time competitive programming platform designed for developers to challenge each other in live 1v1 coding duels. Built on a modern microservices architecture, Coduelo combines real-time WebSockets, Monaco code editor, Redis-backed matchmaking, and a zero-latency local C++ compilation engine (`g++ -O3`) supporting advanced data structures (Binary Trees, Linked Lists, 3D DP, and Permutations).
+- ⚡ **Real-Time 1v1 Coding Battles**: Powered by **Socket.io** with instant live matchmaking, synchronized game state, and instant winner detection.
 
----
+- 🎯 **Multiple Battle Modes**: Diverse competitive formats including **Random Duel**, **Private Duels**, **Topic Duel**, and **Timed Sprint** tailored for targeted practice.
 
-## ✨ Key Features
+- 🔐 **Private Duels**: Create custom casual rooms and send private room invitations to practice algorithms or race against friends without losing rating points.
 
-- ⚔️ **Real-Time 1v1 Battles**: Live matchmaking queue with Socket.io rooms, real-time code progress tracking, and live score updates.
-- ⚡ **Universal C++ Execution Engine**: Local `g++ -O3` execution with automatic template harness (`typeHarness.hpp`) for Primitives, Vectors, 2D/3D DP Grids, Linked Lists (`ListNode*`), Binary Trees (`TreeNode*`), and In-Place Mutations (`void`).
-- 🔄 **Any-Order & Permutation Evaluation**: Smart output normalization supporting solutions returned in any order (e.g. N-Queens, 3Sum, Subsets, Group Anagrams).
-- 🤖 **AI Assistant Integration**: Powered by Gemini & Groq APIs for real-time coding hints, debugging help, and problem insights.
-- 📝 **Monaco Code Editor**: Rich developer experience with syntax highlighting, autocomplete, auto-indentation, and multi-language support (C++, Python, JavaScript).
-- 🏆 **Leaderboards & User Profiles**: Track battle statistics, win rates, match history, and global platform rankings.
-- 🔒 **Secure Auth & Email Notifications**: JWT-based authentication with refresh tokens and Brevo email integration.
+- 🏗️ **Distributed Microservices Architecture**: Decoupled monorepo with 4 independent services (Frontend, Backend API, WebSocket Gateway, Compiler Service) communicating asynchronously via **Redis Pub/Sub & BullMQ**.
+
+- 💻 **Asynchronous Execution Pipeline**: Compiles and evaluates user submissions against hidden test cases using **Judge0 Cloud API** (with local `g++ -O3` engine for dev testing).
+
+- 🏆 **Competitive Rankings & Analytics**: Rating-based rankings, global leaderboards, match history, win rates, and detailed player profiles.
+
+- 🔒 **Enterprise-Grade Security**: JWT authentication with refresh tokens, OTP email verification via **Brevo API**, Zod request validation, and rate-limited REST endpoints.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**
-- **Framework**: React.js 18 + Vite
-- **Styling**: Tailwind CSS, Framer Motion
-- **Code Editor**: `@monaco-editor/react`
-- **Real-time Sync**: `socket.io-client`
-- **Icons & UI**: Lucide React
+<details>
+<summary><b>🖥️ Frontend</b></summary>
+<br>
 
-### **Backend Services**
-- **Runtime**: Node.js (ES Modules) + Express.js
-- **Database**: MongoDB (Mongoose ORM)
-- **Caching & Queue**: Redis (Local / Upstash) + BullMQ
-- **Authentication**: JWT (Access & Refresh Tokens) + bcrypt
-- **Email Service**: Brevo API
+| Technology | Purpose |
+|---|---|
+| React + Vite | High-performance SPA with instant HMR dev server |
+| Tailwind CSS | Utility-first responsive styling and UI components |
+| Framer Motion | Smooth UI animations and modal transitions |
+| `@monaco-editor/react` | Embedded VS Code editor with custom theme & syntax highlighting |
+| Socket.io Client | Low-latency WebSocket sync for live 1v1 battle rooms |
+| Lucide React | Clean icon suite for interactive UI elements |
 
-### **Compiler Microservice**
-- **Compilation Engine**: C++20 (`g++ -O3`), Node.js Worker
-- **Type Harness**: Custom C++ Template Harness (`typeHarness.hpp`)
-- **Execution Fallback**: RapidAPI Judge0 Cloud API integration
+</details>
+
+<details>
+<summary><b>🔧 Backend API & Gateway</b></summary>
+<br>
+
+| Technology | Purpose |
+|---|---|
+| Node.js (ESM) + Express | RESTful API server with ES Module architecture |
+| MongoDB + Mongoose | NoSQL database storing user profiles, battle history & problems |
+| Redis + BullMQ | Background job queues and pub/sub real-time event distribution |
+| JWT + bcrypt | Secure authentication flow with access & refresh tokens |
+| Brevo API | Email OTP verification for account signup & security |
+
+</details>
+
+<details>
+<summary><b>⚙️ Compiler Microservice</b></summary>
+<br>
+
+| Technology | Purpose |
+|---|---|
+| Judge0 Cloud API | Primary code execution engine providing unlimited remote execution |
+| `g++` (GCC C++20 `-O3`) | Local C++ compilation engine for local development testing |
+| `typeHarness.hpp` | Automatic C++ template serialization for all LeetCode data structures |
+| BullMQ Worker | Asynchronous execution worker decoupled from API server |
+
+</details>
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
@@ -65,8 +96,8 @@ flowchart TD
 
     subgraph Execution Layer
         F["Compiler Microservice (BullMQ Worker)"]
-        G["Local C++ Engine (g++ -O3 + typeHarness.hpp)"]
-        H["Judge0 Cloud API (Fallback)"]
+        G["Judge0 Cloud API (Primary Engine)"]
+        H["Local C++ Engine (for local dev testing)"]
     end
 
     A <-->|REST API| B
@@ -75,27 +106,52 @@ flowchart TD
     B <--> E
     C <--> E
     E <--> F
-    F --> G
-    F -.-> H
+    F <--> G
+    F <-.-> H
 ```
+
+**How a battle submission flows:**
+
+1. Player submits code → Frontend sends it over WebSocket.
+2. Socket Gateway enqueues the job into **Redis via BullMQ**.
+3. Compiler Worker picks it up, evaluates code via **Judge0 Cloud API**, and runs all test cases.
+4. Results are pushed back to Redis → Socket Gateway broadcasts them to both players instantly.
 
 ---
 
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```
 Coduelo/
-├── backend/            # Express REST API, Controllers, Models, Routes & Services
-├── frontend/           # React + Vite UI, Monaco Workspace, Battle Rooms & Dashboards
-├── socket-service/     # Socket.io Gateway, Matchmaking Queue & Real-time Sync
-├── compiler-service/   # Asynchronous BullMQ Execution Service & Local g++ Engine
+├── backend/                 # REST API Service (Express.js)
 │   └── src/
-│       ├── drivers/    # Universal C++ Driver Generators
-│       ├── executors/  # Local & Judge0 Executors
-│       └── harness/    # typeHarness.hpp C++ Serialization Templates
-├── shared/             # Shared Types, Constants & Utilities
-├── docker-compose.yml  # Container Orchestration
-└── package.json        # Workspace Monorepo Root Script Configuration
+│       ├── controllers/     # Business logic for auth, users, battles, problems
+│       ├── models/          # Mongoose database models & schemas
+│       ├── routes/          # API endpoint routes
+│       ├── middleware/      # Authentication guards & error handlers
+│       └── services/        # Third-party integrations (Brevo Email OTP)
+│
+├── frontend/                # Single Page Application (React + Vite)
+│   └── src/
+│       ├── pages/           # Battle room, dashboard, profile, leaderboard
+│       ├── components/      # Monaco code editor, UI panels, modals, navbar
+│       ├── hooks/           # Real-time socket & battle management hooks
+│       └── features/        # Feature-specific state and UI components
+│
+├── socket-service/          # Real-Time Gateway Service (Socket.io)
+│   └── src/
+│       ├── handlers/        # Matchmaking queue, battle events, live chat
+│       └── config/          # Socket server & Redis pub/sub configuration
+│
+├── compiler-service/        # Asynchronous Code Execution Worker (BullMQ)
+│   └── src/
+│       ├── executors/       # Judge0 Cloud API (primary) & local g++ engine
+│       ├── drivers/         # C++ test case driver generators
+│       ├── harness/         # typeHarness.hpp — universal C++ type serialization
+│       └── workers/         # BullMQ queue job consumer
+│
+├── .env                     # Environment variables & configuration
+└── package.json             # Monorepo workspace configuration
 ```
 
 ---
@@ -104,71 +160,64 @@ Coduelo/
 
 ### Prerequisites
 
-Ensure you have the following installed locally:
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
-- **C++ Compiler**: `g++` (GCC 10+)
-- **MongoDB**: Local instance or MongoDB Atlas URI
-- **Redis**: Local instance or Upstash Redis URL
+| Requirement | Version |
+|---|---|
+| Node.js | v18 or higher |
+| npm | v9 or higher |
+| MongoDB | Local or [Atlas](https://cloud.mongodb.com) |
+| Redis | Local or [Upstash](https://upstash.com) |
+| g++ (GCC) | v10+ (Optional, for local compiler engine) |
 
----
+### Setup
 
-### Installation
+**1. Clone the repository**
+```bash
+git clone https://github.com/Yugank-563/Real-Time-Coding-Duels.git
+cd Real-Time-Coding-Duels
+```
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/your-username/Coduelo.git
-   cd Coduelo
-   ```
+**2. Install dependencies**
+```bash
+npm install
+```
 
-2. **Install Workspace Dependencies**:
-   ```bash
-   npm install
-   ```
+**3. Configure environment**
 
-3. **Environment Setup**:
-   Create a `.env` file in the root directory:
-   ```env
-   NODE_ENV=development
-   BACKEND_PORT=5000
-   FRONTEND_URL=http://localhost:5173
-   VITE_BACKEND_URL=http://localhost:5000
-   SOCKET_PORT=5001
-   VITE_SOCKET_URL=http://localhost:5001
+A `.env.example` file is already included in the repository with all required keys pre-listed. Copy it and fill in your own values:
 
-   # Database & Redis
-   MONGO_URI="your_mongodb_connection_string"
-   REDIS_URL="redis://127.0.0.1:6379"
+```bash
+cp .env.example .env
+```
 
-   # Compiler Configuration
-   EXECUTOR_TYPE=local
+> Open `.env` and replace the placeholder values with your actual credentials.
 
-   # Security
-   JWT_SECRET="your_jwt_secret"
-   JWT_REFRESH_SECRET="your_jwt_refresh_secret"
-
-   # AI Providers
-   GEMINI_API_KEY="your_gemini_api_key"
-   GROQ_API_KEY="your_groq_api_key"
-   ```
-
----
-
-### Running the Application
-
-Run all services (Frontend, Backend, Socket Service, and Compiler Service) concurrently with a single command:
-
+**4. Start all services**
 ```bash
 npm run dev
 ```
 
-The services will start at the following ports:
-- 💻 **Frontend**: [http://localhost:5173](http://localhost:5173)
-- 🔌 **Backend API**: [http://localhost:5000](http://localhost:5000)
-- ⚡ **Socket Gateway**: [http://localhost:5001](http://localhost:5001)
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5000 |
+| Socket Gateway | http://localhost:5001 |
+
+---
+
+## 🌐 Deployment
+
+Each service is deployed independently:
+
+| Service | Platform | Type |
+|---|---|---|
+| `frontend/` | Vercel | Static Site |
+| `backend/` | Render | Web Service |
+| `socket-service/` | Render | Web Service |
+| `compiler-service/` | Render | Background Worker |
+
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License**.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
